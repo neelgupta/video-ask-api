@@ -1,36 +1,70 @@
 const mongoose = require("mongoose");
 const { role, modelName } = require("../utils/constant");
 
-const userSchema = mongoose.Schema({
-    first_name: {
-        type: String,
-        required: true,
+const termsSchema = new mongoose.Schema(
+  {
+    isAgree: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
-    last_name: {
-        type: String,
-        required: true,
+    isAccept: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    isEmail: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    isActivity: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    isSherContent: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+  },
+  { _id: false }
+);
+
+const userSchema = mongoose.Schema(
+  {
+    user_name: {
+      type: String,
+      required: true,
     },
     email: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     password: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     isActive: {
-        type: Boolean,
-        default: true,
+      type: Boolean,
+      default: true,
     },
     role: {
-        type: String,
-        enum: [role.ADMIN, role.USER],
-        default: role.USER,
+      type: String,
+      enum: [role.ADMIN, role.USER],
+      default: role.USER,
     },
     isDeleted: {
-        type: Boolean,
-        default: true,
+      type: Boolean,
+      default: true,
     },
-}, { timestamps: true });
+    terms: {
+      type: termsSchema,
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-module.exports = mongoose.model(modelName.USER, userSchema)
+module.exports = mongoose.model(modelName.USER, userSchema);
