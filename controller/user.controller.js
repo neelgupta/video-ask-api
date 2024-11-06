@@ -28,7 +28,7 @@ const userSignIn = catchAsyncError(async (req, res) => {
 
   // const token = jwt.sign({ _id: user._id }, process.env.JWT_SEC)
   const token = await user_services.create_jwt_token(user);
-  return response200(res, msg.loginSuccess, { token });
+  return response200(res, msg.loginSuccess, { token, user });
 });
 
 // update one
