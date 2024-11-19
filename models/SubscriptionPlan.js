@@ -1,18 +1,6 @@
 const mongoose = require("mongoose");
 const { role, modelName, planType } = require("../utils/constant");
-const subPlanSchema = new mongoose.Schema(
-  {
-    label: {
-      type: String,
-      required: true,
-    },
-    value: {
-      type: String,
-      required: true,
-    },
-  },
-  { _id: false } // This prevents Mongoose from creating _id fields for subdocuments
-);
+
 const Schema = mongoose.Schema(
   {
     plan_uuid: {

@@ -4,9 +4,7 @@ const { userValidation, validateRequest } = require("../utils/validations");
 const subscriptionPlan = require("./adminRoutes/subscriptionPlan");
 const router = require("express").Router();
 
-router.post(
-  "/login",
-
+router.post("/login",
   swaggerJoi(userValidation.signInValidator),
   validateRequest(userValidation.signInValidator),
   adminController.adminSigning

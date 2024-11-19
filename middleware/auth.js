@@ -16,12 +16,12 @@ exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
     // const data = jwt.verify(token, process.env.JWT_SEC);
     const data = await verifyToken(token)
 
-    const user = await Users.findOne({ _id: data._id });
+    const user = await Users.findOne({ _id: data.user_id });
     if (!user) return response401(res, msg.tokenExpired);
     if (!user.isActive) return response401(res, msg.accountInActivated);
 
     req.user = user._id;
-    req.role = user.role;
+    // req.role = user.role;
 
     next();
 });

@@ -1,0 +1,105 @@
+const mongoService = require("../config/mongoService");
+const { modelName } = require("../utils/constant");
+
+// for add organization
+const add_organization = async (payload) => {
+    try {
+        return mongoService.createOne(modelName.ORGANIZATION, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+// for get single organization
+const get_organization = async (query) => {
+    try {
+        return mongoService.findOne(modelName.ORGANIZATION, query)
+    } catch (error) {
+        return error
+    }
+}
+
+// for get organization list
+const get_organization_list = async (query) => {
+    try {
+        return mongoService.findAll(modelName.ORGANIZATION, query);
+    } catch (error) {
+        return error
+    }
+}
+
+// for update organization
+const update_organization = async (query, payload) => {
+    try {
+        return mongoService.updateOne(modelName.ORGANIZATION, query, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+// for add member in the organization
+const add_member = async (payload) => {
+    try {
+        return mongoService.createOne(modelName.ORGANIZATION_MEMBER, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+// for get member list with options and projection
+const get_members = async (query, project, options) => {
+    try {
+        return mongoService.findAll(modelName.ORGANIZATION_MEMBER, query, project, options);
+    } catch (error) {
+        return error
+    }
+}
+
+// for get member counts
+const get_member_counts = async (query) => {
+    try {
+        return mongoService.countDocument(modelName.ORGANIZATION_MEMBER, query);
+    } catch (error) {
+        return error
+    }
+}
+
+// for get single member details
+const get_single_member = async (query) => {
+    try {
+        return mongoService.findOne(modelName.ORGANIZATION_MEMBER, query);
+    } catch (error) {
+        return error
+    }
+}
+
+// for update single member details
+const update_member = async (query, payload) => {
+    try {
+        return mongoService.updateOne(modelName.ORGANIZATION_MEMBER, query, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+// for update many member details
+const update_many_member = async (query, payload) => {
+    try {
+        return mongoService.updateMany(modelName.ORGANIZATION_MEMBER, query, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+module.exports = {
+    add_organization,
+    get_organization,
+    get_organization_list,
+    update_organization,
+    add_member,
+    get_members,
+    get_member_counts,
+    get_single_member,
+    update_member,
+    update_many_member,
+}

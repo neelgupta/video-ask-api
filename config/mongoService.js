@@ -80,6 +80,11 @@ const populate = async (
     .sort(sort);
 };
 
+// count documents
+const countDocument = async (modelName, criteria,) => {
+  return await mongoose.model(modelName).countDocuments(criteria)
+}
+
 module.exports = {
   findOne,
   createOne,
@@ -89,4 +94,5 @@ module.exports = {
   updateMany,
   aggregation,
   populate,
+  countDocument,
 };
