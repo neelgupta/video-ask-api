@@ -112,11 +112,14 @@ const getMembers = catchAsyncError(async (req, res) => {
         ];
     }
 
-    const options = {
-        limit: limit || 100,
-        skip: offset || 0,
-        sort: { createdAt: -1 },
-    };
+    let options = {};
+    if (limit & offset) {
+        options = {
+            limit: limit || 100,
+            skip: offset || 0,
+            sort: { createdAt: -1 },
+        };
+    }
 
     const data = await organization_services.get_members(matchQuery, { updatedAt: 0, __v: 0, }, options);
     const count = await organization_services.get_member_counts(matchQuery);

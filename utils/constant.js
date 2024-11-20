@@ -1,6 +1,35 @@
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 
+const msg = {
+  invalidCredentials: "Invalid credentials",
+  loginSuccess: "Login successfully",
+  invalidRole: "Invalid role",
+  tokenExpired: "Token is expired or Invalid",
+  accountInActivated: "Your account has been deactivated by the administrator.",
+  emailIsExists: "Email is already exists",
+  phoneExists: "Phone number is already exists",
+  fetchSuccessfully: "Fetched successfully",
+  fetch_success: "Fetched successfully",
+  update_success: "Updated successfully",
+  delete_success: "Deleted successfully",
+  signupSuccess: "Sign up successfully",
+  invalidToken: "Invalid Token",
+  tokenExpired: "Token is expired or Invalid",
+  organizationExists: "Organization is already exists",
+  organizationCreated: "Organization created successfully",
+  organizationNotExists: "Organization is not exists",
+  memberCreated: "Member created successfully",
+  memberNotExists: "Member details not exists",
+  invitationTokenInvalid: "Invitation token is invalid",
+  invitationTokenExpired: "Invitation token is expired",
+  memberIsAlreadyRegistered: "Member is already registered",
+  oldPasswordWrong: "Old password is not correct",
+  passwordChangeSuccess: "Password changed successfully",
+  profileUpdateSuccess: "Profile updated successfully",
+  validMemberEmail: "Email is not exists in the organization",
+};
+
 const userType = {
   ADMIN: "admin",
   USER: "user",
@@ -33,42 +62,12 @@ const frontBaseUrl = "https://localhost:3000";
 
 const defaultOrganization = "My Organization";
 
-const msg = {
-  invalidCredentials: "Invalid credentials",
-  loginSuccess: "Login successfully",
-  invalidRole: "Invalid role",
-  tokenExpired: "Token is expired or Invalid",
-  accountInActivated: "Your account has been deactivated by the administrator.",
-  emailIsExists: "Email is already exists",
-  phoneExists: "Phone number is already exists",
-  fetchSuccessfully: "Fetched successfully",
-  fetch_success: "Fetched successfully",
-  update_success: "Updated successfully",
-  delete_success: "Deleted successfully",
-  signupSuccess: "Sign up successfully",
-  invalidToken: "Invalid Token",
-  tokenExpired: "Token is expired or Invalid",
-  organizationExists: "Organization is already exists",
-  organizationCreated: "Organization created successfully",
-  organizationNotExists: "Organization is not exists",
-  memberCreated: "Member created successfully",
-  memberNotExists: "Member details not exists",
-  invitationTokenInvalid: "Invitation token is invalid",
-  invitationTokenExpired: "Invitation token is expired",
-  memberIsAlreadyRegistered: "Member is already registered",
-  oldPasswordWrong: "Old password is not correct",
-  passwordChangeSuccess: "Password changed successfully",
-  profileUpdateSuccess: "Profile updated successfully",
-  validMemberEmail: "Email is not exists in the organization",
-};
-
 const modelName = {
   USER: "Users",
   SUBSCRIPTION: "subscription",
   ORGANIZATION: "Organization",
   ORGANIZATION_MEMBER: "OrganizationMember",
 };
-
 
 const hashPassword = (password) => {
   return bcrypt.hashSync(password, 10);
