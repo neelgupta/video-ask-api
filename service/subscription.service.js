@@ -3,10 +3,8 @@ const { modelName } = require("../utils/constant");
 
 const createSubscriptionPlan = async (payload) => {
   try {
-    console.log("payload", payload);
     return await mongoService.createOne(modelName.SUBSCRIPTION, payload);
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
@@ -20,7 +18,6 @@ const getAllSubscriptionPlan = async (options) => {
       options
     );
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
@@ -34,7 +31,6 @@ const updateSubscriptionPlan = async (query, payload) => {
       {}
     );
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
@@ -48,7 +44,6 @@ const deleteSubscriptionPlan = async (query) => {
       {}
     );
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
@@ -57,7 +52,6 @@ const findPlanById = async (payload) => {
   try {
     return await mongoService.findOne(modelName.SUBSCRIPTION, payload);
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };

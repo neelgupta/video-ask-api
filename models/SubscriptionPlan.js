@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { role, modelName, planType } = require("../utils/constant");
+const { modelName, planType } = require("../utils/constant");
 
 const Schema = mongoose.Schema(
   {
@@ -36,11 +36,6 @@ const Schema = mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
-    },
-    role: {
-      type: String,
-      enum: [role.ADMIN, role.USER],
-      default: role.USER,
     },
     isDeleted: {
       type: Boolean,

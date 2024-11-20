@@ -18,7 +18,7 @@ exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
 
     const user = await Users.findOne({ _id: data.user_id });
     if (!user) return response401(res, msg.tokenExpired);
-    if (!user.isActive) return response401(res, msg.accountInActivated);
+    if (!user.is_active) return response401(res, msg.accountInActivated);
 
     req.user = user._id;
     // req.role = user.role;

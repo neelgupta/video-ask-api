@@ -4,9 +4,9 @@ const joiToSwagger = (schema) => {
 
     // Iterate through the schema keys
     for (const key in schema.describe().keys) {
-        console.log('✌️key --->', key);
+        // console.log('✌️key --->', key);
         const { type, flags, meta } = schema.describe().keys[key];
-        console.log('✌️type, flags, meta --->', type, flags, meta);
+        // console.log('✌️type, flags, meta --->', type, flags, meta);
 
         swaggerSchema[key] = {
             type: type === 'string' ? 'string' : type,

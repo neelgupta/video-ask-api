@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { role, modelName } = require("../utils/constant");
+const { userType, modelName, memberRole } = require("../utils/constant");
 
 const termsSchema = new mongoose.Schema(
   {
@@ -46,22 +46,30 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    isActive: {
+    is_active: {
       type: Boolean,
       default: true,
     },
-    role: {
+    user_type: {
       type: String,
-      enum: [role.ADMIN, role.USER],
-      default: role.USER,
+      enum: [userType.ADMIN, userType.USER, userType.MEMBER],
+      default: userType.USER,
     },
-    isDeleted: {
+    member_role: {
+      type: String,
+      enum: [memberRole.Owner, memberRole.Member, memberRole.Admin],
+    },
+    is_member: {
       type: Boolean,
-      default: true,
+      default: false
+    },
+    is_deleted: {
+      type: Boolean,
+      default: false,
     },
     terms: {
       type: termsSchema,
-      required: true,
+      // required: true,
     },
   },
   { timestamps: true }

@@ -13,4 +13,4 @@ const validateRequest = (schema) => {
 module.exports = { validateRequest };
 module.exports.userValidation = require("./user.validation");
 module.exports.organizationValidation = require("./organization.validation");
-
+module.exports.profileValidation = require("./profile.validation");

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { memberRole } = require("../utils/constant");
 
 const organizationSchema = mongoose.Schema({
     organization_uuid: {
@@ -9,10 +10,19 @@ const organizationSchema = mongoose.Schema({
         type: String,
         required: true,
     },
-    organization_email: {
+    replay_to_email: {
         type: String,
-        required: true,
     },
+    members: [
+        {
+            userId: { type: mongoose.Types.ObjectId, ref: "User", required: true },
+            role: {
+                type: String,
+                enum: [memberRole.Owner, memberRole.Member, memberRole.Admin],
+                // required: true,
+            },
+        },
+    ],
     organization_settings: {
         type: {
             branding: { type: String, required: false },

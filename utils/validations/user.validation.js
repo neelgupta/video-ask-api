@@ -11,6 +11,7 @@ const signUpValidator = Joi.object({
     "*": "password is required",
   }),
   terms: Joi.object(),
+  memberId: Joi.string().optional(),
   // role:Joi.string(),
 });
 
@@ -23,7 +24,15 @@ const signInValidator = Joi.object({
   }),
 });
 
+const checkInvitationValidator = Joi.object({
+  invitation_token: Joi.string().required().messages({
+    "*": "Invitation token is required",
+  }),
+});
+
+
 module.exports = {
   signUpValidator,
   signInValidator,
+  checkInvitationValidator,
 };

@@ -1,6 +1,6 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { organization_services } = require("../service");
-const { msg, generateUUID } = require("../utils/constant");
+const { msg, generateUUID, generateEncryptedToken, frontBaseUrl, memberRole } = require("../utils/constant");
 const { response400, response200, response201 } = require("../lib/response-messages");
 
 const addOrganization = catchAsyncError(async (req, res) => {
@@ -11,7 +11,7 @@ const addOrganization = catchAsyncError(async (req, res) => {
     if (organizationExists) return response400(res, msg.organizationExists);
 
     const organizationUUID = generateUUID("ORG");
-    req.body = { ...req.body, added_by: Id, organization_uuid: organizationUUID, }
+    req.body = { ...req.body, added_by: Id, organization_uuid: organizationUUID, members: [{ userId: Id, role: memberRole.Owner }] }
 
     const data = await organization_services.add_organization(req.body);
 
@@ -19,8 +19,8 @@ const addOrganization = catchAsyncError(async (req, res) => {
 });
 
 const getOrganizationList = catchAsyncError(async (req, res) => {
-    const Id = req.user
-    const data = await organization_services.get_organization_list({ added_by: Id, is_deleted: false });
+    const Id = req.user;
+    const data = await organization_services.get_organization_list({ "members.userId": Id, is_deleted: false }, { members: 0, __v: 0, updatedAt: 0, });
 
     return response200(res, msg.fetch_success, data);
 });
@@ -70,11 +70,21 @@ const addMember = catchAsyncError(async (req, res) => {
     if (memberPhoneExists) return response400(res, msg.phoneExists);
 
     const organizationMemberUUID = generateUUID("ORG");
-    req.body = { ...req.body, added_by: Id, member_uuid: organizationMemberUUID, };
+    req.body = { ...req.body, added_by: Id, member_uuid: organizationMemberUUID };
 
     const data = await organization_services.add_member(req.body);
 
-    return response201(res, msg.memberCreated, data);
+    // const invitationExpires = Date.now() + 15 * 60 * 1000;
+    const payload = JSON.stringify({
+        memberId: data._id, userId: Id, timestamp: Date.now(),
+    });
+    const inviteToken = await generateEncryptedToken(payload);
+    const emailUrl = `${frontBaseUrl}/signup/${inviteToken}`
+
+    await organization_services.update_member({ _id: data._id }, { invitation_token: inviteToken });
+    const response = { invitationToken: inviteToken, data };
+
+    return response201(res, msg.memberCreated, response);
 });
 
 const getMembers = catchAsyncError(async (req, res) => {

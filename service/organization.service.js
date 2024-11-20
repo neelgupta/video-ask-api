@@ -20,9 +20,9 @@ const get_organization = async (query) => {
 }
 
 // for get organization list
-const get_organization_list = async (query) => {
+const get_organization_list = async (query, project) => {
     try {
-        return mongoService.findAll(modelName.ORGANIZATION, query);
+        return mongoService.findAll(modelName.ORGANIZATION, query, project);
     } catch (error) {
         return error
     }
@@ -65,9 +65,9 @@ const get_member_counts = async (query) => {
 }
 
 // for get single member details
-const get_single_member = async (query) => {
+const get_single_member = async (query, project) => {
     try {
-        return mongoService.findOne(modelName.ORGANIZATION_MEMBER, query);
+        return mongoService.findOne(modelName.ORGANIZATION_MEMBER, query, project);
     } catch (error) {
         return error
     }

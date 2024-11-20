@@ -7,7 +7,6 @@ const findUser = async (payload) => {
   try {
     return await mongoService.findOne(modelName.USER, payload);
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
@@ -16,7 +15,6 @@ const registerUser = async (payload) => {
   try {
     return await mongoService.createOne(modelName.USER, payload);
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
@@ -33,7 +31,6 @@ const updateUser = async (query, payload) => {
   try {
     return await mongoService.updateOne(modelName.USER, query, payload, {});
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
@@ -42,7 +39,6 @@ const updateAllUser = async (query, payload) => {
   try {
     return await mongoService.updateMany(modelName.USER, query, payload, {});
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
@@ -51,7 +47,6 @@ const getAllUsers = async (options) => {
   try {
     return await mongoService.findAll(modelName.USER, {}, {}, options);
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
@@ -71,22 +66,20 @@ const getAllUsersByAggregation = async (userId) => {
     ];
     return await mongoService.aggregation(modelName.USER, pipeline);
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
 
-const fetchPost = async (match, populateQuery) => {
+const fetchUser = async (match, project, populateQuery) => {
   try {
     return await mongoService.populate(
-      modelName.POST,
+      modelName.USER,
       match,
-      {},
+      project,
       {},
       populateQuery
     );
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
@@ -99,5 +92,5 @@ module.exports = {
   getAllUsers,
   updateAllUser,
   getAllUsersByAggregation,
-  fetchPost,
+  fetchUser,
 };

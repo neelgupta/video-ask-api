@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { memberRole } = require("../utils/constant");
+const { memberRole, memberInvitationStatus } = require("../utils/constant");
 
 const organizationMemberSchema = mongoose.Schema({
     organization_id: {
@@ -20,12 +20,20 @@ const organizationMemberSchema = mongoose.Schema({
     },
     member_phone: {
         type: String,
-        required: true,
+        // required: true,
     },
     member_role: {
         type: String,
-        enum: [memberRole.OWNER, memberRole.ADMIN, memberRole.MEMBER],
+        enum: [memberRole.Owner, memberRole.Admin, memberRole.Member],
         required: true,
+    },
+    invitation_status: {
+        type: String,
+        enum: [memberInvitationStatus.Pending, memberInvitationStatus.Completed],
+        default: memberInvitationStatus.Pending,
+    },
+    invitation_token: { // this field is only for the development purpose
+        type: String,
     },
     is_active: {
         type: Boolean,

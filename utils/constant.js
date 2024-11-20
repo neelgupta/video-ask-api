@@ -1,8 +1,10 @@
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
-const role = {
+const userType = {
   ADMIN: "admin",
   USER: "user",
+  MEMBER: "member",
 };
 
 const planType = {
@@ -11,10 +13,19 @@ const planType = {
 };
 
 const memberRole = {
-  OWNER: "owner",
-  ADMIN: "admin",
-  MEMBER: "member",
+  Owner: "owner",
+  Admin: "admin",
+  Member: "member",
 }
+
+const memberInvitationStatus = {
+  Pending: "pending",
+  Completed: "completed",
+}
+
+const frontBaseUrl = "https://localhost:3000";
+
+const defaultOrganization = "My Organization";
 
 const msg = {
   invalidCredentials: "Invalid credentials",
@@ -36,6 +47,12 @@ const msg = {
   organizationNotExists: "Organization is not exists",
   memberCreated: "Member created successfully",
   memberNotExists: "Member details not exists",
+  invitationTokenInvalid: "Invitation token is invalid",
+  invitationTokenExpired: "Invitation token is expired",
+  memberIsAlreadyRegistered: "Member is already registered",
+  oldPasswordWrong: "Old password is not correct",
+  passwordChangeSuccess: "Password changed successfully",
+  profileUpdateSuccess: "Profile updated successfully",
 };
 
 const modelName = {
@@ -44,6 +61,8 @@ const modelName = {
   ORGANIZATION: "Organization",
   ORGANIZATION_MEMBER: "OrganizationMember",
 };
+
+
 const hashPassword = (password) => {
   return bcrypt.hashSync(password, 10);
 };
@@ -58,13 +77,37 @@ const generateUUID = (prefix) => {
   return `${prefix}-${randomPart}`;
 };
 
+const generateEncryptedToken = (payload) => {
+  const cipher = crypto.createCipher("aes-256-cbc", process.env.SECRET_KEY);
+  let encrypted = cipher.update(payload, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  return encrypted;
+};
+
+const decryptToken = (encryptedToken) => {
+  try {
+    const decipher = crypto.createDecipher("aes-256-cbc", process.env.SECRET_KEY);
+    let decrypted = decipher.update(encryptedToken, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+    const payload = JSON.parse(decrypted);
+    return payload;
+  } catch (error) {
+    return error
+  }
+};
+
 module.exports = {
-  role,
+  userType,
+  frontBaseUrl,
+  defaultOrganization,
   msg,
   memberRole,
   modelName,
+  memberInvitationStatus,
+  planType,
   hashPassword,
   validatePassword,
-  planType,
   generateUUID,
+  generateEncryptedToken,
+  decryptToken,
 };
