@@ -1,7 +1,8 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
-const { organization_services } = require("../service");
+const { organization_services, user_services } = require("../service");
 const { msg, generateUUID, generateEncryptedToken, frontBaseUrl, memberRole } = require("../utils/constant");
 const { response400, response200, response201 } = require("../lib/response-messages");
+const { sendInvitation } = require("../utils/emailTemplates");
 
 const addOrganization = catchAsyncError(async (req, res) => {
     const Id = req.user;
@@ -58,7 +59,8 @@ const deleteOrganization = catchAsyncError(async (req, res) => {
 
 const addMember = catchAsyncError(async (req, res) => {
     const Id = req.user;
-    const { organization_id, member_email, member_phone } = req.body;
+    const { organization_id, member_email, member_phone, member_name } = req.body;
+    const userData = await user_services.findUser({ _id: Id });
 
     const organizationData = await organization_services.get_organization({ _id: organization_id, is_deleted: false, added_by: Id });
     if (!organizationData) return response400(res, msg.organizationNotExists);
@@ -79,7 +81,9 @@ const addMember = catchAsyncError(async (req, res) => {
         memberId: data._id, userId: Id, timestamp: Date.now(),
     });
     const inviteToken = await generateEncryptedToken(payload);
-    const emailUrl = `${frontBaseUrl}/signup/${inviteToken}`
+    const emailUrl = `${frontBaseUrl}/signup/${inviteToken}`;
+
+    await sendInvitation({ email: member_email, member_name, invitation_link: emailUrl, user_name: userData.user_name, year: new Date().getFullYear(), });
 
     await organization_services.update_member({ _id: data._id }, { invitation_token: inviteToken });
     const response = { invitationToken: inviteToken, data };
