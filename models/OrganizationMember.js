@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
-const { memberRole, memberInvitationStatus } = require("../utils/constant");
+const { modelName, memberRole, memberInvitationStatus } = require("../utils/constant");
 
 const organizationMemberSchema = mongoose.Schema({
     organization_id: {
         type: mongoose.Types.ObjectId,
-        ref: 'Organization'
+        ref: modelName.ORGANIZATION
     },
     member_uuid: {
         type: String,
@@ -45,8 +45,8 @@ const organizationMemberSchema = mongoose.Schema({
     },
     added_by: {
         type: mongoose.Types.ObjectId,
-        ref: 'User'
+        ref: modelName.USER
     },
 }, { timestamps: true });
 
-module.exports = mongoose.model("OrganizationMember", organizationMemberSchema);
+module.exports = mongoose.model(modelName.ORGANIZATION_MEMBER, organizationMemberSchema);

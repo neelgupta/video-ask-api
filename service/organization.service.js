@@ -11,9 +11,9 @@ const add_organization = async (payload) => {
 }
 
 // for get single organization
-const get_organization = async (query) => {
+const get_organization = async (query, populate) => {
     try {
-        return mongoService.findOne(modelName.ORGANIZATION, query)
+        return mongoService.findOnePopulate(modelName.ORGANIZATION, query, {}, {}, populate)
     } catch (error) {
         return error
     }

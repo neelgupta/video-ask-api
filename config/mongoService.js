@@ -10,6 +10,27 @@ const findOne = async (
   return await mongoose.model(model).findOne(where, projection, options);
 };
 
+// find One with populate
+const findOnePopulate = async (
+  model,
+  where,
+  projection = {},
+  options = { lean: true },
+  populate = null
+) => {
+  try {
+    let query = mongoose.model(model).findOne(where, projection, options);
+
+    if (populate) {
+      query = query.populate(populate);
+    }
+
+    return await query.exec();
+  } catch (error) {
+    throw new Error(`Error in findOne: ${error.message}`);
+  }
+};
+
 // create one
 const createOne = async (model, payload) => {
   return await mongoose.model(model).create(payload);
@@ -87,6 +108,7 @@ const countDocument = async (modelName, criteria,) => {
 
 module.exports = {
   findOne,
+  findOnePopulate,
   createOne,
   createMany,
   findAll,

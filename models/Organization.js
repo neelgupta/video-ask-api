@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { memberRole } = require("../utils/constant");
+const { modelName, memberRole, replyTypes } = require("../utils/constant");
 
 const organizationSchema = mongoose.Schema({
     organization_uuid: {
@@ -15,7 +15,7 @@ const organizationSchema = mongoose.Schema({
     },
     members: [
         {
-            userId: { type: mongoose.Types.ObjectId, ref: "User", required: true },
+            userId: { type: mongoose.Types.ObjectId, ref: modelName.USER, required: true },
             role: {
                 type: String,
                 enum: [memberRole.Owner, memberRole.Member, memberRole.Admin],
@@ -23,13 +23,22 @@ const organizationSchema = mongoose.Schema({
             },
         },
     ],
-    organization_settings: {
+    branding: { type: String, required: false },
+    language: { type: String, required: false },
+    font: { type: String, required: false },
+    colors: { type: String, required: false },
+    border_radius: { type: Number, required: false },
+    notification_settings: {
         type: {
-            branding: { type: String, required: false },
-            language: { type: String, required: false },
-            font: { type: String, required: false },
+            new_user_contacts: { type: Boolean, default: false },
+            tips_and_tutorials: { type: Boolean, default: false },
+            user_research: { type: Boolean, default: false },
         },
-        required: false
+    },
+    replies: {
+        type: String,
+        enum: [replyTypes.DO_NOT_NOTIFY, replyTypes.MENTIONS_ONLY, replyTypes.ALL_COMMENTS],
+        default: replyTypes.DO_NOT_NOTIFY
     },
     address_details: {
         type: {
@@ -47,8 +56,8 @@ const organizationSchema = mongoose.Schema({
     },
     added_by: {
         type: mongoose.Types.ObjectId,
-        ref: 'User'
+        ref: modelName.USER
     },
 }, { timestamps: true });
 
-module.exports = mongoose.model("Organization", organizationSchema);
+module.exports = mongoose.model(modelName.ORGANIZATION, organizationSchema);

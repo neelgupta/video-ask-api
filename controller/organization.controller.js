@@ -28,10 +28,16 @@ const getOrganizationList = catchAsyncError(async (req, res) => {
 
 const updateOrganization = catchAsyncError(async (req, res) => {
     const Id = req.user;
-    const { organization_id, organization_name } = req.body;
+    const { organization_id, organization_name, replay_to_email } = req.body;
 
-    const organizationData = await organization_services.get_organization({ _id: organization_id, is_deleted: false, added_by: Id });
+    const organizationData = await organization_services.get_organization({ _id: organization_id, is_deleted: false, added_by: Id }, "members.userId");
     if (!organizationData) return response400(res, msg.organizationNotExists);
+
+    if (replay_to_email) {
+        let emails = [];
+        if (organizationData?.members?.length) organizationData.members.map(val => emails.push(val?.userId?.email));
+        if (!emails.includes(replay_to_email)) return response400(res, msg.validMemberEmail);
+    }
 
     if (organization_name) {
         const organizationNameExists = await organization_services.get_organization({ _id: { $ne: organization_id }, organization_name, is_deleted: false });

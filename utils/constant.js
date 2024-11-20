@@ -18,6 +18,12 @@ const memberRole = {
   Member: "member",
 }
 
+const replyTypes = {
+  DO_NOT_NOTIFY: "DoNotNotify",
+  MENTIONS_ONLY: "MentionsOnly",
+  ALL_COMMENTS: "AllComments",
+};
+
 const memberInvitationStatus = {
   Pending: "pending",
   Completed: "completed",
@@ -53,6 +59,7 @@ const msg = {
   oldPasswordWrong: "Old password is not correct",
   passwordChangeSuccess: "Password changed successfully",
   profileUpdateSuccess: "Profile updated successfully",
+  validMemberEmail: "Email is not exists in the organization",
 };
 
 const modelName = {
@@ -105,6 +112,7 @@ module.exports = {
   modelName,
   memberInvitationStatus,
   planType,
+  replyTypes,
   hashPassword,
   validatePassword,
   generateUUID,
