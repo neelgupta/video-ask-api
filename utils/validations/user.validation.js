@@ -12,6 +12,7 @@ const signUpValidator = Joi.object({
   }),
   terms: Joi.object(),
   memberId: Joi.string().optional(),
+  referralId: Joi.string().optional(),
   // role:Joi.string(),
 });
 

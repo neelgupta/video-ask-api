@@ -8,7 +8,7 @@ const { verifyToken } = require("../lib/token_manager");
 // Token is valid or not middleware
 exports.isAuthenticated = catchAsyncError(async (req, res, next) => {
     const headers = req.headers.authorization;
-    if (!headers) return response401(res, msg.invalidToken);
+    if (!headers) return response401(res, msg.headerMissing);
 
     const token = headers.split(" ")[1];
     if (!token) return response401(res, msg.invalidToken);

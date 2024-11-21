@@ -18,6 +18,7 @@ const msg = {
   update_success: "Updated successfully",
   delete_success: "Deleted successfully",
   signupSuccess: "Sign up successfully",
+  headerMissing: "Header is missing",
   invalidToken: "Invalid Token",
   tokenExpired: "Token is expired or Invalid",
   organizationExists: "Organization is already exists",
@@ -34,6 +35,13 @@ const msg = {
   validMemberEmail: "Email is not exists in the organization",
   addressCreated: " Address added successfully",
   addressNotExists: "Address details not exists",
+  referralExists: "This email already has a referral",
+  referralSuccess: "Referral send successfully",
+};
+
+const invitationTokenType = {
+  Team_Member: "Team Member",
+  Referral: "Referral",
 };
 
 const userType = {
@@ -75,6 +83,7 @@ const modelName = {
   ORGANIZATION: "Organization",
   ORGANIZATION_MEMBER: "OrganizationMember",
   ADDRESS: "Address",
+  REFERRAL: "Referral",
 };
 
 const hashPassword = (password) => {
@@ -121,6 +130,7 @@ module.exports = {
   planType,
   replyTypes,
   addressType,
+  invitationTokenType,
   hashPassword,
   validatePassword,
   generateUUID,

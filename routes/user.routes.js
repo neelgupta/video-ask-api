@@ -17,7 +17,6 @@ router.post(
 router.post("/invitation", validateRequest(userValidation.checkInvitationValidator), userController.checkInvitation);
 router.post("/sign-in", validateRequest(userValidation.signInValidator), userController.userSignIn);
 
-
 // profile
 router.get("/profile", isAuthenticated, userController.getProfile);
 router.put("/change-password", isAuthenticated, validateRequest(profileValidation.changePasswordValidator), userController.changePassword);
@@ -41,6 +40,10 @@ router.post("/add-address", isAuthenticated, validateRequest(organizationValidat
 router.get("/get-address-list", isAuthenticated, organizationController.getAddresses);
 router.put("/update-address", isAuthenticated, validateRequest(organizationValidation.updateAddressValidator), organizationController.updateAddress);
 router.delete("/delete-address/:address_id", isAuthenticated, organizationController.deleteAddress);
+
+// referral routes
+router.post("/add-referrals", isAuthenticated, validateRequest(organizationValidation.addReferralValidator), organizationController.addReferral);
+router.get("/get-referrals/:organization_id", isAuthenticated, organizationController.getReferrals);
 
 const organizationSwaggerSchemas = (swaggerDoc) => {
   swaggerDoc.components.schemas.addOrganizationSwaggerSchema = j2s(organizationValidation.addOrganizationValidator).swagger;

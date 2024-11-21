@@ -1,11 +1,11 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { response200, response400 } = require("../lib/response-messages");
-const { msg, hashPassword, validatePassword, generateUUID, defaultOrganization, decryptToken, memberInvitationStatus, userType, memberRole } = require("../utils/constant");
+const { msg, hashPassword, validatePassword, generateUUID, defaultOrganization, decryptToken, memberInvitationStatus, userType, memberRole, invitationTokenType } = require("../utils/constant");
 const { user_services, organization_services } = require("../service");
 
 // sign-up
 const userSignup = catchAsyncError(async (req, res) => {
-  let { email, password, memberId } = req.body;
+  let { email, password, memberId, referralId } = req.body;
 
   const user = await user_services.findUser({ email });
   if (user) return response400(res, msg.emailIsExists);
@@ -36,6 +36,13 @@ const userSignup = catchAsyncError(async (req, res) => {
     req.body.user_type = userType.MEMBER;
     req.body.is_member = true;
     req.body.member_role = memberData.member_role;
+  }
+
+  if (referralId) {
+    const referralData = await organization_services.referral_list({ _id: referralId, is_deleted: false });
+    if (referralData?.length) {
+      await organization_services.update_referral({ _id: referralId }, { referral_status: memberInvitationStatus.Completed, referral_token: null });
+    }
   }
 
   req.body.password = hashPassword(password);
@@ -84,14 +91,31 @@ const checkInvitation = catchAsyncError(async (req, res) => {
 
   const decryptedData = await decryptToken(invitation_token);
 
-  if (!decryptedData.memberId && !decryptedData.userId) return response400(res, msg.invitationTokenInvalid);
+  if (decryptedData?.userId && decryptedData?.type === invitationTokenType.Team_Member) {
 
-  const memberData = await organization_services.get_single_member({ _id: decryptedData.memberId, is_deleted: false }, { __v: 0, updatedAt: 0 });
-  if (!memberData) return response400(res, msg.memberNotExists);
+    if (!decryptedData?.memberId) return response400(res, msg.invitationTokenInvalid);
 
-  if (memberData.invitation_status === memberInvitationStatus.Completed) return response400(res, msg.invitationTokenExpired);
+    const memberData = await organization_services.get_single_member({ _id: decryptedData.memberId, is_deleted: false }, { __v: 0, updatedAt: 0 });
+    if (!memberData) return response400(res, msg.memberNotExists);
 
-  return response200(res, msg.fetch_success, memberData);
+    if (memberData.invitation_status === memberInvitationStatus.Completed) return response400(res, msg.invitationTokenExpired);
+
+    return response200(res, msg.fetch_success, memberData);
+
+  } else if (decryptedData?.userId && decryptedData?.type === invitationTokenType.Referral) {
+
+    if (!decryptedData?.referralId) return response400(res, msg.invitationTokenInvalid);
+
+    const referralData = await organization_services.referral_list({ _id: decryptedData.referralId, is_deleted: false }, { __v: 0, updatedAt: 0 });
+    const referral = referralData?.[0];
+    if (!referral) return response400(res, msg.memberNotExists);
+
+    if (referral.invitation_status === memberInvitationStatus.Completed) return response400(res, msg.invitationTokenExpired);
+
+    return response200(res, msg.fetch_success, referral);
+  } else {
+    return response400(res, msg.invitationTokenInvalid);
+  }
 });
 
 // get profile Information

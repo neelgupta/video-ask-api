@@ -1,8 +1,8 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { organization_services, user_services } = require("../service");
-const { msg, generateUUID, generateEncryptedToken, frontBaseUrl, memberRole } = require("../utils/constant");
+const { msg, generateUUID, generateEncryptedToken, frontBaseUrl, memberRole, invitationTokenType } = require("../utils/constant");
 const { response400, response200, response201 } = require("../lib/response-messages");
-const { sendInvitation } = require("../utils/emailTemplates");
+const { sendInvitation, referralInvitation } = require("../utils/emailTemplates");
 
 const addOrganization = catchAsyncError(async (req, res) => {
     const Id = req.user;
@@ -84,12 +84,12 @@ const addMember = catchAsyncError(async (req, res) => {
 
     // const invitationExpires = Date.now() + 15 * 60 * 1000;
     const payload = JSON.stringify({
-        memberId: data._id, userId: Id, timestamp: Date.now(),
+        memberId: data._id, userId: Id, timestamp: Date.now(), type: invitationTokenType.Team_Member
     });
     const inviteToken = await generateEncryptedToken(payload);
     const emailUrl = `${frontBaseUrl}/signup/${inviteToken}`;
 
-    await sendInvitation({ email: member_email, member_name, invitation_link: emailUrl, user_name: userData.user_name, year: new Date().getFullYear(), });
+    await sendInvitation({ email: member_email, member_name, invitation_link: emailUrl, user_name: userData.user_name });
 
     await organization_services.update_member({ _id: data._id }, { invitation_token: inviteToken });
     const response = { invitationToken: inviteToken, data };
@@ -205,6 +205,46 @@ const deleteAddress = catchAsyncError(async (req, res) => {
     return response200(res, msg.delete_success, []);
 });
 
+const addReferral = catchAsyncError(async (req, res) => {
+    const Id = req.user;
+    const { organization_id, referral_email } = req.body;
+
+    const organizationData = await organization_services.get_organization({ _id: organization_id, is_deleted: false, added_by: Id });
+    if (!organizationData) return response400(res, msg.organizationNotExists);
+
+    const referralEmailExists = await organization_services.referral_list({ organization_id, is_deleted: false, referral_email, added_by: Id });
+    if (referralEmailExists?.length) return response400(res, msg.referralExists);
+
+    req.body.added_by = Id;
+    const referralData = await organization_services.add_referral(req.body);
+    const userData = await user_services.findUser({ _id: Id });
+
+    const payload = JSON.stringify({
+        referralId: referralData._id, userId: Id, timestamp: Date.now(), type: invitationTokenType.Referral
+    });
+
+    const inviteToken = await generateEncryptedToken(payload);
+    const emailUrl = `${frontBaseUrl}/signup/${inviteToken}`;
+
+    await referralInvitation({ email: referral_email, invitation_link: emailUrl, user_name: userData.user_name });
+
+    const data = await organization_services.update_referral({ _id: referralData._id }, { referral_token: inviteToken });
+
+    return response201(res, msg.referralSuccess, data);
+});
+
+const getReferrals = catchAsyncError(async (req, res) => {
+    const Id = req.user;
+    const { organization_id } = req.params;
+
+    const organizationData = await organization_services.get_organization({ _id: organization_id, is_deleted: false, added_by: Id });
+    if (!organizationData) return response400(res, msg.organizationNotExists);
+
+    const referralData = await organization_services.referral_list({ organization_id, is_deleted: false, added_by: Id }, { __v: 0, updatedAt: 0, });
+
+    return response200(res, msg.fetch_success, referralData);
+});
+
 module.exports = {
     addOrganization,
     getOrganizationList,
@@ -218,4 +258,6 @@ module.exports = {
     getAddresses,
     updateAddress,
     deleteAddress,
+    addReferral,
+    getReferrals,
 }

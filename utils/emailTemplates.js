@@ -1,6 +1,7 @@
 const path = require("path");
 const ejs = require("ejs");
 const sendEmail = require("./emailSender");
+const year = new Date().getFullYear();
 
 const SignupEmail = async (options) => {
     const { email } = options
@@ -11,19 +12,6 @@ const SignupEmail = async (options) => {
     await sendEmail({
         email,
         subject: 'Singup',
-        message: data
-    })
-}
-
-const sendInvitation = async (options) => {
-    const { email, member_name, user_name, invitation_link, year } = options;
-
-    const templatePath = path.join(__dirname, "../lib/email-templates/invitation.ejs");
-    const data = await ejs.renderFile(templatePath, { member_name, user_name, invitation_link, year });
-
-    await sendEmail({
-        email,
-        subject: 'Invitation',
         message: data
     })
 }
@@ -54,9 +42,36 @@ const forgotPasswordMail = async (options) => {
     })
 }
 
+const sendInvitation = async (options) => {
+    const { email, member_name, user_name, invitation_link } = options;
+
+    const templatePath = path.join(__dirname, "../lib/email-templates/invitation.ejs");
+    const data = await ejs.renderFile(templatePath, { member_name, user_name, invitation_link, year });
+
+    await sendEmail({
+        email,
+        subject: 'Invitation',
+        message: data
+    })
+}
+
+const referralInvitation = async (options) => {
+    const { email, user_name, invitation_link } = options;
+
+    const templatePath = path.join(__dirname, "../lib/email-templates/referral.ejs");
+    const data = await ejs.renderFile(templatePath, { invitation_link, user_name, year });
+
+    await sendEmail({
+        email,
+        subject: `${user_name} wants you to join QnAFlowAI!`,
+        message: data
+    })
+}
+
 module.exports = {
     SignupEmail,
     sendInvitation,
     emailVerification,
-    forgotPasswordMail
+    forgotPasswordMail,
+    referralInvitation,
 }

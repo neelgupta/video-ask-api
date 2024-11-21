@@ -123,6 +123,30 @@ const delete_address = async (query, payload) => {
     }
 }
 
+const referral_list = async (query, project) => {
+    try {
+        return mongoService.findAll(modelName.REFERRAL, query, project);
+    } catch (error) {
+        return error
+    }
+}
+
+const add_referral = async (payload) => {
+    try {
+        return mongoService.createOne(modelName.REFERRAL, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+const update_referral = async (query, payload) => {
+    try {
+        return mongoService.updateOne(modelName.REFERRAL, query, payload);
+    } catch (error) {
+        return error
+    }
+}
+
 module.exports = {
     add_organization,
     get_organization,
@@ -138,4 +162,7 @@ module.exports = {
     get_address_list,
     update_address,
     delete_address,
+    referral_list,
+    add_referral,
+    update_referral,
 }

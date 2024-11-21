@@ -120,6 +120,15 @@ const updateAddressValidator = Joi.object({
     email: Joi.string().optional(),
 });
 
+const addReferralValidator = Joi.object({
+    organization_id: Joi.string().required().messages({
+        "*": "Please enter valid organization Id",
+    }),
+    referral_email: Joi.string().required().messages({
+        "*": "Email is required",
+    }),
+});
+
 module.exports = {
     addOrganizationValidator,
     updateOrganizationValidator,
@@ -128,4 +137,5 @@ module.exports = {
     updateOrganizationMemberValidator,
     addAddressValidator,
     updateAddressValidator,
+    addReferralValidator,
 };
