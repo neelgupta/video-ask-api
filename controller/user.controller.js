@@ -83,7 +83,7 @@ const userSignIn = catchAsyncError(async (req, res) => {
   if (!validPassword) return response400(res, msg.invalidCredentials);
 
   const token = await user_services.create_jwt_token(user);
-  return response200(res, msg.loginSuccess, { token });
+  return response200(res, msg.loginSuccess, { role: user.user_type, token });
 });
 
 // for got password
