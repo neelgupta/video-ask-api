@@ -1,5 +1,5 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
-const { organization_services, user_services } = require("../service");
+const { organization_services, user_services, subscription_services } = require("../service");
 const { msg, generateUUID, generateEncryptedToken, frontBaseUrl, memberRole, invitationTokenType } = require("../utils/constant");
 const { response400, response200, response201 } = require("../lib/response-messages");
 const { sendInvitation, referralInvitation } = require("../utils/emailTemplates");
@@ -24,6 +24,14 @@ const getOrganizationList = catchAsyncError(async (req, res) => {
     const data = await organization_services.get_organization_list({ "members.userId": Id, is_deleted: false }, { members: 0, __v: 0, updatedAt: 0, });
 
     return response200(res, msg.fetch_success, data);
+});
+
+const getOrganizationDetails = catchAsyncError(async (req, res) => {
+    const { Id } = req.params;
+
+    const organizationData = await organization_services.get_organization({ _id: Id, is_deleted: false }, { path: "members.userId", select: { email: 1 } },);
+
+    return response200(res, msg.fetch_success, organizationData);
 });
 
 const updateOrganization = catchAsyncError(async (req, res) => {
@@ -245,9 +253,16 @@ const getReferrals = catchAsyncError(async (req, res) => {
     return response200(res, msg.fetch_success, referralData);
 });
 
+const getSubscriptionPlans = catchAsyncError(async (req, res) => {
+    const data = await subscription_services.getAllSubscriptionPlan({ is_deleted: false, is_active: true });
+
+    return response200(res, msg.fetch_success, data);
+});
+
 module.exports = {
     addOrganization,
     getOrganizationList,
+    getOrganizationDetails,
     updateOrganization,
     deleteOrganization,
     addMember,
@@ -260,4 +275,5 @@ module.exports = {
     deleteAddress,
     addReferral,
     getReferrals,
+    getSubscriptionPlans,
 }

@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { modelName, planType } = require("../utils/constant");
+const { modelName, planType, subscriptionPlanType } = require("../utils/constant");
 
 const Schema = mongoose.Schema(
   {
@@ -7,11 +7,15 @@ const Schema = mongoose.Schema(
       type: String,
       required: true,
     },
-    plan_name: {
+    title: {
       type: String,
       required: true,
     },
-    description: {
+    plan_type: {
+      type: String,
+      enum: [subscriptionPlanType.Free, subscriptionPlanType.Basic, subscriptionPlanType.Pro, subscriptionPlanType.Enterprise],
+    },
+    sub_title: {
       type: String,
       required: true,
     },
@@ -19,34 +23,43 @@ const Schema = mongoose.Schema(
       type: String,
       required: true,
     },
+    description: {
+      type: [String], // Array of strings for plan descriptions
+      required: true,
+    },
     currency: {
       type: String,
       required: true,
     },
-    plan_type: {
-      type: String,
-      enum: [planType.yearly, planType.monthly],
-    },
     discount: {
       type: String,
     },
-    mins: {
+    is_best_deal: {
+      type: Boolean,
+      default: false,
+    },
+    is_upgrade: {
+      type: Boolean,
+      default: false,
+    },
+    is_custom: {
+      type: Boolean,
+      default: false,
+    },
+    button_text: {
       type: String,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-    isDeleted: {
-      type: Boolean,
-      default: true,
-    },
-    sub_plan: {
-      type: [String],
       required: true,
+    },
+    is_active: {
+      type: Boolean,
+      default: true,
+    },
+    is_deleted: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model(modelName.SUBSCRIPTION, Schema);
+module.exports = mongoose.model(modelName.SUBSCRIPTION_PLAN, Schema);

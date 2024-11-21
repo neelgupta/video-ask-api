@@ -28,6 +28,7 @@ router.put("/update-profile", isAuthenticated, validateRequest(profileValidation
 // organization routes
 router.post("/add-organization", isAuthenticated, validateRequest(organizationValidation.addOrganizationValidator), organizationController.addOrganization);
 router.get("/get-my-organizations", isAuthenticated, organizationController.getOrganizationList);
+router.get("/organization/:Id", isAuthenticated, organizationController.getOrganizationDetails);
 router.put("/update-organization", isAuthenticated, validateRequest(organizationValidation.updateOrganizationValidator), organizationController.updateOrganization);
 router.delete("/delete-organization/:organization_id", isAuthenticated, organizationController.deleteOrganization);
 
@@ -46,6 +47,9 @@ router.delete("/delete-address/:address_id", isAuthenticated, organizationContro
 // referral routes
 router.post("/add-referrals", isAuthenticated, validateRequest(organizationValidation.addReferralValidator), organizationController.addReferral);
 router.get("/get-referrals/:organization_id", isAuthenticated, organizationController.getReferrals);
+
+// get Subscription plans
+router.get("/get-plans", isAuthenticated, organizationController.getSubscriptionPlans);
 
 const organizationSwaggerSchemas = (swaggerDoc) => {
   swaggerDoc.components.schemas.addOrganizationSwaggerSchema = j2s(organizationValidation.addOrganizationValidator).swagger;

@@ -3,7 +3,7 @@ const { modelName } = require("../utils/constant");
 
 const createSubscriptionPlan = async (payload) => {
   try {
-    return await mongoService.createOne(modelName.SUBSCRIPTION, payload);
+    return await mongoService.createOne(modelName.SUBSCRIPTION_PLAN, payload);
   } catch (error) {
     throw error;
   }
@@ -12,8 +12,8 @@ const createSubscriptionPlan = async (payload) => {
 const getAllSubscriptionPlan = async (options) => {
   try {
     return await mongoService.findAll(
-      modelName.SUBSCRIPTION,
-      { isDeleted: false },
+      modelName.SUBSCRIPTION_PLAN,
+      {},
       {},
       options
     );
@@ -25,7 +25,7 @@ const getAllSubscriptionPlan = async (options) => {
 const updateSubscriptionPlan = async (query, payload) => {
   try {
     return await mongoService.updateOne(
-      modelName.SUBSCRIPTION,
+      modelName.SUBSCRIPTION_PLAN,
       query,
       payload,
       {}
@@ -38,7 +38,7 @@ const updateSubscriptionPlan = async (query, payload) => {
 const deleteSubscriptionPlan = async (query) => {
   try {
     return await mongoService.updateOne(
-      modelName.SUBSCRIPTION,
+      modelName.SUBSCRIPTION_PLAN,
       query,
       { isDeleted: true },
       {}
@@ -50,7 +50,7 @@ const deleteSubscriptionPlan = async (query) => {
 
 const findPlanById = async (payload) => {
   try {
-    return await mongoService.findOne(modelName.SUBSCRIPTION, payload);
+    return await mongoService.findOne(modelName.SUBSCRIPTION_PLAN, payload);
   } catch (error) {
     throw error;
   }

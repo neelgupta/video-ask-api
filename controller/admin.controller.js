@@ -1,8 +1,7 @@
 const { response400, response200 } = require("../lib/response-messages");
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { subscription_services } = require("../service");
-const { msg } = require("../utils/constant");
-const jwt = require("jsonwebtoken");
+const { msg, generateUUID } = require("../utils/constant");
 const bcrypt = require("bcrypt");
 
 const adminSigning = catchAsyncError(async (req, res) => {
@@ -14,12 +13,14 @@ const adminSigning = catchAsyncError(async (req, res) => {
   if (!bcrypt.compareSync(password, adminData.password))
     return response400(res, msg.invalidCredentials);
 
-  // const token = jwt.sign({ _id: adminData._id }, process.env.JWT_SEC)
   const token = await user_services.create_jwt_token(adminData);
   return response200(res, msg.loginSuccess, { token });
 });
 
-const postSubscriptionPlan = catchAsyncError(async (req, res) => {
+const addSubscriptionPlan = catchAsyncError(async (req, res) => {
+  const currency = "$";
+  const plan_uuid = generateUUID("SUB");
+  req.body = { ...req.body, currency, plan_uuid };
   const subscription = await subscription_services.createSubscriptionPlan(
     req.body
   );
@@ -27,14 +28,13 @@ const postSubscriptionPlan = catchAsyncError(async (req, res) => {
 });
 
 const updateSubscriptionPlan = catchAsyncError(async (req, res) => {
-  let userId = req.user;
-  let { id } = req.params;
+  let { plan_id } = req.params;
 
-  let plan = await subscription_services.findPlanById({ _id: id });
+  let plan = await subscription_services.findPlanById({ _id: plan_id });
   if (!plan) return response400(res, "Subscription details not found");
 
   await subscription_services.updateSubscriptionPlan(
-    { _id: id },
+    { _id: plan_id },
     { ...req.body }
   );
   return response200(res, "Update details successfully", []);
@@ -58,7 +58,7 @@ const deleteSubscriptionPlan = catchAsyncError(async (req, res) => {
 });
 module.exports = {
   adminSigning,
-  postSubscriptionPlan,
+  addSubscriptionPlan,
   updateSubscriptionPlan,
   getSubscriptionPlan,
   deleteSubscriptionPlan,
