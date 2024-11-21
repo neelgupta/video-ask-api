@@ -17,7 +17,7 @@ const SignupEmail = async (options) => {
 }
 
 const emailVerification = async (options) => {
-    const { first_name, last_name, email, OTP } = options
+    const { first_name, last_name, email, OTP } = options;
 
     const templatePath = path.join(__dirname, "../lib/email-templates/verification.ejs")
     const data = await ejs.renderFile(templatePath, { first_name, last_name, email, OTP });
@@ -30,14 +30,14 @@ const emailVerification = async (options) => {
 }
 
 const forgotPasswordMail = async (options) => {
-    const { email, first_name, last_name, resetPasswordUrl } = options
+    const { email, name, resetPasswordUrl } = options;
 
     const templatePath = path.join(__dirname, "../lib/email-templates/forgotPassword.ejs")
-    const data = await ejs.renderFile(templatePath, { first_name, last_name, email, resetPasswordUrl });
+    const data = await ejs.renderFile(templatePath, { name, resetPasswordUrl, year });
 
     await sendEmail({
         email,
-        subject: 'Reset Password Token',
+        subject: 'Reset your password',
         message: data
     })
 }

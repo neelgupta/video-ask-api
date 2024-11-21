@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 
-const frontBaseUrl = "https://localhost:3000";
+const frontBaseUrl = "https://adorable-custard-9de130.netlify.app";
 
 const defaultOrganization = "My Organization";
 
@@ -37,6 +37,9 @@ const msg = {
   addressNotExists: "Address details not exists",
   referralExists: "This email already has a referral",
   referralSuccess: "Referral send successfully",
+  forgotPassword: "We've just sent you an email to reset your password",
+  invalidResetPasswordToken: "Reset Password token is invalid",
+  passwordRestSuccess: "Password reset successfully",
 };
 
 const invitationTokenType = {
@@ -119,6 +122,14 @@ const decryptToken = (encryptedToken) => {
   }
 };
 
+const generateResetPasswordToken = () => {
+  const resetToken = crypto.randomBytes(20).toString("hex");
+  const resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+  const resetPasswordExpires = Date.now() + 15 * 60 * 1000;
+
+  return { resetPasswordToken, resetPasswordExpires };
+}
+
 module.exports = {
   userType,
   frontBaseUrl,
@@ -136,4 +147,5 @@ module.exports = {
   generateUUID,
   generateEncryptedToken,
   decryptToken,
+  generateResetPasswordToken,
 };

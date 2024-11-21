@@ -59,6 +59,12 @@ const userSchema = mongoose.Schema(
       type: String,
       enum: [memberRole.Owner, memberRole.Member, memberRole.Admin],
     },
+    reset_password_token: {
+      type: String,
+    },
+    reset_password_expires: {
+      type: String,
+    },
     is_member: {
       type: Boolean,
       default: false

@@ -16,6 +16,8 @@ router.post(
 
 router.post("/invitation", validateRequest(userValidation.checkInvitationValidator), userController.checkInvitation);
 router.post("/sign-in", validateRequest(userValidation.signInValidator), userController.userSignIn);
+router.post("/forgot-password", validateRequest(userValidation.forgotPasswordValidator), userController.forgotPassword);
+router.post("/reset-password", validateRequest(userValidation.resetPasswordValidator), userController.resetPassword);
 
 // profile
 router.get("/profile", isAuthenticated, userController.getProfile);

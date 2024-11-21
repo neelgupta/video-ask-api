@@ -1,7 +1,8 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { response200, response400 } = require("../lib/response-messages");
-const { msg, hashPassword, validatePassword, generateUUID, defaultOrganization, decryptToken, memberInvitationStatus, userType, memberRole, invitationTokenType } = require("../utils/constant");
+const { msg, hashPassword, validatePassword, generateUUID, defaultOrganization, decryptToken, memberInvitationStatus, userType, memberRole, invitationTokenType, generateResetPasswordToken, frontBaseUrl } = require("../utils/constant");
 const { user_services, organization_services } = require("../service");
+const { forgotPasswordMail } = require("../utils/emailTemplates");
 
 // sign-up
 const userSignup = catchAsyncError(async (req, res) => {
@@ -85,6 +86,40 @@ const userSignIn = catchAsyncError(async (req, res) => {
   return response200(res, msg.loginSuccess, { token, user });
 });
 
+// for got password
+const forgotPassword = catchAsyncError(async (req, res) => {
+  const { email } = req.body;
+
+  const userData = await user_services.findUser({ email, is_deleted: false });
+
+  if (!userData) return response400(res, msg.validMemberEmail);
+
+  const { resetPasswordToken, resetPasswordExpires } = generateResetPasswordToken();
+
+  const resetPasswordUrl = `${frontBaseUrl}/resetpassword/${resetPasswordToken}`;
+
+  await forgotPasswordMail({ email, name: userData.user_name, resetPasswordUrl });
+
+  await user_services.updateUser({ _id: userData._id }, { reset_password_token: resetPasswordToken, reset_password_expires: resetPasswordExpires });
+
+  return response200(res, msg.forgotPassword, []);
+});
+
+// reset Password
+const resetPassword = catchAsyncError(async (req, res) => {
+  const { resetPasswordToken, password } = req.body;
+
+  const userData = await user_services.findUser({ reset_password_token: resetPasswordToken, reset_password_expires: { $gt: Date.now() } });
+
+  if (!userData) return response400(res, msg.invalidResetPasswordToken);
+
+  const HashedPassword = hashPassword(password);
+
+  await user_services.updateUser({ _id: userData._id }, { password: HashedPassword, reset_password_token: null, reset_password_expires: null });
+
+  return response200(res, msg.passwordRestSuccess);
+})
+
 // check valid invitation token
 const checkInvitation = catchAsyncError(async (req, res) => {
   const { invitation_token } = req.body;
@@ -146,6 +181,7 @@ const changePassword = catchAsyncError(async (req, res) => {
   return response200(res, msg.passwordChangeSuccess, []);
 });
 
+// update profile
 const updateProfile = catchAsyncError(async (req, res) => {
   const Id = req.user;
   const { user_name, email } = req.body;
@@ -163,6 +199,8 @@ const updateProfile = catchAsyncError(async (req, res) => {
 module.exports = {
   userSignup,
   userSignIn,
+  forgotPassword,
+  resetPassword,
   checkInvitation,
   getProfile,
   changePassword,

@@ -31,9 +31,25 @@ const checkInvitationValidator = Joi.object({
   }),
 });
 
+const forgotPasswordValidator = Joi.object({
+  email: Joi.string().required().messages({
+    "*": "Email is required",
+  }),
+});
+
+const resetPasswordValidator = Joi.object({
+  password: Joi.string().required().messages({
+    "*": "Password is required",
+  }),
+  resetPasswordToken: Joi.string().required().messages({
+    "*": "Password token is required",
+  }),
+});
 
 module.exports = {
   signUpValidator,
   signInValidator,
   checkInvitationValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
 };
