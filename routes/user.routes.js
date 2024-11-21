@@ -36,6 +36,12 @@ router.get("/get-member-list/:organization_id", isAuthenticated, validateRequest
 router.put("/update-member", isAuthenticated, validateRequest(organizationValidation.updateOrganizationMemberValidator), organizationController.updateMember);
 router.delete("/delete-member/:member_id", isAuthenticated, organizationController.deleteMember);
 
+// address routes
+router.post("/add-address", isAuthenticated, validateRequest(organizationValidation.addAddressValidator), organizationController.addAddress);
+router.get("/get-address-list", isAuthenticated, organizationController.getAddresses);
+router.put("/update-address", isAuthenticated, validateRequest(organizationValidation.updateAddressValidator), organizationController.updateAddress);
+router.delete("/delete-address/:address_id", isAuthenticated, organizationController.deleteAddress);
+
 const organizationSwaggerSchemas = (swaggerDoc) => {
   swaggerDoc.components.schemas.addOrganizationSwaggerSchema = j2s(organizationValidation.addOrganizationValidator).swagger;
   swaggerDoc.components.schemas.updateOrganizationSwaggerSchema = j2s(organizationValidation.updateOrganizationValidator).swagger;

@@ -1,6 +1,10 @@
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 
+const frontBaseUrl = "https://localhost:3000";
+
+const defaultOrganization = "My Organization";
+
 const msg = {
   invalidCredentials: "Invalid credentials",
   loginSuccess: "Login successfully",
@@ -28,6 +32,8 @@ const msg = {
   passwordChangeSuccess: "Password changed successfully",
   profileUpdateSuccess: "Profile updated successfully",
   validMemberEmail: "Email is not exists in the organization",
+  addressCreated: " Address added successfully",
+  addressNotExists: "Address details not exists",
 };
 
 const userType = {
@@ -58,15 +64,17 @@ const memberInvitationStatus = {
   Completed: "completed",
 }
 
-const frontBaseUrl = "https://localhost:3000";
-
-const defaultOrganization = "My Organization";
+const addressType = {
+  Shipping: "Shipping",
+  Billing: "Billing",
+}
 
 const modelName = {
   USER: "Users",
   SUBSCRIPTION: "subscription",
   ORGANIZATION: "Organization",
   ORGANIZATION_MEMBER: "OrganizationMember",
+  ADDRESS: "Address",
 };
 
 const hashPassword = (password) => {
@@ -112,6 +120,7 @@ module.exports = {
   memberInvitationStatus,
   planType,
   replyTypes,
+  addressType,
   hashPassword,
   validatePassword,
   generateUUID,

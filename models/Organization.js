@@ -40,16 +40,6 @@ const organizationSchema = mongoose.Schema({
         enum: [replyTypes.DO_NOT_NOTIFY, replyTypes.MENTIONS_ONLY, replyTypes.ALL_COMMENTS],
         default: replyTypes.DO_NOT_NOTIFY
     },
-    address_details: {
-        type: {
-            apartment_number: { type: String, required: false },
-            street_name: { type: String, required: false },
-            state: { type: String, required: false },
-            pinCode: { type: String, required: false },
-            country: { type: String, required: false },
-        },
-        required: false
-    },
     is_deleted: {
         type: Boolean,
         default: false,

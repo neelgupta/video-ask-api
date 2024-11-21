@@ -164,6 +164,47 @@ const deleteMember = catchAsyncError(async (req, res) => {
     return response200(res, msg.delete_success, []);
 });
 
+const addAddress = catchAsyncError(async (req, res) => {
+    const Id = req.user;
+
+    req.body.user_id = Id;
+
+    const data = await organization_services.add_address(req.body);
+
+    return response201(res, msg.addressCreated, data);
+});
+
+const getAddresses = catchAsyncError(async (req, res) => {
+    const Id = req.user;
+
+    const data = await organization_services.get_address_list({ user_id: Id, is_deleted: false }, { updatedAt: 0, __v: 0 });
+
+    return response200(res, msg.fetch_success, data);
+});
+
+const updateAddress = catchAsyncError(async (req, res) => {
+    const { address_id } = req.body;
+
+    const addressData = await organization_services.get_address_list({ _id: address_id, is_deleted: false });
+
+    if (!addressData?.length) return response400(res, msg.addressNotExists);
+
+    const data = await organization_services.update_address({ _id: address_id }, req.body);
+
+    return response200(res, msg.update_success, data);
+});
+
+const deleteAddress = catchAsyncError(async (req, res) => {
+    const { address_id } = req.params;
+
+    const addressData = await organization_services.get_address_list({ _id: address_id, is_deleted: false });
+    if (!addressData?.length) return response400(res, msg.addressNotExists);
+
+    await organization_services.update_address({ _id: address_id }, { is_deleted: true });
+
+    return response200(res, msg.delete_success, []);
+});
+
 module.exports = {
     addOrganization,
     getOrganizationList,
@@ -172,5 +213,9 @@ module.exports = {
     addMember,
     getMembers,
     updateMember,
-    deleteMember
+    deleteMember,
+    addAddress,
+    getAddresses,
+    updateAddress,
+    deleteAddress,
 }

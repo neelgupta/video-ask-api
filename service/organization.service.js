@@ -91,6 +91,38 @@ const update_many_member = async (query, payload) => {
     }
 }
 
+const add_address = async (payload) => {
+    try {
+        return mongoService.createOne(modelName.ADDRESS, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+const get_address_list = async (query, project) => {
+    try {
+        return mongoService.findAll(modelName.ADDRESS, query, project)
+    } catch (error) {
+        return error
+    }
+}
+
+const update_address = async (query, payload) => {
+    try {
+        return mongoService.updateOne(modelName.ADDRESS, query, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+const delete_address = async (query, payload) => {
+    try {
+        return mongoService.updateOne(modelName.ADDRESS, query, payload);
+    } catch (error) {
+        return error
+    }
+}
+
 module.exports = {
     add_organization,
     get_organization,
@@ -102,4 +134,8 @@ module.exports = {
     get_single_member,
     update_member,
     update_many_member,
+    add_address,
+    get_address_list,
+    update_address,
+    delete_address,
 }

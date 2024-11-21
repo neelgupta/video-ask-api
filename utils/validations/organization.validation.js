@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const { memberRole, replyTypes } = require("../constant");
+const { memberRole, replyTypes, addressType } = require("../constant");
 
 const addOrganizationValidator = Joi.object({
     organization_name: Joi.string().required().messages({
@@ -83,10 +83,49 @@ const updateOrganizationMemberValidator = Joi.object({
     member_role: Joi.string().optional().valid(memberRole.Admin, memberRole.Member, memberRole.Owner),
 });
 
+const addAddressValidator = Joi.object({
+    organization_id: Joi.string().required().messages({
+        "*": "Please enter valid organization Id",
+    }),
+    apartment_number: Joi.string().required().messages({
+        "*": "Apartment number is required",
+    }),
+    street_name: Joi.string().required().messages({
+        "*": "Street name is required",
+    }),
+    state: Joi.string().required().messages({
+        "*": "State is required",
+    }),
+    pinCode: Joi.string().required().messages({
+        "*": "Pin code is required",
+    }),
+    country: Joi.string().required().messages({
+        "*": "country is required",
+    }),
+    email: Joi.string().required().messages({
+        "*": "Email is required",
+    }),
+    address_type: Joi.string().required().valid(addressType.Billing, addressType.Shipping),
+});
+
+const updateAddressValidator = Joi.object({
+    address_id: Joi.string().required().messages({
+        "*": "Please enter valid address Id",
+    }),
+    apartment_number: Joi.string().optional(),
+    street_name: Joi.string().optional(),
+    state: Joi.string().optional(),
+    pinCode: Joi.string().optional(),
+    country: Joi.string().optional(),
+    email: Joi.string().optional(),
+});
+
 module.exports = {
     addOrganizationValidator,
     updateOrganizationValidator,
     getOrganizationMemberValidator,
     addOrganizationMemberValidator,
     updateOrganizationMemberValidator,
+    addAddressValidator,
+    updateAddressValidator,
 };
