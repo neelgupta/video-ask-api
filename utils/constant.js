@@ -82,11 +82,18 @@ const addressType = {
 
 const modelName = {
   USER: "Users",
-  SUBSCRIPTION: "subscription",
+  SUBSCRIPTION_PLAN: "Subscription_Plan",
   ORGANIZATION: "Organization",
   ORGANIZATION_MEMBER: "OrganizationMember",
   ADDRESS: "Address",
   REFERRAL: "Referral",
+};
+
+const subscriptionPlanType = {
+  Free: "free",
+  Basic: "basic",
+  Pro: "pro",
+  Enterprise: "enterprise"
 };
 
 const hashPassword = (password) => {
@@ -142,6 +149,7 @@ module.exports = {
   replyTypes,
   addressType,
   invitationTokenType,
+  subscriptionPlanType,
   hashPassword,
   validatePassword,
   generateUUID,
