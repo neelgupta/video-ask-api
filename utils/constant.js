@@ -40,6 +40,8 @@ const msg = {
   forgotPassword: "We've just sent you an email to reset your password",
   invalidResetPasswordToken: "Reset Password token is invalid",
   passwordRestSuccess: "Password reset successfully",
+  contactAddSuccess: "Contact added successfully",
+  contactNotFound: "Contact details not found",
 };
 
 const invitationTokenType = {
@@ -87,6 +89,7 @@ const modelName = {
   ORGANIZATION_MEMBER: "OrganizationMember",
   ADDRESS: "Address",
   REFERRAL: "Referral",
+  CONTACT: "Contact",
 };
 
 const subscriptionPlanType = {

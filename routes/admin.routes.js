@@ -1,7 +1,6 @@
 const { adminController } = require("../controller");
 const { swaggerJoi } = require("../utils/joiToSwagger");
 const { userValidation, validateRequest, adminValidation } = require("../utils/validations");
-// const subscriptionPlan = require("./adminRoutes/subscriptionPlan");
 const router = require("express").Router();
 
 router.post("/login",
@@ -15,7 +14,5 @@ router.get("/get-subscription-plan", adminController.getSubscriptionPlan);
 router.post("/update-subscription-plan", validateRequest(adminValidation.updatePlanValidator), adminController.updateSubscriptionPlan);
 router.post("/delete-subscription-plan/:id", adminController.deleteSubscriptionPlan);
 
-
-// router.use("/subscription-plan", subscriptionPlan);
 
 module.exports = router;

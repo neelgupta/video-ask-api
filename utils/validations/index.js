@@ -15,3 +15,4 @@ module.exports.adminValidation = require("./admin.validation");
 module.exports.userValidation = require("./user.validation");
 module.exports.organizationValidation = require("./organization.validation");
 module.exports.profileValidation = require("./profile.validation");
+module.exports.contactValidation = require("./contact.validation");
