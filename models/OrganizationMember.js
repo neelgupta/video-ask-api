@@ -35,6 +35,10 @@ const organizationMemberSchema = mongoose.Schema({
     invitation_token: { // this field is only for the development purpose
         type: String,
     },
+    is_parent: {
+        type: Boolean,
+        default: false,
+    },
     is_active: {
         type: Boolean,
         default: false,

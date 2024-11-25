@@ -132,7 +132,7 @@ const getMembers = catchAsyncError(async (req, res) => {
     const data = await organization_services.get_members(matchQuery, { updatedAt: 0, __v: 0, }, options);
     const count = await organization_services.get_member_counts(matchQuery);
 
-    const response = { count, members: data };
+    const response = { count, organizationData, members: data };
 
     return response200(res, msg.fetch_success, response);
 });
