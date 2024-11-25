@@ -76,7 +76,7 @@ const userSignup = catchAsyncError(async (req, res) => {
 const userSignIn = catchAsyncError(async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await user_services.findUser({ email });
+  const user = await user_services.findUser({ email, is_deleted: false });
   if (!user) return response400(res, msg.invalidCredentials);
 
   const validPassword = validatePassword(password, user.password);
@@ -196,6 +196,15 @@ const updateProfile = catchAsyncError(async (req, res) => {
   return response200(res, msg.profileUpdateSuccess, []);
 });
 
+// delete account 
+const deleteAccount = catchAsyncError(async (req, res) => {
+  const userId = req.user;
+
+  await user_services.updateUser({ _id: userId, }, { is_deleted: true });
+
+  return response200(res, msg.accountDeleted, []);
+})
+
 module.exports = {
   userSignup,
   userSignIn,
@@ -205,4 +214,5 @@ module.exports = {
   getProfile,
   changePassword,
   updateProfile,
+  deleteAccount,
 };

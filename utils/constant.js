@@ -42,6 +42,7 @@ const msg = {
   passwordRestSuccess: "Password reset successfully",
   contactAddSuccess: "Contact added successfully",
   contactNotFound: "Contact details not found",
+  accountDeleted: "Account deleted successfully",
 };
 
 const invitationTokenType = {

@@ -23,7 +23,7 @@ router.post("/reset-password", validateRequest(userValidation.resetPasswordValid
 router.get("/profile", isAuthenticated, userController.getProfile);
 router.put("/change-password", isAuthenticated, validateRequest(profileValidation.changePasswordValidator), userController.changePassword);
 router.put("/update-profile", isAuthenticated, validateRequest(profileValidation.updateProfileValidator), userController.updateProfile);
-
+router.post("/delete-account", isAuthenticated, userController.deleteAccount);
 
 // organization routes
 router.post("/add-organization", isAuthenticated, validateRequest(organizationValidation.addOrganizationValidator), organizationController.addOrganization);
