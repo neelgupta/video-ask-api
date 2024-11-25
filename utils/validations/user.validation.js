@@ -46,10 +46,17 @@ const resetPasswordValidator = Joi.object({
   }),
 });
 
+const deleteAccountValidator = Joi.object({
+  password: Joi.string().required().messages({
+    "*": "Password is required",
+  }),
+});
+
 module.exports = {
   signUpValidator,
   signInValidator,
   checkInvitationValidator,
   forgotPasswordValidator,
   resetPasswordValidator,
+  deleteAccountValidator,
 };

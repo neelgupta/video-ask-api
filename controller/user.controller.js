@@ -199,6 +199,12 @@ const updateProfile = catchAsyncError(async (req, res) => {
 // delete account 
 const deleteAccount = catchAsyncError(async (req, res) => {
   const userId = req.user;
+  const { password } = req.body;
+
+  const userData = await user_services.findUser({ _id: userId });
+
+  const validPassword = validatePassword(password, userData.password);
+  if (!validPassword) return response400(res, msg.invalidCredentials);
 
   await user_services.updateUser({ _id: userId, }, { is_deleted: true });
 
