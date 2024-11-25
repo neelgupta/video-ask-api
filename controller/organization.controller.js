@@ -121,7 +121,7 @@ const getMembers = catchAsyncError(async (req, res) => {
     }
 
     let options = {};
-    if (limit & offset) {
+    if (limit & offset !== "") {
         options = {
             limit: limit || 100,
             skip: offset || 0,
