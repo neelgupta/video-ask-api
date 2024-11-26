@@ -8,7 +8,7 @@ const { forgotPasswordMail } = require("../utils/emailTemplates");
 const userSignup = catchAsyncError(async (req, res) => {
   let { email, password, memberId, referralId } = req.body;
 
-  const user = await user_services.findUser({ email });
+  const user = await user_services.findUser({ email, is_deleted: false });
   if (user) return response400(res, msg.emailIsExists);
 
   req.body.user_type = userType.USER;
@@ -32,7 +32,7 @@ const userSignup = catchAsyncError(async (req, res) => {
         member_role: memberData?.member_role,
       });
 
-      if (addMember) memberId = addMember?._id
+      if (addMember) memberId = addMember?._id;
     }
     req.body.user_type = userType.MEMBER;
     req.body.is_member = true;
@@ -110,7 +110,7 @@ const forgotPassword = catchAsyncError(async (req, res) => {
 const resetPassword = catchAsyncError(async (req, res) => {
   const { resetPasswordToken, password } = req.body;
 
-  const userData = await user_services.findUser({ reset_password_token: resetPasswordToken, reset_password_expires: { $gt: Date.now() } });
+  const userData = await user_services.findUser({ is_deleted: false, reset_password_token: resetPasswordToken, reset_password_expires: { $gt: Date.now() } });
 
   if (!userData) return response400(res, msg.invalidResetPasswordToken);
 
@@ -202,7 +202,7 @@ const deleteAccount = catchAsyncError(async (req, res) => {
   const userId = req.user;
   const { password } = req.body;
 
-  const userData = await user_services.findUser({ _id: userId });
+  const userData = await user_services.findUser({ _id: userId, is_deleted: false });
 
   const validPassword = validatePassword(password, userData.password);
   if (!validPassword) return response400(res, msg.invalidCredentials);
