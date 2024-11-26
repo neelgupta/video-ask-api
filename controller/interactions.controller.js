@@ -25,6 +25,13 @@ const getFolderList = catchAsyncError(async (req, res) => {
 
     const data = await interactions_services.get_folder_list({ organization_id, is_deleted: false }, { __v: 0, updatedAt: 0 });
 
+    if (data?.length) {
+        await Promise.all(data.map(async (val) => {
+            const interactionCounts = await interactions_services.get_interaction_counts({ folder_id: val._id, is_deleted: false });
+            val.count = interactionCounts;
+        }));
+    }
+
     return response200(res, msg.fetch_success, data);
 });
 
@@ -50,4 +57,27 @@ const deleteFolder = catchAsyncError(async (req, res) => {
     return response200(res, msg.delete_success, [])
 });
 
-module.exports = { addFolder, getFolderList, updateFolder, deleteFolder }
+const createInteraction = catchAsyncError(async (req, res) => {
+    const Id = req.user;
+    const { organization_id, folder_id } = req.body;;
+
+    const folderData = await interactions_services.get_single_folder({ _id: folder_id, organization_id, is_deleted: false });
+    if (!folderData) return response400(res, msg.folderIsNotExists);
+
+    const organizationData = await organization_services.get_organization({ _id: organization_id, is_deleted: false, });
+    if (!organizationData) return response400(res, msg.organizationNotExists);
+
+    req.body.added_by = Id;
+
+    const data = await interactions_services.add_new_interaction(req.body);
+
+    return response201(res, msg.interactionAdded, data);
+});
+
+module.exports = {
+    addFolder,
+    getFolderList,
+    updateFolder,
+    deleteFolder,
+    createInteraction
+}

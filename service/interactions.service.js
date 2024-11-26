@@ -33,4 +33,28 @@ const update_folder = async (query, payload) => {
     }
 }
 
-module.exports = { add_folder, get_folder_list, get_single_folder, update_folder }
+const add_new_interaction = async (payload) => {
+    try {
+        return mongoService.createOne(modelName.INTERACTION, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+const get_all_interactions = async (query, project) => {
+    try {
+        return mongoService.findAll(modelName.INTERACTION, query, project);
+    } catch (error) {
+        return error
+    }
+}
+
+const get_interaction_counts = async (query) => {
+    try {
+        return mongoService.countDocument(modelName.INTERACTION, query);
+    } catch (error) {
+        return error
+    }
+}
+
+module.exports = { add_folder, get_folder_list, get_single_folder, update_folder, add_new_interaction, get_all_interactions, get_interaction_counts }

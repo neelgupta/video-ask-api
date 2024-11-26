@@ -6,3 +6,4 @@ module.exports.Address = require("./Address");
 module.exports.Referral = require("./Referral");
 module.exports.Contact = require("./Contact");
 module.exports.Folder = require("./Folder");
+module.exports.Interaction = require("./Interaction");

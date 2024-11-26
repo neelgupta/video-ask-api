@@ -47,6 +47,7 @@ const msg = {
   accountDeleted: "Account deleted successfully",
   folderAdded: "Folder created successfully",
   folderIsNotExists: "Folder is not exists",
+  interactionAdded: "Interactions added successfully",
 };
 
 const invitationTokenType = {
@@ -96,6 +97,7 @@ const modelName = {
   REFERRAL: "Referral",
   CONTACT: "Contact",
   FOLDER: "Folder",
+  INTERACTION: "Interaction",
 };
 
 const subscriptionPlanType = {
@@ -104,6 +106,20 @@ const subscriptionPlanType = {
   Pro: "pro",
   Enterprise: "enterprise"
 };
+
+const interactionType = {
+  Scratch: "Scratch",
+  Template: "Template",
+  FlowAI: "FlowAI"
+}
+
+const flowType = {
+  Webcam: "Webcam",
+  Upload: "Upload",
+  Library: "Library",
+  Screen: "Screen",
+  FlowAI: "FlowAI"
+}
 
 const hashPassword = (password) => {
   return bcrypt.hashSync(password, 10);
@@ -160,6 +176,8 @@ module.exports = {
   addressType,
   invitationTokenType,
   subscriptionPlanType,
+  interactionType,
+  flowType,
   hashPassword,
   validatePassword,
   generateUUID,

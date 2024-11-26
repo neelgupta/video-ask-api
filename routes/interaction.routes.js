@@ -9,4 +9,7 @@ router.get("/get-folders/:organization_id", isAuthenticated, interactionsControl
 router.put("/update-folder", isAuthenticated, validateRequest(interactionsValidation.updateFolderValidator), interactionsController.updateFolder);
 router.delete("/delete-folder/:folder_id", isAuthenticated, interactionsController.deleteFolder);
 
+// Interactions
+router.post("/add-interactions", isAuthenticated, validateRequest(interactionsValidation.addInteractionValidator), interactionsController.createInteraction);
+
 module.exports = router;
