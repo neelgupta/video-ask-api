@@ -5,3 +5,4 @@ module.exports.OrganizationMember = require("./OrganizationMember");
 module.exports.Address = require("./Address");
 module.exports.Referral = require("./Referral");
 module.exports.Contact = require("./Contact");
+module.exports.Folder = require("./Folder");

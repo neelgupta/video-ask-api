@@ -3,3 +3,4 @@ module.exports.userController = require("./user.controller");
 module.exports.adminController = require("./admin.controller");
 module.exports.organizationController = require("./organization.controller");
 module.exports.contactController = require("./contact.controller");
+module.exports.interactionsController = require("./interactions.controller");

@@ -16,3 +16,4 @@ module.exports.userValidation = require("./user.validation");
 module.exports.organizationValidation = require("./organization.validation");
 module.exports.profileValidation = require("./profile.validation");
 module.exports.contactValidation = require("./contact.validation");
+module.exports.interactionsValidation = require("./interactions.validation");

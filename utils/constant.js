@@ -5,6 +5,8 @@ const frontBaseUrl = "https://adorable-custard-9de130.netlify.app";
 
 const defaultOrganization = "My Organization";
 
+const defaultFolderName = "Default";
+
 const msg = {
   invalidCredentials: "Invalid credentials",
   loginSuccess: "Login successfully",
@@ -43,6 +45,8 @@ const msg = {
   contactAddSuccess: "Contact added successfully",
   contactNotFound: "Contact details not found",
   accountDeleted: "Account deleted successfully",
+  folderAdded: "Folder created successfully",
+  folderIsNotExists: "Folder is not exists",
 };
 
 const invitationTokenType = {
@@ -91,6 +95,7 @@ const modelName = {
   ADDRESS: "Address",
   REFERRAL: "Referral",
   CONTACT: "Contact",
+  FOLDER: "Folder",
 };
 
 const subscriptionPlanType = {
@@ -145,6 +150,7 @@ module.exports = {
   userType,
   frontBaseUrl,
   defaultOrganization,
+  defaultFolderName,
   msg,
   memberRole,
   modelName,
