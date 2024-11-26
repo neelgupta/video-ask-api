@@ -59,7 +59,7 @@ const deleteFolder = catchAsyncError(async (req, res) => {
 
 const createInteraction = catchAsyncError(async (req, res) => {
     const Id = req.user;
-    const { organization_id, folder_id } = req.body;;
+    const { organization_id, folder_id } = req.body;
 
     const folderData = await interactions_services.get_single_folder({ _id: folder_id, organization_id, is_deleted: false });
     if (!folderData) return response400(res, msg.folderIsNotExists);
@@ -74,10 +74,50 @@ const createInteraction = catchAsyncError(async (req, res) => {
     return response201(res, msg.interactionAdded, data);
 });
 
+const getInteractionList = catchAsyncError(async (req, res) => {
+    const Id = req.user;
+    const { folder_id } = req.params;
+
+    const folderData = await interactions_services.get_single_folder({ _id: folder_id, is_deleted: false });
+    if (!folderData) return response400(res, msg.folderIsNotExists);
+
+    const data = await interactions_services.get_all_interactions({ folder_id, is_deleted: false, added_by: Id }, { updatedAt: 0, __v: 0 });
+
+    return response200(res, msg.fetch_success, data);
+});
+
+const updateInteraction = catchAsyncError(async (req, res) => {
+    const { folder_id, interaction_id } = req.body;
+
+    const folderData = await interactions_services.get_single_folder({ _id: folder_id, is_deleted: false });
+    if (!folderData) return response400(res, msg.folderIsNotExists);
+
+    const interactionData = await interactions_services.get_single_interaction({ _id: interaction_id, is_deleted: false });
+    if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+    await interactions_services.update_interaction({ _id: interaction_id }, req.body);
+
+    return response200(res, msg.update_success, [])
+});
+
+const deleteInteraction = catchAsyncError(async (req, res) => {
+    const { interaction_id } = req.params;
+
+    const interactionData = await interactions_services.get_single_interaction({ _id: interaction_id, is_deleted: false });
+    if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+    await interactions_services.update_interaction({ _id: interaction_id }, { is_deleted: true });
+
+    return response200(res, msg.delete_success, []);
+})
+
 module.exports = {
     addFolder,
     getFolderList,
     updateFolder,
     deleteFolder,
-    createInteraction
+    createInteraction,
+    getInteractionList,
+    updateInteraction,
+    deleteInteraction,
 }

@@ -48,6 +48,7 @@ const msg = {
   folderAdded: "Folder created successfully",
   folderIsNotExists: "Folder is not exists",
   interactionAdded: "Interactions added successfully",
+  interactionIsNotExists: "Inter action is not exists",
 };
 
 const invitationTokenType = {

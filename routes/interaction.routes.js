@@ -11,5 +11,8 @@ router.delete("/delete-folder/:folder_id", isAuthenticated, interactionsControll
 
 // Interactions
 router.post("/add-interactions", isAuthenticated, validateRequest(interactionsValidation.addInteractionValidator), interactionsController.createInteraction);
+router.get("/get-interactions/:folder_id", isAuthenticated, interactionsController.getInteractionList);
+router.put("/update-interactions", isAuthenticated, validateRequest(interactionsValidation.updateInteractionValidator), interactionsController.updateInteraction);
+router.delete("/delete-interactions/:interaction_id", isAuthenticated, interactionsController.deleteInteraction);
 
 module.exports = router;

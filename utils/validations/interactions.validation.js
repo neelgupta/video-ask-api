@@ -33,4 +33,14 @@ const addInteractionValidator = Joi.object({
     language: Joi.string().optional(),
 });
 
-module.exports = { addFolderValidator, updateFolderValidator, addInteractionValidator }
+const updateInteractionValidator = Joi.object({
+    interaction_id: Joi.string().required().messages({
+        "*": "Please enter valid interaction Id",
+    }),
+    folder_id: Joi.string().required().messages({
+        "*": "Please enter valid folder Id",
+    }),
+});
+
+
+module.exports = { addFolderValidator, updateFolderValidator, addInteractionValidator, updateInteractionValidator }
