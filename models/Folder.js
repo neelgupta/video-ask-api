@@ -17,6 +17,10 @@ const folderSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        is_default: {
+            type: Boolean,
+            default: false,
+        },
         is_deleted: {
             type: Boolean,
             default: false
