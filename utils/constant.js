@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const { v4: uuidv4 } = require("uuid");
 
 const frontBaseUrl = "https://adorable-custard-9de130.netlify.app";
 
@@ -49,6 +50,8 @@ const msg = {
   folderIsNotExists: "Folder is not exists",
   interactionAdded: "Interactions added successfully",
   interactionIsNotExists: "Inter action is not exists",
+  flowCreated: "Flow created successfully",
+  flowNotExists: "Flow is not exists",
 };
 
 const invitationTokenType = {
@@ -99,6 +102,9 @@ const modelName = {
   CONTACT: "Contact",
   FOLDER: "Folder",
   INTERACTION: "Interaction",
+  FLOW: "Flow",
+  EDGE: "Edge",
+  NODE: "Node",
 };
 
 const subscriptionPlanType = {
@@ -163,6 +169,10 @@ const generateResetPasswordToken = () => {
   return { resetPasswordToken, resetPasswordExpires };
 }
 
+const generateUid = () => {
+  return uuidv4().replace(/-/g, '').slice(0, 8);
+};
+
 module.exports = {
   userType,
   frontBaseUrl,
@@ -185,4 +195,5 @@ module.exports = {
   generateEncryptedToken,
   decryptToken,
   generateResetPasswordToken,
+  generateUid,
 };

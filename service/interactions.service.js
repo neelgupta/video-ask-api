@@ -73,6 +73,38 @@ const update_interaction = async (query, payload) => {
     }
 }
 
+const add_flow = async (payload) => {
+    try {
+        return mongoService.createOne(modelName.FLOW, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+const get_single_flow = async (query) => {
+    try {
+        return mongoService.findOne(modelName.FLOW, query);
+    } catch (error) {
+        return error
+    }
+}
+
+const get_flow_list = async (query, project) => {
+    try {
+        return mongoService.findAll(modelName.FLOW, query, project);
+    } catch (error) {
+        return error
+    }
+}
+
+const update_flow = async (query, payload) => {
+    try {
+        return mongoService.updateOne(modelName.FLOW, query, payload);
+    } catch (error) {
+        return error
+    }
+}
+
 module.exports = {
     add_folder,
     get_folder_list,
@@ -83,4 +115,8 @@ module.exports = {
     get_single_interaction,
     get_interaction_counts,
     update_interaction,
+    add_flow,
+    get_flow_list,
+    get_single_flow,
+    update_flow,
 }

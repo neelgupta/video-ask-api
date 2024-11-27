@@ -30,10 +30,6 @@ const interactionSchema = new mongoose.Schema(
             type: mongoose.Types.ObjectId,
             ref: modelName.FOLDER,
         },
-        flow_type: {
-            type: String,
-            enum: [flowType.Webcam, flowType.Upload, flowType.Screen, flowType.Library, flowType.FlowAI],
-        },
         added_by: {
             type: mongoose.Types.ObjectId,
             ref: modelName.USER,

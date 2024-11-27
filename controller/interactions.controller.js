@@ -1,4 +1,5 @@
 const { response400, response201, response200 } = require("../lib/response-messages");
+const { uploadVideoToCloudinary } = require("../lib/uploader/upload");
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { organization_services, interactions_services } = require("../service");
 const { msg } = require("../utils/constant");
@@ -109,7 +110,66 @@ const deleteInteraction = catchAsyncError(async (req, res) => {
     await interactions_services.update_interaction({ _id: interaction_id }, { is_deleted: true });
 
     return response200(res, msg.delete_success, []);
-})
+});
+
+const createFlow = catchAsyncError(async (req, res) => {
+    const Id = req.user;
+    //  added_by, flow_type, video_thumbnail, video_url, video_align, overlay_text, text_size, fade_reveal
+    const { interaction_id } = req.body;
+
+    const interactionData = await interactions_services.get_single_interaction({ _id: interaction_id, is_deleted: false });
+    if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+    req.body.added_by = Id;
+    if (req.file) {
+        const uploadedFile = await uploadVideoToCloudinary(req.file);
+        req.body.video_thumbnail = uploadedFile.thumbnailUrl;
+        req.body.video_url = uploadedFile.videoUrl;
+    }
+
+    const data = await interactions_services.add_flow(req.body)
+
+    return response201(res, msg.flowCreated, data);
+});
+
+const getFlows = catchAsyncError(async (req, res) => {
+    const { interaction_id } = req.params;
+
+    const interactionData = await interactions_services.get_single_interaction({ _id: interaction_id, is_deleted: false });
+    if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+    const data = await interactions_services.get_flow_list({ interaction_id, is_deleted: false }, { updatedAt: 0, __v: 0 });
+
+    return response200(res, msg.fetch_success, data);
+});
+
+const updateFlow = catchAsyncError(async (req, res) => {
+    const { flow_id } = req.body;
+
+    const flowData = await interactions_services.get_single_flow({ _id: flow_id, is_deleted: false });
+    if (!flowData) return response400(res, msg.flowNotExists);
+
+    if (req.file) {
+        const uploadedFile = await uploadVideoToCloudinary(req.file);
+        req.body.video_thumbnail = uploadedFile.thumbnailUrl;
+        req.body.video_url = uploadedFile.videoUrl;
+    }
+
+    await interactions_services.update_flow({ _id: flow_id }, req.body);
+
+    return response200(res, msg.update_success, []);
+});
+
+const removeFlow = catchAsyncError(async (req, res) => {
+    const { flow_id } = req.body;
+
+    const flowData = await interactions_services.get_single_flow({ _id: flow_id, is_deleted: false });
+    if (!flowData) return response400(res, msg.flowNotExists);
+
+    await interactions_services.update_flow({ _id: flow_id }, { is_deleted: true });
+
+    return response200(res, msg.delete_success, []);
+});
 
 module.exports = {
     addFolder,
@@ -120,4 +180,8 @@ module.exports = {
     getInteractionList,
     updateInteraction,
     deleteInteraction,
+    createFlow,
+    getFlows,
+    updateFlow,
+    removeFlow,
 }
