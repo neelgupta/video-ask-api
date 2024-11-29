@@ -13,7 +13,7 @@ const nodeSchema = new mongoose.Schema(
             ref: modelName.USER,
             required: true,
         },
-        node_type: {
+        type: {
             type: String,
         },
         position: {
