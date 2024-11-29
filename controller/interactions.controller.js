@@ -78,14 +78,14 @@ const createInteraction = catchAsyncError(async (req, res) => {
         await Promise.all(flows.map(async (val) => {
             if (val.type === nodeType.Start) {
                 const nodeData = await interactions_services.add_Node({ interaction_id: interactionData._id, type: val.type, position: val.position, title: val.title, added_by: Id });
-                // sourceId = nodeData._id;
-                targetId = nodeData._id;
+                sourceId = nodeData._id;
+                // targetId = nodeData._id;
             }
 
             if (val.type === nodeType.End) {
                 const nodeData = await interactions_services.add_Node({ interaction_id: interactionData._id, type: val.type, position: val.position, title: val.title, added_by: Id });
-                sourceId = nodeData._id;
-                // targetId = nodeData._id;
+                // sourceId = nodeData._id;
+                targetId = nodeData._id;
             }
         }))
 
