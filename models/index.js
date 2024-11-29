@@ -7,6 +7,5 @@ module.exports.Referral = require("./Referral");
 module.exports.Contact = require("./Contact");
 module.exports.Folder = require("./Folder");
 module.exports.Interaction = require("./Interaction");
-module.exports.Flow = require("./Flow");
 module.exports.Node = require("./Node");
 module.exports.Edge = require("./Edge");

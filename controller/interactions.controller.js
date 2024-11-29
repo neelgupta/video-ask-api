@@ -2,7 +2,7 @@ const { response400, response201, response200 } = require("../lib/response-messa
 const { uploadVideoToCloudinary } = require("../lib/uploader/upload");
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { organization_services, interactions_services } = require("../service");
-const { msg } = require("../utils/constant");
+const { msg, CloudFolder, nodeType } = require("../utils/constant");
 
 
 const addFolder = catchAsyncError(async (req, res) => {
@@ -60,7 +60,7 @@ const deleteFolder = catchAsyncError(async (req, res) => {
 
 const createInteraction = catchAsyncError(async (req, res) => {
     const Id = req.user;
-    const { organization_id, folder_id } = req.body;
+    const { organization_id, folder_id, flows } = req.body;
 
     const folderData = await interactions_services.get_single_folder({ _id: folder_id, organization_id, is_deleted: false });
     if (!folderData) return response400(res, msg.folderIsNotExists);
@@ -70,9 +70,29 @@ const createInteraction = catchAsyncError(async (req, res) => {
 
     req.body.added_by = Id;
 
-    const data = await interactions_services.add_new_interaction(req.body);
+    const interactionData = await interactions_services.add_new_interaction(req.body);
 
-    return response201(res, msg.interactionAdded, data);
+    if (flows?.length) {
+        let targetId;
+        let sourceId;
+        await Promise.all(flows.map(async (val) => {
+            if (val.type === nodeType.Start) {
+                const nodeData = await interactions_services.add_Node({ interaction_id: interactionData._id, node_type: val.type, position: val.position, title: val.title, added_by: Id });
+                sourceId = nodeData._id
+            }
+
+            if (val.type === nodeType.End) {
+                const nodeData = await interactions_services.add_Node({ interaction_id: interactionData._id, node_type: val.type, position: val.position, title: val.title, added_by: Id });
+                targetId = nodeData._id;
+            }
+        }))
+
+        if (targetId && sourceId) {
+            await interactions_services.add_Edge({ interaction_id: interactionData._id, source: sourceId, target: targetId, added_by: Id });
+        }
+    }
+
+    return response201(res, msg.interactionAdded, interactionData);
 });
 
 const getInteractionList = catchAsyncError(async (req, res) => {
@@ -120,9 +140,11 @@ const createFlow = catchAsyncError(async (req, res) => {
     const interactionData = await interactions_services.get_single_interaction({ _id: interaction_id, is_deleted: false });
     if (!interactionData) return response400(res, msg.interactionIsNotExists);
 
+    const folderData = await interactions_services.get_single_folder({ _id: interactionData.folder_id, is_deleted: false });
+
     req.body.added_by = Id;
     if (req.file) {
-        const uploadedFile = await uploadVideoToCloudinary(req.file);
+        const uploadedFile = await uploadVideoToCloudinary(req.file, `${CloudFolder}/${Id}/${folderData?.folder_name}`);
         req.body.video_thumbnail = uploadedFile.thumbnailUrl;
         req.body.video_url = uploadedFile.videoUrl;
     }
@@ -149,8 +171,13 @@ const updateFlow = catchAsyncError(async (req, res) => {
     const flowData = await interactions_services.get_single_flow({ _id: flow_id, is_deleted: false });
     if (!flowData) return response400(res, msg.flowNotExists);
 
+    const interactionData = await interactions_services.get_single_interaction({ _id: flowData?.interaction_id, is_deleted: false });
+    if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+    const folderData = await interactions_services.get_single_folder({ _id: interactionData.folder_id, is_deleted: false });
+
     if (req.file) {
-        const uploadedFile = await uploadVideoToCloudinary(req.file);
+        const uploadedFile = await uploadVideoToCloudinary(req.file, `${CloudFolder}/${Id}/${folderData.folder_name}`);
         req.body.video_thumbnail = uploadedFile.thumbnailUrl;
         req.body.video_url = uploadedFile.videoUrl;
     }
@@ -171,6 +198,70 @@ const removeFlow = catchAsyncError(async (req, res) => {
     return response200(res, msg.delete_success, []);
 });
 
+const createDefaultFlow = catchAsyncError(async (req, res) => {
+    const Id = req.user;
+    const { interaction_id, flows, } = req.body;
+
+    const interactionData = await interactions_services.get_single_interaction({ _id: interaction_id, is_deleted: false });
+    if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+
+    if (flows?.length) {
+
+        let targetId;
+        let sourceId;
+        await Promise.all(flows.map(async (val) => {
+            // const payload = { interaction_id: interactionData._id, added_by: Id, title: val.title };
+            // let targetId;
+            // let sourceId;
+            if (val.type === nodeType.Start) {
+                const nodeData = await interactions_services.add_Node({ interaction_id: interaction_id, node_type: val.type, position: val.position, title: val.title, added_by: Id });
+                sourceId = nodeData._id
+            }
+
+            if (val.type === nodeType.End) {
+                const nodeData = await interactions_services.add_Node({ interaction_id: interaction_id, node_type: val.type, position: val.position, title: val.title, added_by: Id });
+                targetId = nodeData._id;
+            }
+
+            // // const flowData = await interactions_services.add_flow(payload);
+
+            // if (nodeData) {
+
+            //     if (val.type === nodeType.Start && nodeData) {
+            //         sourceId = nodeData._id
+            //     };
+            //     if (val.type === nodeType.End && nodeData) {
+            //         console.log("before", targetId)
+            //         // console.log("helllo ", nodeData._id)
+            //         targetId = nodeData._id;
+            //         console.log("after", targetId)
+            //     }
+            //     console.log("outer", targetId)
+            // if (targetId && sourceId) {
+            //     console.log("test",)
+            //     await interactions_services.add_Edge({ interaction_id, source: sourceId, target: targetId, added_by: Id });
+            // }
+            // }
+
+        }))
+
+        if (targetId && sourceId) {
+            await interactions_services.add_Edge({ interaction_id, source: sourceId, target: targetId, added_by: Id });
+        }
+    }
+
+    return response200(res, msg.fetch_success, [])
+});
+
+const getInteractionDetails = catchAsyncError(async (req, res) => {
+    const Id = req.user;
+    const { interaction_id, } = req.params;
+
+    const interactionData = await interactions_services.interaction_details(interaction_id);
+    return response200(res, msg.fetch_success, interactionData)
+});
+
 module.exports = {
     addFolder,
     getFolderList,
@@ -184,4 +275,6 @@ module.exports = {
     getFlows,
     updateFlow,
     removeFlow,
+    createDefaultFlow,
+    getInteractionDetails
 }

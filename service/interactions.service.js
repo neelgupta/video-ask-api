@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const mongoService = require("../config/mongoService");
 const { modelName } = require("../utils/constant");
 
@@ -75,7 +76,7 @@ const update_interaction = async (query, payload) => {
 
 const add_flow = async (payload) => {
     try {
-        return mongoService.createOne(modelName.FLOW, payload);
+        return mongoService.createOne(modelName.NODE, payload);
     } catch (error) {
         return error
     }
@@ -83,7 +84,7 @@ const add_flow = async (payload) => {
 
 const get_single_flow = async (query) => {
     try {
-        return mongoService.findOne(modelName.FLOW, query);
+        return mongoService.findOne(modelName.NODE, query);
     } catch (error) {
         return error
     }
@@ -91,7 +92,7 @@ const get_single_flow = async (query) => {
 
 const get_flow_list = async (query, project) => {
     try {
-        return mongoService.findAll(modelName.FLOW, query, project);
+        return mongoService.findAll(modelName.NODE, query, project);
     } catch (error) {
         return error
     }
@@ -99,11 +100,54 @@ const get_flow_list = async (query, project) => {
 
 const update_flow = async (query, payload) => {
     try {
-        return mongoService.updateOne(modelName.FLOW, query, payload);
+        return mongoService.updateOne(modelName.NODE, query, payload);
     } catch (error) {
         return error
     }
 }
+
+const add_Node = async (payload) => {
+    try {
+        return mongoService.createOne(modelName.NODE, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+const add_Edge = async (payload) => {
+    try {
+        return mongoService.createOne(modelName.EDGE, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+const interaction_details = async (interactionId) => {
+    try {
+        let pipeline = [
+            { $match: { _id: new mongoose.Types.ObjectId(interactionId) } },
+            {
+                $lookup: {
+                    from: "nodes",
+                    localField: "_id",
+                    foreignField: "interaction_id",
+                    as: "nodes",
+                },
+            },
+            {
+                $lookup: {
+                    from: "edges",
+                    localField: "_id",
+                    foreignField: "interaction_id",
+                    as: "edges",
+                },
+            },
+        ];
+        return await mongoService.aggregation(modelName.INTERACTION, pipeline);
+    } catch (error) {
+        throw error;
+    }
+};
 
 module.exports = {
     add_folder,
@@ -119,4 +163,7 @@ module.exports = {
     get_flow_list,
     get_single_flow,
     update_flow,
+    add_Node,
+    add_Edge,
+    interaction_details
 }

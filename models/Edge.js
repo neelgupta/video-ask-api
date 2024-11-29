@@ -3,11 +3,6 @@ const { modelName } = require("../utils/constant");
 
 const edgeSchema = new mongoose.Schema(
     {
-        flow_id: {
-            type: mongoose.Types.ObjectId,
-            ref: modelName.FLOW,
-            required: true,
-        },
         interaction_id: {
             type: mongoose.Types.ObjectId,
             ref: modelName.INTERACTION,
@@ -25,7 +20,7 @@ const edgeSchema = new mongoose.Schema(
         },
         label: {
             type: String,
-            required: true,
+            // required: true,
         },
         added_by: {
             type: mongoose.Types.ObjectId,

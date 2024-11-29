@@ -37,4 +37,16 @@ router.put("/update-flow",
 router.delete("/delete-flow/:flow_id", isAuthenticated, interactionsController.removeFlow);
 
 
+router.post("/create-default-flow",
+    isAuthenticated,
+    validateRequest(interactionsValidation.createDefaultFlow),
+    interactionsController.createDefaultFlow
+);
+router.get("/details/:interaction_id",
+    isAuthenticated,
+    // validateRequest(interactionsValidation.createDefaultFlow),
+    interactionsController.getInteractionDetails
+);
+
+
 module.exports = router;

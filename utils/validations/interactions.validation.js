@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const { interactionType, flowType } = require("../constant");
+const { interactionType, flowType, nodeType } = require("../constant");
 
 const addFolderValidator = Joi.object({
     organization_id: Joi.string().required().messages({
@@ -31,6 +31,15 @@ const addInteractionValidator = Joi.object({
     }),
     is_collect_contact: Joi.boolean().required(),
     language: Joi.string().optional(),
+    flows: Joi.array().required().items(
+        Joi.object({
+            type: Joi.string().required().valid(nodeType.Start, nodeType.End),
+            position: Joi.object({
+                x: Joi.number().required(),
+                y: Joi.number().required(),
+            }).required(),
+            title: Joi.string().required(),
+        })).required(),
 });
 
 const updateInteractionValidator = Joi.object({
@@ -78,5 +87,11 @@ const updateFlowValidator = Joi.object({
     fade_reveal: Joi.string().optional(),
 });
 
+const createDefaultFlow = Joi.object({
+    interaction_id: Joi.string().required().messages({
+        "*": "Please enter valid interaction Id",
+    }),
+});
 
-module.exports = { addFolderValidator, updateFolderValidator, addInteractionValidator, updateInteractionValidator, createFlowValidator, updateFlowValidator }
+
+module.exports = { addFolderValidator, updateFolderValidator, addInteractionValidator, updateInteractionValidator, createFlowValidator, updateFlowValidator, createDefaultFlow }

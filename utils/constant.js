@@ -92,6 +92,8 @@ const addressType = {
   Billing: "Billing",
 }
 
+const CloudFolder = "video-ask";
+
 const modelName = {
   USER: "Users",
   SUBSCRIPTION_PLAN: "Subscription_Plan",
@@ -102,7 +104,7 @@ const modelName = {
   CONTACT: "Contact",
   FOLDER: "Folder",
   INTERACTION: "Interaction",
-  FLOW: "Flow",
+  // FLOW: "Flow",
   EDGE: "Edge",
   NODE: "Node",
 };
@@ -126,6 +128,11 @@ const flowType = {
   Library: "Library",
   Screen: "Screen",
   FlowAI: "FlowAI"
+}
+
+const nodeType = {
+  Start: "Start",
+  End: "End"
 }
 
 const hashPassword = (password) => {
@@ -187,8 +194,10 @@ module.exports = {
   addressType,
   invitationTokenType,
   subscriptionPlanType,
+  CloudFolder,
   interactionType,
   flowType,
+  nodeType,
   hashPassword,
   validatePassword,
   generateUUID,
