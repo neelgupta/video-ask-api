@@ -179,7 +179,7 @@ const getNodes = catchAsyncError(async (req, res) => {
     const interactionData = await interactions_services.getNodesList(interaction_id);
     if (!interactionData) return response400(res, msg.interactionIsNotExists);
 
-    return response200(res, msg.fetch_success, interactionData?.[0] | {});
+    return response200(res, msg.fetch_success, interactionData?.[0] || {});
 });
 
 const updateNode = catchAsyncError(async (req, res) => {
