@@ -77,13 +77,13 @@ const createInteraction = catchAsyncError(async (req, res) => {
         let sourceId;
         await Promise.all(flows.map(async (val) => {
             if (val.type === nodeType.Start) {
-                const nodeData = await interactions_services.add_Node({ interaction_id: interactionData._id, node_type: val.type, position: val.position, title: val.title, added_by: Id });
+                const nodeData = await interactions_services.add_Node({ interaction_id: interactionData._id, type: val.type, position: val.position, title: val.title, added_by: Id });
                 // sourceId = nodeData._id;
                 targetId = nodeData._id;
             }
 
             if (val.type === nodeType.End) {
-                const nodeData = await interactions_services.add_Node({ interaction_id: interactionData._id, node_type: val.type, position: val.position, title: val.title, added_by: Id });
+                const nodeData = await interactions_services.add_Node({ interaction_id: interactionData._id, type: val.type, position: val.position, title: val.title, added_by: Id });
                 sourceId = nodeData._id;
                 // targetId = nodeData._id;
             }
@@ -161,6 +161,7 @@ const createNode = catchAsyncError(async (req, res) => {
         req.body.video_url = uploadedFile.videoUrl;
     }
 
+    console.log("req.body", req.body)
     const newNode = await interactions_services.add_Node(req.body);
     if (newNode) {
 
@@ -232,12 +233,12 @@ const createDefaultFlow = catchAsyncError(async (req, res) => {
             // let targetId;
             // let sourceId;
             if (val.type === nodeType.Start) {
-                const nodeData = await interactions_services.add_Node({ interaction_id: interaction_id, node_type: val.type, position: val.position, title: val.title, added_by: Id });
+                const nodeData = await interactions_services.add_Node({ interaction_id: interaction_id, type: val.type, position: val.position, title: val.title, added_by: Id });
                 sourceId = nodeData._id
             }
 
             if (val.type === nodeType.End) {
-                const nodeData = await interactions_services.add_Node({ interaction_id: interaction_id, node_type: val.type, position: val.position, title: val.title, added_by: Id });
+                const nodeData = await interactions_services.add_Node({ interaction_id: interaction_id, type: val.type, position: val.position, title: val.title, added_by: Id });
                 targetId = nodeData._id;
             }
 
