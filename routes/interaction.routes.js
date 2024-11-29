@@ -17,35 +17,30 @@ router.put("/update-interactions", isAuthenticated, validateRequest(interactions
 router.delete("/delete-interactions/:interaction_id", isAuthenticated, interactionsController.deleteInteraction);
 
 // flow
-router.post("/create-flow",
+router.post("/create-node",
     isAuthenticated,
     uploadFile.single('video'),
     multerErrorHandler,
-    validateFormData(interactionsValidation.createFlowValidator),
-    interactionsController.createFlow
+    validateFormData(interactionsValidation.createNodeValidator),
+    interactionsController.createNode
 );
 
-router.get("/get-flows/:interaction_id", isAuthenticated, interactionsController.getFlows);
+router.get("/get-nodes/:interaction_id", isAuthenticated, interactionsController.getNodes);
 
-router.put("/update-flow",
+router.put("/update-node",
     isAuthenticated,
     uploadFile.single('video'),
     multerErrorHandler,
-    validateFormData(interactionsValidation.updateFlowValidator),
-    interactionsController.updateFlow
+    validateFormData(interactionsValidation.updateNodeValidator),
+    interactionsController.updateNode
 );
-router.delete("/delete-flow/:flow_id", isAuthenticated, interactionsController.removeFlow);
+router.delete("/delete-nodes/:node_id", isAuthenticated, interactionsController.removeNode);
 
 
 router.post("/create-default-flow",
     isAuthenticated,
     validateRequest(interactionsValidation.createDefaultFlow),
     interactionsController.createDefaultFlow
-);
-router.get("/details/:interaction_id",
-    isAuthenticated,
-    // validateRequest(interactionsValidation.createDefaultFlow),
-    interactionsController.getInteractionDetails
 );
 
 

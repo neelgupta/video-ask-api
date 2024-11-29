@@ -82,7 +82,7 @@ const add_flow = async (payload) => {
     }
 }
 
-const get_single_flow = async (query) => {
+const get_single_node = async (query) => {
     try {
         return mongoService.findOne(modelName.NODE, query);
     } catch (error) {
@@ -98,7 +98,7 @@ const get_flow_list = async (query, project) => {
     }
 }
 
-const update_flow = async (query, payload) => {
+const update_Node = async (query, payload) => {
     try {
         return mongoService.updateOne(modelName.NODE, query, payload);
     } catch (error) {
@@ -122,7 +122,15 @@ const add_Edge = async (payload) => {
     }
 }
 
-const interaction_details = async (interactionId) => {
+const update_Edge = async (query, payload) => {
+    try {
+        return mongoService.updateOne(modelName.EDGE, query, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+const getNodesList = async (interactionId) => {
     try {
         let pipeline = [
             { $match: { _id: new mongoose.Types.ObjectId(interactionId) } },
@@ -161,9 +169,10 @@ module.exports = {
     update_interaction,
     add_flow,
     get_flow_list,
-    get_single_flow,
-    update_flow,
+    get_single_node,
+    update_Node,
     add_Node,
     add_Edge,
-    interaction_details
+    getNodesList,
+    update_Edge,
 }

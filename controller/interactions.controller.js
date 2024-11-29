@@ -78,12 +78,14 @@ const createInteraction = catchAsyncError(async (req, res) => {
         await Promise.all(flows.map(async (val) => {
             if (val.type === nodeType.Start) {
                 const nodeData = await interactions_services.add_Node({ interaction_id: interactionData._id, node_type: val.type, position: val.position, title: val.title, added_by: Id });
-                sourceId = nodeData._id
+                // sourceId = nodeData._id;
+                targetId = nodeData._id;
             }
 
             if (val.type === nodeType.End) {
                 const nodeData = await interactions_services.add_Node({ interaction_id: interactionData._id, node_type: val.type, position: val.position, title: val.title, added_by: Id });
-                targetId = nodeData._id;
+                sourceId = nodeData._id;
+                // targetId = nodeData._id;
             }
         }))
 
@@ -132,43 +134,58 @@ const deleteInteraction = catchAsyncError(async (req, res) => {
     return response200(res, msg.delete_success, []);
 });
 
-const createFlow = catchAsyncError(async (req, res) => {
+const createNode = catchAsyncError(async (req, res) => {
     const Id = req.user;
     //  added_by, flow_type, video_thumbnail, video_url, video_align, overlay_text, text_size, fade_reveal
-    const { interaction_id } = req.body;
+    const { interaction_id, sourceId, targetId, positionX, positionY } = req.body;
 
     const interactionData = await interactions_services.get_single_interaction({ _id: interaction_id, is_deleted: false });
     if (!interactionData) return response400(res, msg.interactionIsNotExists);
 
+    const sourceData = await interactions_services.get_single_node({ _id: sourceId });
+    if (!sourceData) return response400(res, msg.sourceNotFound);
+
+    const targetData = await interactions_services.get_single_node({ _id: targetId });
+    if (!targetData) return response400(res, msg.targetNotFound);
+
     const folderData = await interactions_services.get_single_folder({ _id: interactionData.folder_id, is_deleted: false });
 
     req.body.added_by = Id;
+    req.body.position = {
+        x: positionX,
+        y: positionY
+    }
     if (req.file) {
         const uploadedFile = await uploadVideoToCloudinary(req.file, `${CloudFolder}/${Id}/${folderData?.folder_name}`);
         req.body.video_thumbnail = uploadedFile.thumbnailUrl;
         req.body.video_url = uploadedFile.videoUrl;
     }
 
-    const data = await interactions_services.add_flow(req.body)
+    const newNode = await interactions_services.add_Node(req.body);
+    if (newNode) {
 
-    return response201(res, msg.flowCreated, data);
+        const newEdge = await interactions_services.add_Edge({ interaction_id: interaction_id, source: sourceId, target: targetId, added_by: Id });
+        const updateSource = await interactions_services.update_Edge({ source: sourceId, }, { target: newNode._id });
+        const updateTarget = await interactions_services.update_Edge({ target: targetId, }, { source: newNode._id });
+    }
+
+
+    return response201(res, msg.flowCreated, newNode);
 });
 
-const getFlows = catchAsyncError(async (req, res) => {
+const getNodes = catchAsyncError(async (req, res) => {
     const { interaction_id } = req.params;
 
-    const interactionData = await interactions_services.get_single_interaction({ _id: interaction_id, is_deleted: false });
+    const interactionData = await interactions_services.getNodesList(interaction_id);
     if (!interactionData) return response400(res, msg.interactionIsNotExists);
 
-    const data = await interactions_services.get_flow_list({ interaction_id, is_deleted: false }, { updatedAt: 0, __v: 0 });
-
-    return response200(res, msg.fetch_success, data);
+    return response200(res, msg.fetch_success, interactionData);
 });
 
-const updateFlow = catchAsyncError(async (req, res) => {
+const updateNode = catchAsyncError(async (req, res) => {
     const { flow_id } = req.body;
 
-    const flowData = await interactions_services.get_single_flow({ _id: flow_id, is_deleted: false });
+    const flowData = await interactions_services.get_single_node({ _id: flow_id, is_deleted: false });
     if (!flowData) return response400(res, msg.flowNotExists);
 
     const interactionData = await interactions_services.get_single_interaction({ _id: flowData?.interaction_id, is_deleted: false });
@@ -182,18 +199,18 @@ const updateFlow = catchAsyncError(async (req, res) => {
         req.body.video_url = uploadedFile.videoUrl;
     }
 
-    await interactions_services.update_flow({ _id: flow_id }, req.body);
+    await interactions_services.update_Node({ _id: flow_id }, req.body);
 
     return response200(res, msg.update_success, []);
 });
 
-const removeFlow = catchAsyncError(async (req, res) => {
+const removeNode = catchAsyncError(async (req, res) => {
     const { flow_id } = req.body;
 
-    const flowData = await interactions_services.get_single_flow({ _id: flow_id, is_deleted: false });
+    const flowData = await interactions_services.get_single_node({ _id: flow_id, is_deleted: false });
     if (!flowData) return response400(res, msg.flowNotExists);
 
-    await interactions_services.update_flow({ _id: flow_id }, { is_deleted: true });
+    await interactions_services.update_Node({ _id: flow_id }, { is_deleted: true });
 
     return response200(res, msg.delete_success, []);
 });
@@ -254,14 +271,6 @@ const createDefaultFlow = catchAsyncError(async (req, res) => {
     return response200(res, msg.fetch_success, [])
 });
 
-const getInteractionDetails = catchAsyncError(async (req, res) => {
-    const Id = req.user;
-    const { interaction_id, } = req.params;
-
-    const interactionData = await interactions_services.interaction_details(interaction_id);
-    return response200(res, msg.fetch_success, interactionData)
-});
-
 module.exports = {
     addFolder,
     getFolderList,
@@ -271,10 +280,9 @@ module.exports = {
     getInteractionList,
     updateInteraction,
     deleteInteraction,
-    createFlow,
-    getFlows,
-    updateFlow,
-    removeFlow,
+    createNode,
+    getNodes,
+    updateNode,
+    removeNode,
     createDefaultFlow,
-    getInteractionDetails
 }

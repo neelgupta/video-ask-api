@@ -51,7 +51,7 @@ const updateInteractionValidator = Joi.object({
     }),
 });
 
-const createFlowValidator = Joi.object({
+const createNodeValidator = Joi.object({
     interaction_id: Joi.string().required().messages({
         "*": "Please enter valid interaction Id",
     }),
@@ -59,17 +59,22 @@ const createFlowValidator = Joi.object({
     video: Joi.array()
         .items(Joi.object({
             originalname: Joi.string().required(),
-            // mimetype: Joi.string().valid('image/jpeg', 'image/png', 'application/pdf').required(),
-            size: Joi.number().max(10 * 1024 * 1024) // Max size 5MB
+            size: Joi.number().max(10 * 1024 * 1024) // Max size 10MB
         }))
         .optional(),
     video_align: Joi.boolean().optional(),
     overlay_text: Joi.string().optional(),
     text_size: Joi.string().optional(),
     fade_reveal: Joi.string().optional(),
+    positionX: Joi.number().required(),
+    positionY: Joi.number().required(),
+    // type: Joi.string().required().valid(nodeType.Start, nodeType.End),
+    title: Joi.string().required(),
+    sourceId: Joi.string().required(),
+    targetId: Joi.string().required(),
 });
 
-const updateFlowValidator = Joi.object({
+const updateNodeValidator = Joi.object({
     flow_id: Joi.string().required().messages({
         "*": "Please enter valid flow Id",
     }),
@@ -91,7 +96,16 @@ const createDefaultFlow = Joi.object({
     interaction_id: Joi.string().required().messages({
         "*": "Please enter valid interaction Id",
     }),
+    flows: Joi.array().required().items(
+        Joi.object({
+            type: Joi.string().required().valid(nodeType.Start, nodeType.End),
+            position: Joi.object({
+                x: Joi.number().required(),
+                y: Joi.number().required(),
+            }).required(),
+            title: Joi.string().required(),
+        })).required(),
 });
 
 
-module.exports = { addFolderValidator, updateFolderValidator, addInteractionValidator, updateInteractionValidator, createFlowValidator, updateFlowValidator, createDefaultFlow }
+module.exports = { addFolderValidator, updateFolderValidator, addInteractionValidator, updateInteractionValidator, createNodeValidator, updateNodeValidator, createDefaultFlow }
