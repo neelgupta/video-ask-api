@@ -68,7 +68,7 @@ const createNodeValidator = Joi.object({
     fade_reveal: Joi.string().optional(),
     positionX: Joi.number().required(),
     positionY: Joi.number().required(),
-    type: Joi.string().required().valid(nodeType.Start, nodeType.End),
+    type: Joi.string().required().valid(nodeType.Start, nodeType.End, nodeType.Question),
     title: Joi.string().required(),
     sourceId: Joi.string().required(),
     targetId: Joi.string().required(),
@@ -98,7 +98,7 @@ const createDefaultFlow = Joi.object({
     }),
     flows: Joi.array().required().items(
         Joi.object({
-            type: Joi.string().required().valid(nodeType.Start, nodeType.End),
+            type: Joi.string().required().valid(nodeType.Start, nodeType.End, nodeType.Question),
             position: Joi.object({
                 x: Joi.number().required(),
                 y: Joi.number().required(),

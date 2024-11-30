@@ -134,7 +134,8 @@ const flowType = {
 
 const nodeType = {
   Start: "Start",
-  End: "End"
+  End: "End",
+  Question: "Question",
 }
 
 const hashPassword = (password) => {
