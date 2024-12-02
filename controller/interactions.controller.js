@@ -184,7 +184,7 @@ const getNodes = catchAsyncError(async (req, res) => {
 });
 
 const updateCordinates = catchAsyncError(async (req, res) => {
-    const { node_id,positionX,positionY } = req.body;;
+    const { node_id,positionX,positionY } = req.body;
 
     req.body.position = {
         x: positionX,
