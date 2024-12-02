@@ -183,11 +183,28 @@ const getNodes = catchAsyncError(async (req, res) => {
     return response200(res, msg.fetch_success, interactionData?.[0] || {});
 });
 
+const updateCordinates = catchAsyncError(async (req, res) => {
+    const { node_id,positionX,positionY } = req.body;;
+
+    req.body.position = {
+        x: positionX,
+        y: positionY
+    }
+
+    const nodeData = await interactions_services.get_single_node({ _id: node_id, is_deleted: false });
+    if (!nodeData) return response400(res, msg.nodeNotExists);
+
+    await interactions_services.update_Node({ _id: node_id }, req.body);
+
+
+    return response200(res, msg.update_success, []);
+});
+
 const updateNode = catchAsyncError(async (req, res) => {
     const { flow_id } = req.body;
 
     const flowData = await interactions_services.get_single_node({ _id: flow_id, is_deleted: false });
-    if (!flowData) return response400(res, msg.flowNotExists);
+    if (!flowData) return response400(res, msg.nodeNotExists);
 
     const interactionData = await interactions_services.get_single_interaction({ _id: flowData?.interaction_id, is_deleted: false });
     if (!interactionData) return response400(res, msg.interactionIsNotExists);
@@ -209,7 +226,7 @@ const removeNode = catchAsyncError(async (req, res) => {
     const { flow_id } = req.body;
 
     const flowData = await interactions_services.get_single_node({ _id: flow_id, is_deleted: false });
-    if (!flowData) return response400(res, msg.flowNotExists);
+    if (!flowData) return response400(res, msg.nodeNotExists);
 
     await interactions_services.update_Node({ _id: flow_id }, { is_deleted: true });
 
@@ -286,4 +303,5 @@ module.exports = {
     updateNode,
     removeNode,
     createDefaultFlow,
+    updateCordinates,
 }

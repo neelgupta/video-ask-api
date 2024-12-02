@@ -34,6 +34,12 @@ router.put("/update-node",
     validateFormData(interactionsValidation.updateNodeValidator),
     interactionsController.updateNode
 );
+
+router.put("/update-cordinates",
+    isAuthenticated,
+    validateRequest(interactionsValidation.updateCordinates),
+    interactionsController.updateCordinates
+);
 router.delete("/delete-nodes/:node_id", isAuthenticated, interactionsController.removeNode);
 
 

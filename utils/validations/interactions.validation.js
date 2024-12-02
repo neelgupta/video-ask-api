@@ -92,6 +92,14 @@ const updateNodeValidator = Joi.object({
     fade_reveal: Joi.string().optional(),
 });
 
+const updateCordinates = Joi.object({
+    node_id: Joi.string().required().messages({
+        "*": "Please enter valid node Id",
+    }),
+    positionX: Joi.number().required(),
+    positionY: Joi.number().required(),
+});
+
 const createDefaultFlow = Joi.object({
     interaction_id: Joi.string().required().messages({
         "*": "Please enter valid interaction Id",
@@ -108,4 +116,13 @@ const createDefaultFlow = Joi.object({
 });
 
 
-module.exports = { addFolderValidator, updateFolderValidator, addInteractionValidator, updateInteractionValidator, createNodeValidator, updateNodeValidator, createDefaultFlow }
+module.exports = { 
+    addFolderValidator, 
+    updateFolderValidator, 
+    addInteractionValidator, 
+    updateInteractionValidator, 
+    createNodeValidator, 
+    updateNodeValidator, 
+    createDefaultFlow,
+    updateCordinates,
+}

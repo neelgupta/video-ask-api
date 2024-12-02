@@ -51,7 +51,7 @@ const msg = {
   interactionAdded: "Interactions added successfully",
   interactionIsNotExists: "Inter action is not exists",
   flowCreated: "Flow created successfully",
-  flowNotExists: "Flow is not exists",
+  nodeNotExists: "Node is not exists",
   sourceNotFound: "Source Id is not exists",
   targetNotFound: "Target Id is not exists",
 };
