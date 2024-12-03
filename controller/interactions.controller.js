@@ -184,18 +184,17 @@ const getNodes = catchAsyncError(async (req, res) => {
 });
 
 const updateCordinates = catchAsyncError(async (req, res) => {
-    const { node_id,positionX,positionY } = req.body;
+    const { nodes} = req.body;
 
-    req.body.position = {
-        x: positionX,
-        y: positionY
+    if(nodes?.length){
+        for (const val of nodes) {
+            const nodeData = await interactions_services.get_single_node({ _id: val.node_id, is_deleted: false });
+            if (!nodeData) {
+                return response400(res, msg.nodeNotExists);
+            }
+            await interactions_services.update_Node({ _id: val.node_id }, val);
+        }
     }
-
-    const nodeData = await interactions_services.get_single_node({ _id: node_id, is_deleted: false });
-    if (!nodeData) return response400(res, msg.nodeNotExists);
-
-    await interactions_services.update_Node({ _id: node_id }, req.body);
-
 
     return response200(res, msg.update_success, []);
 });

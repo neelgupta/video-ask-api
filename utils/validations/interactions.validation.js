@@ -93,11 +93,16 @@ const updateNodeValidator = Joi.object({
 });
 
 const updateCordinates = Joi.object({
-    node_id: Joi.string().required().messages({
-        "*": "Please enter valid node Id",
-    }),
-    positionX: Joi.number().required(),
-    positionY: Joi.number().required(),
+    nodes: Joi.array()
+        .items(
+            Joi.object({
+                node_id: Joi.string().required(),
+                position: Joi.object({
+                    x: Joi.number().required(),
+                    y: Joi.number().required(),
+                }).required(),
+            })
+        ).required(),
 });
 
 const createDefaultFlow = Joi.object({
