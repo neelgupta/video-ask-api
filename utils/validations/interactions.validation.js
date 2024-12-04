@@ -63,7 +63,7 @@ const createNodeValidator = Joi.object({
         }))
         .optional(),
     video_align: Joi.boolean().optional(),
-    overlay_text: Joi.string().optional(),
+    overlay_text: Joi.string().optional().allow(""),
     text_size: Joi.string().optional(),
     fade_reveal: Joi.string().optional(),
     positionX: Joi.number().required(),
