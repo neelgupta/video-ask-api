@@ -50,7 +50,7 @@ const userSignup = catchAsyncError(async (req, res) => {
   const userData = await user_services.registerUser(req.body);
 
   const organizationUUID = generateUUID("ORG");
-  const organizationRequest = { organization_name: defaultOrganization, is_parent: true, members: { userId: [userData._id], role: memberRole.Admin }, added_by: userData._id, organization_uuid: organizationUUID, }
+  const organizationRequest = { organization_name: defaultOrganization, members: { userId: [userData._id], role: memberRole.Admin }, added_by: userData._id, organization_uuid: organizationUUID, }
   const organizationData = await organization_services.add_organization(organizationRequest);
   await interactions_services.add_folder({ organization_id: organizationData._id, added_by: userData._id, folder_name: defaultFolderName, is_default: true });
 
@@ -67,6 +67,7 @@ const userSignup = catchAsyncError(async (req, res) => {
       member_role: memberRole.Admin,
       invitation_status: memberInvitationStatus.Completed,
       added_by: userData?._id,
+      is_parent: true, 
     });
   }
 
