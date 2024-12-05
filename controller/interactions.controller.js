@@ -290,7 +290,7 @@ const createDefaultFlow = catchAsyncError(async (req, res) => {
 
 const getMediaLibrary = catchAsyncError(async(req,res)=>{
     const {organization_id} = req.params;
-    const {search} = req.params;
+    const {search} = req.query;
 
     const interActions = await interactions_services.get_all_interactions({organization_id});
     let interActionIds =[]

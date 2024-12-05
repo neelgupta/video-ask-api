@@ -158,15 +158,21 @@ const getNodesList = async (interactionId) => {
 };
 
 const getLibrary = async(query,search) => {
-    console.log("🚀 ~ getLibrary ~ search:", search)
     if(query.length){
         query.map((ele)=>{
             return new mongoose.Types.ObjectId(ele)
         })
     }
+    let matchQuery={ interaction_id: {$in:query},type: "Question",video_thumbnail:{ $exists: true },is_deleted:false }
+
+    if(search){
+        matchQuery= {...matchQuery,
+            title:{ $regex: search, $options: 'i' }
+        }
+    }
     try {
         let pipeline = [
-            { $match: { interaction_id: {$in:query},type: "Question",video_thumbnail:{ $exists: true },is_deleted:false }, },
+            { $match: matchQuery },
             {
                 $project:{
                     video_thumbnail:1,
