@@ -49,5 +49,10 @@ router.post("/create-default-flow",
     interactionsController.createDefaultFlow
 );
 
+router.get("/get-library/:organization_id",
+    isAuthenticated,
+    interactionsController.getMediaLibrary
+);
+
 
 module.exports = router;

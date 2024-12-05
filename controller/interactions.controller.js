@@ -288,6 +288,20 @@ const createDefaultFlow = catchAsyncError(async (req, res) => {
     return response200(res, msg.fetch_success, [])
 });
 
+const getMediaLibrary = catchAsyncError(async(req,res)=>{
+    const {organization_id} = req.params;
+    const {search} = req.params;
+
+    const interActions = await interactions_services.get_all_interactions({organization_id});
+    let interActionIds =[]
+    interActions.map((val)=>{
+        interActionIds.push(val._id)
+    });
+
+    const results = await interactions_services.getLibrary(interActionIds,search)
+    return response200(res,msg.fetch_success,results);
+});
+
 module.exports = {
     addFolder,
     getFolderList,
@@ -303,4 +317,5 @@ module.exports = {
     removeNode,
     createDefaultFlow,
     updateCordinates,
+    getMediaLibrary,
 }

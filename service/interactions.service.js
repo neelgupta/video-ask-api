@@ -157,6 +157,30 @@ const getNodesList = async (interactionId) => {
     }
 };
 
+const getLibrary = async(query,search) => {
+    console.log("🚀 ~ getLibrary ~ search:", search)
+    if(query.length){
+        query.map((ele)=>{
+            return new mongoose.Types.ObjectId(ele)
+        })
+    }
+    try {
+        let pipeline = [
+            { $match: { interaction_id: {$in:query},type: "Question",video_thumbnail:{ $exists: true },is_deleted:false }, },
+            {
+                $project:{
+                    video_thumbnail:1,
+                    interaction_id:1,
+                    title:1,
+                },
+            },
+        ];
+        return await mongoService.aggregation(modelName.NODE, pipeline);
+    } catch (error) {
+        throw error;
+    }
+}
+
 module.exports = {
     add_folder,
     get_folder_list,
@@ -175,4 +199,5 @@ module.exports = {
     add_Edge,
     getNodesList,
     update_Edge,
+    getLibrary,
 }
