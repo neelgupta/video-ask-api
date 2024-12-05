@@ -105,7 +105,12 @@ const getInteractionList = catchAsyncError(async (req, res) => {
     if (!folderData) return response400(res, msg.folderIsNotExists);
 
     const data = await interactions_services.get_all_interactions({ folder_id, is_deleted: false, added_by: Id }, { updatedAt: 0, __v: 0 });
-
+    
+    await Promise.all(data.map(async(val) =>{
+        const getNodes = await interactions_services.get_flow_list({interaction_id:val._id})
+        const nodesWithThumbnails = getNodes.filter((node) => node.video_thumbnail);
+        val.thumbnailUrl = nodesWithThumbnails?.length ?nodesWithThumbnails[0].video_thumbnail:"";
+    }));
     return response200(res, msg.fetch_success, data);
 });
 
