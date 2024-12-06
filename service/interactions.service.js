@@ -133,7 +133,7 @@ const update_Edge = async (query, payload) => {
 const getNodesList = async (interactionId) => {
     try {
         let pipeline = [
-            { $match: { _id: new mongoose.Types.ObjectId(interactionId) } },
+            { $match: { _id: new mongoose.Types.ObjectId(interactionId),is_deleted:false } },
             {
                 $lookup: {
                     from: "nodes",

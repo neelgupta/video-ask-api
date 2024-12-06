@@ -120,6 +120,14 @@ const createDefaultFlow = Joi.object({
         })).required(),
 });
 
+const copyInteractionValidator = Joi.object({
+    interaction_id: Joi.string().required().messages({
+        "*": "Please enter valid interaction Id",
+    }),
+    folder_id: Joi.string().required().messages({
+        "*": "Please enter valid folder Id",
+    }),
+});
 
 module.exports = { 
     addFolderValidator, 
@@ -130,4 +138,5 @@ module.exports = {
     updateNodeValidator, 
     createDefaultFlow,
     updateCordinates,
+    copyInteractionValidator,
 }

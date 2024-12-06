@@ -54,5 +54,7 @@ router.get("/get-library/:organization_id",
     interactionsController.getMediaLibrary
 );
 
+router.post("/copy-interaction",isAuthenticated,validateRequest(interactionsValidation.updateInteractionValidator),interactionsController.copyInteraction);
+
 
 module.exports = router;
