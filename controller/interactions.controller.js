@@ -174,13 +174,18 @@ const getInteractionList = catchAsyncError(async (req, res) => {
     data.map(async (val) => {
       const getNodes = await interactions_services.get_flow_list({
         interaction_id: val._id,
+        is_deleted:false,
       });
-      const nodesWithThumbnails = getNodes.filter(
-        (node) => node.video_thumbnail
-      );
-      val.thumbnailUrl = nodesWithThumbnails?.length
-        ? nodesWithThumbnails[0].video_thumbnail
-        : "";
+      if(getNodes?.length){
+        const nodesWithThumbnails = getNodes.filter(
+          (node) => node.video_thumbnail
+        );
+        val.thumbnailUrl = nodesWithThumbnails?.length
+          ? nodesWithThumbnails[0].video_thumbnail
+          : "";
+      }else{
+        val.thumbnailUrl ="";
+      }
     })
   );
   return response200(res, msg.fetch_success, data);
