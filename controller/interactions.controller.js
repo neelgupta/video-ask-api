@@ -493,16 +493,15 @@ const copyInteraction = catchAsyncError(async (req, res) => {
   if (interactionData?.length && interactionData?.[0]?.nodes?.length) {
     const nodes = interactionData[0].nodes;
 
-    let nodeIds = []; // Array to store the created node IDs
-    let oldEdgesToUpdate = []; // Array to track the edges
+    let nodeIds = [];
+    let oldEdgesToUpdate = [];
 
-    // Create new nodes and store their IDs first
     let endNode = null;
     let endNodeId;
     const filteredNodes = nodes.filter((node) => {
       if (node.type === "End") {
-        endNode = node; // Save the "End" node separately
-        return false; // Exclude it from the filtered list
+        endNode = node; 
+        return false;
       }
       return true;
     });
@@ -511,26 +510,26 @@ const copyInteraction = catchAsyncError(async (req, res) => {
       node.interaction_id = newInteraction._id;
       node.added_by = Id;
 
-      // Exclude unnecessary fields like _id, createdAt, updatedAt, __v
+      if(node?.video_url){
+        const videoData = await copyVideoInCloudinary(node?.video_url,`${CloudFolder}/${Id}/${folderData?.folder_name}/${newInteraction?._id}`)
+        node.video_url = videoData?.videoUrl;
+        node.video_thumbnail = videoData?.thumbnailUrl;
+      }
+
       const { _id, createdAt, updatedAt, __v, ...rest } = node;
 
       // Create a new node and get its ID
       const newNode = await interactions_services.add_Node(rest);
-      nodeIds.push(newNode._id); // Store the newly created node's ID
-
-      // console.log(`Created node ${index} with ID: ${newNode._id}`);
-
-      // Ensure nodeIds is updated correctly
-      // console.log("🚀 ~ Current nodeIds:", nodeIds);
+      nodeIds.push(newNode?._id);
 
       // Track start node (first node)
       if (index === 0) {
-        startNodeId = newNode._id;
+        startNodeId = newNode?._id;
       }
 
       // Track end node (last node) will be handled after all nodes are added
       if (index === filteredNodes.length - 1) {
-        endNodeId = newNode._id;
+        endNodeId = newNode?._id;
       }
     }
 
@@ -539,20 +538,11 @@ const copyInteraction = catchAsyncError(async (req, res) => {
       endNode.interaction_id = newInteraction._id;
       endNode.added_by = Id;
 
-      // Exclude unnecessary fields like _id, createdAt, updatedAt, __v
       const { _id, createdAt, updatedAt, __v, ...rest } = endNode;
-
-      // Create the "End" node and get its ID
       const newEndNode = await interactions_services.add_Node(rest);
-      nodeIds.push(newEndNode._id); // Store the newly created "End" node's ID
+      nodeIds.push(newEndNode._id);
 
-      // console.log(`Created "End" node with ID: ${newEndNode._id}`);
-
-      // Update the endNodeId for the "End" node
       endNodeId = newEndNode._id;
-
-      // Ensure nodeIds is updated correctly
-      // console.log("🚀 ~ Current nodeIds after End node:", nodeIds);
     }
 
     // Now that all nodes are created and their IDs are stored, add the 'end' type node
@@ -560,11 +550,9 @@ const copyInteraction = catchAsyncError(async (req, res) => {
       const lastNodeId = nodeIds[nodeIds.length - 1];
       // Update the last node to have type 'end'
       const updatedEndNode = await interactions_services.update_Node(
-        { _id: lastNodeId }, // Find the last node by ID
-        { type: "End" } // Set its type to 'end'
+        { _id: lastNodeId },
+        { type: "End" }
       );
-
-      // console.log("Last node updated to 'end' type:", updatedEndNode);
     }
 
     // Now create edges between nodes
@@ -574,7 +562,6 @@ const copyInteraction = catchAsyncError(async (req, res) => {
 
       // Only create an edge if both source and target are valid
       if (sourceNodeId && targetNodeId) {
-        // console.log(`Creating edge from ${sourceNodeId} to ${targetNodeId}`);
 
         // Add edge to the update queue
         oldEdgesToUpdate.push({
@@ -586,12 +573,10 @@ const copyInteraction = catchAsyncError(async (req, res) => {
       }
     }
 
-    // 1. Update existing edges (if necessary) based on new node IDs
+    // 1) Update existing edges (if necessary) based on new node IDs
     for (const edge of oldEdgesToUpdate) {
-      // console.log("Updating edge:", edge);
-
       // Ensure both source and target are defined before updating
-      if (edge.source && edge.target) {
+      if (edge?.source && edge?.target) {
         await interactions_services.update_Edge(
           { interaction_id: newInteraction._id, source: edge.source },
           { target: edge.target }
@@ -601,7 +586,7 @@ const copyInteraction = catchAsyncError(async (req, res) => {
       }
     }
 
-    // 2. Create new edges between the new nodes (if no existing edges to update)
+    // 2) Create new edges between the new nodes (if no existing edges to update)
     for (let i = 0; i < nodeIds.length - 1; i++) {
       const sourceNodeId = nodeIds[i];
       const targetNodeId = nodeIds[i + 1];
