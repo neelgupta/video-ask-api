@@ -55,6 +55,9 @@ const msg = {
   sourceNotFound: "Source Id is not exists",
   targetNotFound: "Target Id is not exists",
   someThingsWrong:"Something is wrong",
+  paymentMethodAdd :"Payment method added successfully",
+  paymentMethodNotEXists :"Payment method is not exists",
+  // paymentMethodAdd :"Payment method added successfully",
 };
 
 const invitationTokenType = {
@@ -110,6 +113,7 @@ const modelName = {
   // FLOW: "Flow",
   EDGE: "Edge",
   NODE: "Node",
+  PAYMENT_METHOD:"Payment_method",
 };
 
 const subscriptionPlanType = {

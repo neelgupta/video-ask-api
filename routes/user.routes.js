@@ -44,6 +44,12 @@ router.get("/get-address-list", isAuthenticated, organizationController.getAddre
 router.put("/update-address", isAuthenticated, validateRequest(organizationValidation.updateAddressValidator), organizationController.updateAddress);
 router.delete("/delete-address/:address_id", isAuthenticated, organizationController.deleteAddress);
 
+// payment method routes
+router.post("/add-payment_method", isAuthenticated, validateRequest(organizationValidation.addPaymentMethodValidator), organizationController.addPaymentMethod);
+router.get("/get-payment_methods/:organization_id", isAuthenticated, organizationController.getPaymentMethods);
+router.put("/update-payment-method", isAuthenticated, validateRequest(organizationValidation.updatePaymentMethodValidator), organizationController.updatePaymentMethod);
+router.delete("/delete-payment-method/:payment_method_id", isAuthenticated, organizationController.deletePaymentMethod);
+
 // referral routes
 router.post("/add-referrals", isAuthenticated, validateRequest(organizationValidation.addReferralValidator), organizationController.addReferral);
 router.get("/get-referrals/:organization_id", isAuthenticated, organizationController.getReferrals);

@@ -9,3 +9,4 @@ module.exports.Folder = require("./Folder");
 module.exports.Interaction = require("./Interaction");
 module.exports.Node = require("./Node");
 module.exports.Edge = require("./Edge");
+module.exports.PaymentMethod = require("./PaymentMethod");

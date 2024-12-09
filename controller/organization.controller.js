@@ -259,6 +259,55 @@ const getSubscriptionPlans = catchAsyncError(async (req, res) => {
     return response200(res, msg.fetch_success, data);
 });
 
+const addPaymentMethod = catchAsyncError(async (req, res) => {
+    const { organization_id } = req.body;
+    const Id = req.user;
+
+    const paymentMethodData = await organization_services.get_payment_method_list({ organization_id, is_deleted: false });
+    if (!paymentMethodData?.length) req.body.is_primary = true;
+
+    const organizationData = await organization_services.get_organization({ _id: organization_id, is_deleted: false,added_by: Id });
+    if (!organizationData) return response400(res, msg.organizationNotExists);
+
+    req.body.user_id = Id;
+
+    const data = await organization_services.add_payment_method(req.body);
+
+    return response201(res, msg.paymentMethodAdd, data);
+});
+
+const getPaymentMethods = catchAsyncError(async (req, res) => {
+    const { organization_id } = req.params;
+    const Id = req.user;
+
+    const data = await organization_services.get_payment_method_list({ organization_id,user_id: Id, is_deleted: false }, { updatedAt: 0, __v: 0 });
+
+    return response200(res, msg.fetch_success, data);
+});
+
+const updatePaymentMethod = catchAsyncError(async (req, res) => {
+    const { payment_method_id } = req.body;
+
+    const paymentMethodData = await organization_services.get_payment_method_list({ _id: payment_method_id, is_deleted: false });
+
+    if (!paymentMethodData?.length) return response400(res, msg.paymentMethodNotEXists);
+
+    const data = await organization_services.update_payment_method({ _id: payment_method_id }, req.body);
+
+    return response200(res, msg.update_success, data);
+});
+
+const deletePaymentMethod = catchAsyncError(async (req, res) => {
+    const { payment_method_id } = req.params;
+
+    const paymentMethodData = await organization_services.get_payment_method_list({ _id: payment_method_id, is_deleted: false });
+    if (!paymentMethodData?.length) return response400(res, msg.paymentMethodNotEXists);
+
+    await organization_services.update_payment_method({ _id: payment_method_id }, { is_deleted: true });
+
+    return response200(res, msg.delete_success, []);
+});
+
 module.exports = {
     addOrganization,
     getOrganizationList,
@@ -276,4 +325,8 @@ module.exports = {
     addReferral,
     getReferrals,
     getSubscriptionPlans,
+    addPaymentMethod,
+    getPaymentMethods,
+    updatePaymentMethod,
+    deletePaymentMethod,
 }

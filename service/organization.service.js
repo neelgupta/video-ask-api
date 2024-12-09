@@ -147,6 +147,30 @@ const update_referral = async (query, payload) => {
     }
 }
 
+const add_payment_method = async (payload) => {
+    try {
+        return mongoService.createOne(modelName.PAYMENT_METHOD, payload);
+    } catch (error) {
+        return error
+    }
+}
+
+const get_payment_method_list = async (query, project) => {
+    try {
+        return mongoService.findAll(modelName.PAYMENT_METHOD, query, project)
+    } catch (error) {
+        return error
+    }
+}
+
+const update_payment_method = async (query, payload) => {
+    try {
+        return mongoService.updateOne(modelName.PAYMENT_METHOD, query, payload);
+    } catch (error) {
+        return error
+    }
+}
+
 module.exports = {
     add_organization,
     get_organization,
@@ -165,4 +189,7 @@ module.exports = {
     referral_list,
     add_referral,
     update_referral,
+    add_payment_method,
+    get_payment_method_list,
+    update_payment_method,
 }

@@ -129,6 +129,38 @@ const addReferralValidator = Joi.object({
     }),
 });
 
+const addPaymentMethodValidator = Joi.object({
+    organization_id: Joi.string().required().messages({
+        "*": "Please enter valid organization Id",
+    }),
+    card_type: Joi.string().required().messages({
+        "*": "Card type is required",
+    }),
+    card_number: Joi.string().required().messages({
+        "*": "Card number is required",
+    }),
+    cvv: Joi.string().required().messages({
+        "*": "CVV is required",
+    }),
+    expiry_date: Joi.date().required().messages({
+        "*": "Expiry Date is required",
+    }),
+    email: Joi.string().required().messages({
+        "*": "Email is required",
+    }),
+});
+
+const updatePaymentMethodValidator = Joi.object({
+    payment_method_id: Joi.string().required().messages({
+        "*": "Please enter valid payment method Id",
+    }),
+    card_type: Joi.string().optional(),
+    card_number: Joi.string().optional(),
+    cvv: Joi.string().optional(),
+    expiry_date: Joi.string().optional(),
+    email: Joi.string().optional(),
+});
+
 module.exports = {
     addOrganizationValidator,
     updateOrganizationValidator,
@@ -138,4 +170,6 @@ module.exports = {
     addAddressValidator,
     updateAddressValidator,
     addReferralValidator,
+    addPaymentMethodValidator,
+    updatePaymentMethodValidator,
 };
