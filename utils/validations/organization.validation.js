@@ -118,7 +118,7 @@ const updateAddressValidator = Joi.object({
     pinCode: Joi.string().optional(),
     country: Joi.string().optional(),
     email: Joi.string().optional(),
-    is_primary:Joi.boolean.optional(),
+    is_primary:Joi.boolean().optional(),
 });
 
 const addReferralValidator = Joi.object({
@@ -160,7 +160,7 @@ const updatePaymentMethodValidator = Joi.object({
     cvv: Joi.string().optional(),
     expiry_date: Joi.string().optional(),
     email: Joi.string().optional(),
-    is_primary:Joi.boolean.optional(),
+    is_primary:Joi.boolean().optional(),
 });
 
 module.exports = {
