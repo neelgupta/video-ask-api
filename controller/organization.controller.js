@@ -173,9 +173,12 @@ const deleteMember = catchAsyncError(async (req, res) => {
 });
 
 const addAddress = catchAsyncError(async (req, res) => {
+    const {organization_id} = req.body;
     const Id = req.user;
-
     req.body.user_id = Id;
+
+    const addressData = await organization_services.get_address_list({ organization_id, is_deleted: false });
+    if (!addressData?.length) req.body.is_primary = true;
 
     const data = await organization_services.add_address(req.body);
 

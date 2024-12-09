@@ -42,6 +42,10 @@ const addressSchema = new mongoose.Schema(
             enum: [addressType.Billing, addressType.Shipping],
             required: true,
         },
+        is_primary:{
+            type:Boolean,
+            default:false,
+        },
         is_deleted: {
             type: Boolean,
             default: false
