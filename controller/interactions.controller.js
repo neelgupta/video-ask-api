@@ -491,70 +491,77 @@ const copyInteraction = catchAsyncError(async (req, res) => {
   });
 
   if (interactionData?.length && interactionData?.[0]?.nodes?.length) {
-    const nodes = interactionData?.[0]?.nodes;
+    const nodes = interactionData[0].nodes;
 
-    let startNodeId = null; // Start node ID
-    let endNodeId = null; // End node ID
-    let firstIntermediateNodeId = null; // To track the third node
+    let startNodeId = null;
+    let endNodeId = null;
+    let intermediateNodeId = null;
 
-    for (const [index, val] of nodes.entries()) {
-      val.interaction_id = newInteraction._id;
-      val.added_by = Id;
+    for (const [index, node] of nodes.entries()) {
+      node.interaction_id = newInteraction._id;
+      node.added_by = Id;
 
       // Exclude unnecessary fields
-      const { _id, createdAt, updatedAt, __v, ...rest } = val;
+      const { _id, createdAt, updatedAt, __v, ...rest } = node;
 
-      // Add the node and get its ID
+      // Add node and get its ID
       const newNode = await interactions_services.add_Node(rest);
       const currentNodeId = newNode._id;
 
-      // Track start and end nodes
+      // Track start, end, and intermediate nodes
       if (index === 0) {
         startNodeId = currentNodeId;
       } else if (index === nodes.length - 1) {
         endNodeId = currentNodeId;
       } else {
-        // Handle intermediate node (third node)
-        if (!firstIntermediateNodeId) {
-          firstIntermediateNodeId = currentNodeId;
-
-          // Update first node's target to point to the third node
-          await interactions_services.update_Edge(
-            { interaction_id: newInteraction._id, source: startNodeId },
-            { target: firstIntermediateNodeId }
-          );
-
-          // Update end node's source to point to the third node
-          await interactions_services.update_Edge(
-            { interaction_id: newInteraction._id, target: endNodeId },
-            { source: firstIntermediateNodeId }
-          );
-        }
+        intermediateNodeId = currentNodeId;
       }
     }
 
-    // Ensure proper edge connections:
-    // Start Node → Third Node
-    if (startNodeId && firstIntermediateNodeId) {
+    // Manage edges: Update and create as required
+    if (startNodeId && endNodeId && intermediateNodeId) {
+    //   console.log("first startNodeId",startNodeId)
+    // console.log("first endNodeId",endNodeId)
+    // console.log("first intermediateNodeId",intermediateNodeId)
+      // Update the first edge: Start Node → Intermediate Node
+      await interactions_services.update_Edge(
+        { interaction_id: newInteraction._id, source: startNodeId },
+        { target: intermediateNodeId }
+        // { target: endNodeId }
+      );
+
+      // Update the second edge: Intermediate Node → End Node
+      await interactions_services.update_Edge(
+        { interaction_id: newInteraction._id, target: endNodeId },
+        { source: endNodeId }
+      );
+    }
+
+    // Create new edges if updates are not applicable
+    if (startNodeId && intermediateNodeId) {
+    //   console.log("second startNodeId",startNodeId)
+    // console.log("second endNodeId",endNodeId)
+    // console.log("second intermediateNodeId",intermediateNodeId)
       await interactions_services.add_Edge({
         interaction_id: newInteraction._id,
         source: startNodeId,
-        target: firstIntermediateNodeId,
-        added_by: Id,
-      });
-    }
-
-    // Third Node → End Node
-    if (firstIntermediateNodeId && endNodeId) {
-      await interactions_services.add_Edge({
-        interaction_id: newInteraction._id,
-        source: firstIntermediateNodeId,
         target: endNodeId,
         added_by: Id,
       });
     }
-  }
 
+    if (intermediateNodeId && endNodeId) {
+    //   console.log("third startNodeId",startNodeId)
+    // console.log("third endNodeId",endNodeId)
+    // console.log("third intermediateNodeId",intermediateNodeId)
+      await interactions_services.add_Edge({
+        interaction_id: newInteraction._id,
+        source: endNodeId,
+        target: intermediateNodeId,
+        added_by: Id,
+      });
+    }
+  }  
 
   return response200(res, msg.fetch_success, newInteraction);
 });

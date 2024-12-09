@@ -187,6 +187,14 @@ const getLibrary = async(query,search) => {
     }
 }
 
+const find_Edge = async(query) =>{
+    try {
+        return mongoService.findOne(modelName.EDGE, query);
+    } catch (error) {
+        return error
+    }
+}
+
 module.exports = {
     add_folder,
     get_folder_list,
@@ -206,4 +214,5 @@ module.exports = {
     getNodesList,
     update_Edge,
     getLibrary,
+    find_Edge,
 }
