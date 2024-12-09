@@ -493,75 +493,128 @@ const copyInteraction = catchAsyncError(async (req, res) => {
   if (interactionData?.length && interactionData?.[0]?.nodes?.length) {
     const nodes = interactionData[0].nodes;
 
-    let startNodeId = null;
-    let endNodeId = null;
-    let intermediateNodeId = null;
+    let nodeIds = []; // Array to store the created node IDs
+    let oldEdgesToUpdate = []; // Array to track the edges
 
-    for (const [index, node] of nodes.entries()) {
+    // Create new nodes and store their IDs first
+    let endNode = null;
+    let endNodeId;
+    const filteredNodes = nodes.filter((node) => {
+      if (node.type === "End") {
+        endNode = node; // Save the "End" node separately
+        return false; // Exclude it from the filtered list
+      }
+      return true;
+    });
+
+    for (const [index, node] of filteredNodes.entries()) {
       node.interaction_id = newInteraction._id;
       node.added_by = Id;
 
-      // Exclude unnecessary fields
+      // Exclude unnecessary fields like _id, createdAt, updatedAt, __v
       const { _id, createdAt, updatedAt, __v, ...rest } = node;
 
-      // Add node and get its ID
+      // Create a new node and get its ID
       const newNode = await interactions_services.add_Node(rest);
-      const currentNodeId = newNode._id;
+      nodeIds.push(newNode._id); // Store the newly created node's ID
 
-      // Track start, end, and intermediate nodes
+      // console.log(`Created node ${index} with ID: ${newNode._id}`);
+
+      // Ensure nodeIds is updated correctly
+      // console.log("🚀 ~ Current nodeIds:", nodeIds);
+
+      // Track start node (first node)
       if (index === 0) {
-        startNodeId = currentNodeId;
-      } else if (index === nodes.length - 1) {
-        endNodeId = currentNodeId;
-      } else {
-        intermediateNodeId = currentNodeId;
+        startNodeId = newNode._id;
+      }
+
+      // Track end node (last node) will be handled after all nodes are added
+      if (index === filteredNodes.length - 1) {
+        endNodeId = newNode._id;
       }
     }
 
-    // Manage edges: Update and create as required
-    if (startNodeId && endNodeId && intermediateNodeId) {
-    //   console.log("first startNodeId",startNodeId)
-    // console.log("first endNodeId",endNodeId)
-    // console.log("first intermediateNodeId",intermediateNodeId)
-      // Update the first edge: Start Node → Intermediate Node
-      await interactions_services.update_Edge(
-        { interaction_id: newInteraction._id, source: startNodeId },
-        { target: intermediateNodeId }
-        // { target: endNodeId }
-      );
+    // Now, process the "End" node if it exists
+    if (endNode) {
+      endNode.interaction_id = newInteraction._id;
+      endNode.added_by = Id;
 
-      // Update the second edge: Intermediate Node → End Node
-      await interactions_services.update_Edge(
-        { interaction_id: newInteraction._id, target: endNodeId },
-        { source: endNodeId }
-      );
+      // Exclude unnecessary fields like _id, createdAt, updatedAt, __v
+      const { _id, createdAt, updatedAt, __v, ...rest } = endNode;
+
+      // Create the "End" node and get its ID
+      const newEndNode = await interactions_services.add_Node(rest);
+      nodeIds.push(newEndNode._id); // Store the newly created "End" node's ID
+
+      // console.log(`Created "End" node with ID: ${newEndNode._id}`);
+
+      // Update the endNodeId for the "End" node
+      endNodeId = newEndNode._id;
+
+      // Ensure nodeIds is updated correctly
+      // console.log("🚀 ~ Current nodeIds after End node:", nodeIds);
     }
 
-    // Create new edges if updates are not applicable
-    if (startNodeId && intermediateNodeId) {
-    //   console.log("second startNodeId",startNodeId)
-    // console.log("second endNodeId",endNodeId)
-    // console.log("second intermediateNodeId",intermediateNodeId)
+    // Now that all nodes are created and their IDs are stored, add the 'end' type node
+    if (nodeIds.length > 0) {
+      const lastNodeId = nodeIds[nodeIds.length - 1];
+      // Update the last node to have type 'end'
+      const updatedEndNode = await interactions_services.update_Node(
+        { _id: lastNodeId }, // Find the last node by ID
+        { type: "End" } // Set its type to 'end'
+      );
+
+      // console.log("Last node updated to 'end' type:", updatedEndNode);
+    }
+
+    // Now create edges between nodes
+    for (let i = 0; i < nodeIds.length - 1; i++) {
+      const sourceNodeId = nodeIds[i];
+      const targetNodeId = nodeIds[i + 1];
+
+      // Only create an edge if both source and target are valid
+      if (sourceNodeId && targetNodeId) {
+        // console.log(`Creating edge from ${sourceNodeId} to ${targetNodeId}`);
+
+        // Add edge to the update queue
+        oldEdgesToUpdate.push({
+          source: sourceNodeId,
+          target: targetNodeId,
+        });
+      } else {
+        console.error("Missing source or target node for edge creation");
+      }
+    }
+
+    // 1. Update existing edges (if necessary) based on new node IDs
+    for (const edge of oldEdgesToUpdate) {
+      // console.log("Updating edge:", edge);
+
+      // Ensure both source and target are defined before updating
+      if (edge.source && edge.target) {
+        await interactions_services.update_Edge(
+          { interaction_id: newInteraction._id, source: edge.source },
+          { target: edge.target }
+        );
+      } else {
+        console.error("Missing source or target in edge", edge);
+      }
+    }
+
+    // 2. Create new edges between the new nodes (if no existing edges to update)
+    for (let i = 0; i < nodeIds.length - 1; i++) {
+      const sourceNodeId = nodeIds[i];
+      const targetNodeId = nodeIds[i + 1];
+
+      // Create the edge between the nodes
       await interactions_services.add_Edge({
         interaction_id: newInteraction._id,
-        source: startNodeId,
-        target: endNodeId,
+        source: sourceNodeId,
+        target: targetNodeId,
         added_by: Id,
       });
     }
-
-    if (intermediateNodeId && endNodeId) {
-    //   console.log("third startNodeId",startNodeId)
-    // console.log("third endNodeId",endNodeId)
-    // console.log("third intermediateNodeId",intermediateNodeId)
-      await interactions_services.add_Edge({
-        interaction_id: newInteraction._id,
-        source: endNodeId,
-        target: intermediateNodeId,
-        added_by: Id,
-      });
-    }
-  }  
+  }
 
   return response200(res, msg.fetch_success, newInteraction);
 });
