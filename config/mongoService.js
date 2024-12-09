@@ -106,6 +106,10 @@ const countDocument = async (modelName, criteria,) => {
   return await mongoose.model(modelName).countDocuments(criteria)
 }
 
+const deleteDocument = async (model, criteria) => {
+  return await mongoose.model(model).findOneAndDelete(criteria);
+}
+
 module.exports = {
   findOne,
   findOnePopulate,
@@ -117,4 +121,5 @@ module.exports = {
   aggregation,
   populate,
   countDocument,
+  deleteDocument,
 };

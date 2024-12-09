@@ -352,20 +352,53 @@ const updateNode = catchAsyncError(async (req, res) => {
 });
 
 const removeNode = catchAsyncError(async (req, res) => {
-  const { flow_id } = req.body;
+  const { node_id } = req.params;
 
-  const flowData = await interactions_services.get_single_node({
-    _id: flow_id,
+  const nodeData = await interactions_services.get_single_node({
+    _id: node_id,
     is_deleted: false,
   });
-  if (!flowData) return response400(res, msg.nodeNotExists);
+  if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  await interactions_services.update_Node(
-    { _id: flow_id },
-    { is_deleted: true }
-  );
+  const allEdges = await interactions_services.getNodesList(nodeData.interaction_id)
+  console.log("🚀 ~ removeNode ~ allEdges:", allEdges[0].edges)
 
-  return response200(res, msg.delete_success, []);
+  const sourceEdge = await interactions_services.find_Edge({
+    source:nodeData._id,
+    is_deleted:false
+  });
+
+  const targetEdge =  await interactions_services.find_Edge({
+    target:nodeData._id,
+    is_deleted:false
+  });
+
+  if(sourceEdge && targetEdge){
+
+    const updateEdgeTarget = await interactions_services.update_Edge( 
+      { _id: targetEdge._id },
+      { target: sourceEdge.target }
+    )
+  
+    console.log("sourceEdge._id ",sourceEdge._id )
+    const removeEdge = await interactions_services.remove_Edge( 
+      { _id: sourceEdge._id },
+    )
+  
+    console.log("nodeData",nodeData._id)
+    console.log("sourceEdge",sourceEdge)
+    console.log("targetEdge",targetEdge)
+  
+    await interactions_services.update_Node(
+      { _id: node_id },
+      { is_deleted: true }
+    );
+    return response200(res, msg.delete_success, []);
+  }else{
+    return response400(res, msg.someThingsWrong);
+  }
+
+
 });
 
 const createDefaultFlow = catchAsyncError(async (req, res) => {

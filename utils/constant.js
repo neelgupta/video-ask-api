@@ -54,6 +54,7 @@ const msg = {
   nodeNotExists: "Node is not exists",
   sourceNotFound: "Source Id is not exists",
   targetNotFound: "Target Id is not exists",
+  someThingsWrong:"Something is wrong",
 };
 
 const invitationTokenType = {
