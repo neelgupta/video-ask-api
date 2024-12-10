@@ -120,6 +120,7 @@ router.get(
   interactionsController.getArchivedInteractions
 );
 
+// remove permanently
 router.delete(
     "/delete-forever-interaction/:interaction_id",
     isAuthenticated,

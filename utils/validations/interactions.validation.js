@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const { interactionType, flowType, nodeType } = require("../constant");
+const { interactionType, flowType, nodeType, answerType } = require("../constant");
 
 const addFolderValidator = Joi.object({
     organization_id: Joi.string().required().messages({
@@ -47,6 +47,8 @@ const updateInteractionValidator = Joi.object({
         "*": "Please enter valid interaction Id",
     }),
     folder_id: Joi.string().optional(),
+    answer_type: Joi.string().valid(...Object.values(answerType)).optional(),
+    answer_format:Joi.array().optional(),
     is_deleted:Joi.boolean().optional(),
 });
 

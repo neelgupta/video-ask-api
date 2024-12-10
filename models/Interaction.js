@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { modelName, interactionType, flowType } = require("../utils/constant");
+const { modelName, interactionType, answerType } = require("../utils/constant");
 
 const interactionSchema = new mongoose.Schema(
     {
@@ -30,6 +30,15 @@ const interactionSchema = new mongoose.Schema(
             type: mongoose.Types.ObjectId,
             ref: modelName.FOLDER,
         },
+        answer_type: {
+            type: String,
+            enum: Object.values(answerType), // Use Object.values for enum
+        },
+        answer_format: [
+            {
+                type: mongoose.Schema.Types.Mixed,
+            },
+        ],
         added_by: {
             type: mongoose.Types.ObjectId,
             ref: modelName.USER,

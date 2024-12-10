@@ -143,6 +143,18 @@ const nodeType = {
   Question: "Question",
 }
 
+const answerType = Object.freeze({
+  OpenEnded:"open-ended",
+  AIChatbot: "ai-chatbot",
+  MultipleChoice: "multiple-choice",
+  Button: "button",
+  Calender: "calender",
+  LiveCall: "live-call",
+  NPS: "nps",
+  FileUpload: "file-upload",
+  Payment: "payment",
+});
+
 const hashPassword = (password) => {
   return bcrypt.hashSync(password, 10);
 };
@@ -206,6 +218,7 @@ module.exports = {
   interactionType,
   flowType,
   nodeType,
+  answerType,
   hashPassword,
   validatePassword,
   generateUUID,
