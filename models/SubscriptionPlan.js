@@ -31,6 +31,18 @@ const Schema = mongoose.Schema(
       type: String,
       required: true,
     },
+    page:{
+      type:Number,
+      required:true
+    },
+    storage:{
+      type:Number,
+      required:true
+    },
+    members:{
+      type:Number,
+      required:true
+    },
     discount: {
       type: String,
     },

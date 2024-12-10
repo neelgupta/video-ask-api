@@ -12,6 +12,15 @@ const addPlanValidator = Joi.object({
     price: Joi.string().required().messages({
         "*": "Please enter Price",
     }),
+    page: Joi.number().required().messages({
+        "*": "Please enter Page",
+    }),
+    storage: Joi.number().required().messages({
+        "*": "Please enter Storage",
+    }),
+    members: Joi.number().required().messages({
+        "*": "Please enter Members",
+    }),
     description: Joi.array()
         .items(Joi.string().required())
         .min(1)
@@ -34,6 +43,9 @@ const updatePlanValidator = Joi.object({
     plan_type: Joi.string().optional().valid(subscriptionPlanType.Free, subscriptionPlanType.Basic, subscriptionPlanType.Pro, subscriptionPlanType.Enterprise),
     subTitle: Joi.string().optional(),
     price: Joi.string().optional(),
+    page: Joi.number().optional(),
+    storage: Joi.number().optional(),
+    members: Joi.number().optional(),
     description: Joi.array()
         .items(Joi.string().required())
         .min(1)

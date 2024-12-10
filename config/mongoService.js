@@ -110,6 +110,10 @@ const deleteDocument = async (model, criteria) => {
   return await mongoose.model(model).findOneAndDelete(criteria);
 }
 
+const deleteManyDocument = async(model, criteria) =>{
+  return await mongoose.model(model).deleteMany(criteria);
+}
+
 module.exports = {
   findOne,
   findOnePopulate,
@@ -122,4 +126,5 @@ module.exports = {
   populate,
   countDocument,
   deleteDocument,
+  deleteManyDocument,
 };

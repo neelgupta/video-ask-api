@@ -130,6 +130,7 @@ const update_Edge = async (query, payload) => {
   }
 };
 
+// delete permanently
 const remove_Edge = async (query) => {
   try {
     return mongoService.deleteDocument(modelName.EDGE, query);
@@ -137,6 +138,33 @@ const remove_Edge = async (query) => {
     return error;
   }
 };
+
+// delete permanently
+remove_multiple_Edge  = async (query) => {
+  try {
+    return mongoService.deleteManyDocument(modelName.EDGE, query);
+  } catch (error) {
+    return error;
+  }
+};
+
+// delete permanently
+const remove_Node = async (query) => {
+  try {
+    return mongoService.deleteManyDocument(modelName.NODE, query);
+  } catch (error) {
+    return error;
+  }
+};
+
+// delete permanently
+const remove_interaction = async(query) =>{
+  try {
+    return mongoService.deleteDocument(modelName.INTERACTION, query);
+  } catch (error) {
+    return error;
+  }
+}
 
 const getNodesList = async (interactionId) => {
   try {
@@ -234,4 +262,6 @@ module.exports = {
   getLibrary,
   find_Edge,
   remove_Edge,
+  remove_Node,
+  remove_interaction,
 };

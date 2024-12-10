@@ -46,9 +46,8 @@ const updateInteractionValidator = Joi.object({
     interaction_id: Joi.string().required().messages({
         "*": "Please enter valid interaction Id",
     }),
-    folder_id: Joi.string().required().messages({
-        "*": "Please enter valid folder Id",
-    }),
+    folder_id: Joi.string().optional(),
+    is_deleted:Joi.boolean().optional(),
 });
 
 const createNodeValidator = Joi.object({

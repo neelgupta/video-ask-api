@@ -174,17 +174,17 @@ const getInteractionList = catchAsyncError(async (req, res) => {
     data.map(async (val) => {
       const getNodes = await interactions_services.get_flow_list({
         interaction_id: val._id,
-        is_deleted:false,
+        is_deleted: false,
       });
-      if(getNodes?.length){
+      if (getNodes?.length) {
         const nodesWithThumbnails = getNodes.filter(
           (node) => node.video_thumbnail
         );
         val.thumbnailUrl = nodesWithThumbnails?.length
           ? nodesWithThumbnails[0].video_thumbnail
           : "";
-      }else{
-        val.thumbnailUrl ="";
+      } else {
+        val.thumbnailUrl = "";
       }
     })
   );
@@ -194,15 +194,17 @@ const getInteractionList = catchAsyncError(async (req, res) => {
 const updateInteraction = catchAsyncError(async (req, res) => {
   const { folder_id, interaction_id } = req.body;
 
-  const folderData = await interactions_services.get_single_folder({
-    _id: folder_id,
-    is_deleted: false,
-  });
-  if (!folderData) return response400(res, msg.folderIsNotExists);
+  if (folder_id) {
+    const folderData = await interactions_services.get_single_folder({
+      _id: folder_id,
+      is_deleted: false,
+    });
+    if (!folderData) return response400(res, msg.folderIsNotExists);
+  }
 
   const interactionData = await interactions_services.get_single_interaction({
     _id: interaction_id,
-    is_deleted: false,
+    // is_deleted: false,
   });
   if (!interactionData) return response400(res, msg.interactionIsNotExists);
 
@@ -365,45 +367,38 @@ const removeNode = catchAsyncError(async (req, res) => {
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  const allEdges = await interactions_services.getNodesList(nodeData.interaction_id)
-  console.log("🚀 ~ removeNode ~ allEdges:", allEdges[0].edges)
+  const allEdges = await interactions_services.getNodesList(
+    nodeData.interaction_id
+  );
 
   const sourceEdge = await interactions_services.find_Edge({
-    source:nodeData._id,
-    is_deleted:false
+    source: nodeData._id,
+    is_deleted: false,
   });
 
-  const targetEdge =  await interactions_services.find_Edge({
-    target:nodeData._id,
-    is_deleted:false
+  const targetEdge = await interactions_services.find_Edge({
+    target: nodeData._id,
+    is_deleted: false,
   });
 
-  if(sourceEdge && targetEdge){
-
-    const updateEdgeTarget = await interactions_services.update_Edge( 
+  if (sourceEdge && targetEdge) {
+    const updateEdgeTarget = await interactions_services.update_Edge(
       { _id: targetEdge._id },
       { target: sourceEdge.target }
-    )
-  
-    console.log("sourceEdge._id ",sourceEdge._id )
-    const removeEdge = await interactions_services.remove_Edge( 
-      { _id: sourceEdge._id },
-    )
-  
-    console.log("nodeData",nodeData._id)
-    console.log("sourceEdge",sourceEdge)
-    console.log("targetEdge",targetEdge)
-  
+    );
+
+    const removeEdge = await interactions_services.remove_Edge({
+      _id: sourceEdge._id,
+    });
+
     await interactions_services.update_Node(
       { _id: node_id },
       { is_deleted: true }
     );
     return response200(res, msg.delete_success, []);
-  }else{
+  } else {
     return response400(res, msg.someThingsWrong);
   }
-
-
 });
 
 const createDefaultFlow = catchAsyncError(async (req, res) => {
@@ -538,7 +533,7 @@ const copyInteraction = catchAsyncError(async (req, res) => {
     let endNodeId;
     const filteredNodes = nodes.filter((node) => {
       if (node.type === "End") {
-        endNode = node; 
+        endNode = node;
         return false;
       }
       return true;
@@ -548,8 +543,11 @@ const copyInteraction = catchAsyncError(async (req, res) => {
       node.interaction_id = newInteraction._id;
       node.added_by = Id;
 
-      if(node?.video_url){
-        const videoData = await copyVideoInCloudinary(node?.video_url,`${CloudFolder}/${Id}/${folderData?.folder_name}/${newInteraction?._id}`)
+      if (node?.video_url) {
+        const videoData = await copyVideoInCloudinary(
+          node?.video_url,
+          `${CloudFolder}/${Id}/${folderData?.folder_name}/${newInteraction?._id}`
+        );
         node.video_url = videoData?.videoUrl;
         node.video_thumbnail = videoData?.thumbnailUrl;
       }
@@ -600,7 +598,6 @@ const copyInteraction = catchAsyncError(async (req, res) => {
 
       // Only create an edge if both source and target are valid
       if (sourceNodeId && targetNodeId) {
-
         // Add edge to the update queue
         oldEdgesToUpdate.push({
           source: sourceNodeId,
@@ -642,6 +639,46 @@ const copyInteraction = catchAsyncError(async (req, res) => {
   return response200(res, msg.fetch_success, newInteraction);
 });
 
+const getArchivedInteractions = catchAsyncError(async (req, res) => {
+  const { organization_id } = req.params;
+
+  const organizationData = await organization_services.get_organization({
+    _id: organization_id,
+    is_deleted: false,
+  });
+  if (!organizationData) return response400(res, msg.organizationNotExists);
+
+  const interactionList = await interactions_services.get_all_interactions({
+    organization_id,
+    is_deleted: true,
+  });
+
+  return response200(res, msg.fetch_success, interactionList);
+});
+
+// remove permanently
+const removeForeverInteraction = catchAsyncError(async (req, res) => {
+  const { interaction_id } = req.params;
+
+  const interactionData = await interactions_services.get_single_interaction({
+    _id: interaction_id,
+    is_deleted: true,
+  });
+
+  if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+  const removeEdges = await interactions_services.remove_Edge({
+    interaction_id,
+  });
+  const removeNodes = await interactions_services.remove_Node({
+    interaction_id,
+  });
+
+  await interactions_services.remove_interaction({ _id: interaction_id });
+
+  return response200(res, msg.delete_success, []);
+});
+
 module.exports = {
   addFolder,
   getFolderList,
@@ -659,4 +696,6 @@ module.exports = {
   updateCordinates,
   getMediaLibrary,
   copyInteraction,
+  getArchivedInteractions,
+  removeForeverInteraction,
 };
