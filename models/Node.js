@@ -42,6 +42,9 @@ const nodeSchema = new mongoose.Schema(
         video_align: {
             type: Boolean,
         },
+        video_duration:{
+            type:String,
+        },
         video_position: {
             type: String,
         },
