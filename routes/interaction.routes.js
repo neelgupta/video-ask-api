@@ -68,7 +68,7 @@ router.post(
 
 router.get(
   "/get-nodes/:interaction_id",
-  isAuthenticated,
+  // isAuthenticated,
   interactionsController.getNodes
 );
 
