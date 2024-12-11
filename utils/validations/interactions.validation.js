@@ -103,7 +103,7 @@ const updateNodeValidator = Joi.object({
         .optional(),
     video_align: Joi.boolean().optional(),
     video_duration: Joi.boolean().optional(),
-    overlay_text: Joi.string().optional(),
+    overlay_text: Joi.string().optional().allow(""),
     answer_type: Joi.string().valid(...Object.values(answerType)).optional(),
     answer_format:Joi.array().optional(),
     text_size: Joi.string().optional(),
