@@ -82,6 +82,13 @@ router.put(
 );
 
 router.put(
+  "/update-answer-format",
+  isAuthenticated,
+  validateRequest(interactionsValidation.updateAnswerFormatValidator),
+  interactionsController.updateNodeAnswerFormat
+);
+
+router.put(
   "/update-cordinates",
   isAuthenticated,
   validateRequest(interactionsValidation.updateCordinates),

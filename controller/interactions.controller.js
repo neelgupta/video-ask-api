@@ -685,6 +685,21 @@ const removeForeverInteraction = catchAsyncError(async (req, res) => {
   return response200(res, msg.delete_success, []);
 });
 
+const updateNodeAnswerFormat = catchAsyncError(async(req,res)=>{
+  const Id = req.user;
+  const { node_id } = req.body;
+
+  const nodeData = await interactions_services.get_single_node({
+    _id: node_id,
+    is_deleted: false,
+  });
+  if (!nodeData) return response400(res, msg.nodeNotExists);
+
+  await interactions_services.update_Node({ _id: node_id }, req.body);
+
+  return response200(res, msg.update_success, []);
+});
+
 module.exports = {
   addFolder,
   getFolderList,
@@ -704,4 +719,5 @@ module.exports = {
   copyInteraction,
   getArchivedInteractions,
   removeForeverInteraction,
+  updateNodeAnswerFormat,
 };

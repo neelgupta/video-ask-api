@@ -86,7 +86,7 @@ const createNodeValidator = Joi.object({
     sourceId: Joi.string().required(),
     targetId: Joi.string().required(),
     answer_type: Joi.string().valid(...Object.values(answerType)).optional(),
-    answer_format:Joi.array().optional(),
+    answer_format:Joi.any().optional(),
 });
 
 const updateNodeValidator = Joi.object({
@@ -105,15 +105,12 @@ const updateNodeValidator = Joi.object({
     video_duration: Joi.boolean().optional(),
     overlay_text: Joi.string().optional().allow(""),
     answer_type: Joi.string().valid(...Object.values(answerType)).optional(),
-    answer_format:Joi.array().optional(),
     text_size: Joi.string().optional(),
     fade_reveal: Joi.string().optional(),
     video_position: Joi.string().optional(),
     title: Joi.string().optional(),
     sourceId: Joi.string().optional(),
     targetId: Joi.string().optional(),
-    answer_type: Joi.string().valid(...Object.values(answerType)).optional(),
-    answer_format:Joi.array().optional(),
 });
 
 const updateCordinates = Joi.object({
@@ -127,6 +124,14 @@ const updateCordinates = Joi.object({
                 }).required(),
             })
         ).required(),
+});
+
+const updateAnswerFormatValidator = Joi.object({
+    node_id: Joi.string().required().messages({
+        "*": "Please enter valid Node Id",
+    }),
+    answer_type: Joi.string().valid(...Object.values(answerType)).optional(),
+    answer_format:Joi.any().optional(),
 });
 
 const createDefaultFlow = Joi.object({
@@ -163,4 +168,5 @@ module.exports = {
     createDefaultFlow,
     updateCordinates,
     copyInteractionValidator,
+    updateAnswerFormatValidator,
 }
