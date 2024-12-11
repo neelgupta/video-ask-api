@@ -329,10 +329,10 @@ const updateCordinates = catchAsyncError(async (req, res) => {
 
 const updateNode = catchAsyncError(async (req, res) => {
   const Id = req.user;
-  const { flow_id } = req.body;
+  const { node_id } = req.body;
 
   const flowData = await interactions_services.get_single_node({
-    _id: flow_id,
+    _id: node_id,
     is_deleted: false,
   });
   if (!flowData) return response400(res, msg.nodeNotExists);
@@ -357,7 +357,7 @@ const updateNode = catchAsyncError(async (req, res) => {
     req.body.video_url = uploadedFile.videoUrl;
   }
 
-  await interactions_services.update_Node({ _id: flow_id }, req.body);
+  await interactions_services.update_Node({ _id: node_id }, req.body);
 
   return response200(res, msg.update_success, []);
 });

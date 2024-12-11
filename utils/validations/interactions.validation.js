@@ -90,7 +90,7 @@ const createNodeValidator = Joi.object({
 });
 
 const updateNodeValidator = Joi.object({
-    flow_id: Joi.string().required().messages({
+    node_id: Joi.string().required().messages({
         "*": "Please enter valid flow Id",
     }),
     flow_type: Joi.string().optional().valid(flowType.Webcam, flowType.Upload, flowType.Screen, flowType.Library, flowType.FlowAI),
