@@ -17,6 +17,15 @@ const updateFolderValidator = Joi.object({
     folder_name: Joi.string().optional(),
 });
 
+const contactDetailsSchema = Joi.object({
+    is_name: Joi.boolean().optional(), // Validates as boolean with a default value
+    is_email: Joi.boolean().optional(),
+    is_phone: Joi.boolean().optional(),
+    is_product: Joi.boolean().optional(),
+    is_note: Joi.boolean().optional(),
+    note: Joi.string().optional().allow(""), // Allows empty string and sets default
+});
+
 const addInteractionValidator = Joi.object({
     organization_id: Joi.string().required().messages({
         "*": "Please enter valid organization Id",
@@ -39,7 +48,9 @@ const addInteractionValidator = Joi.object({
                 y: Joi.number().required(),
             }).required(),
             title: Joi.string().required(),
+            answer_format:Joi.object().optional(),
         })).required(),
+    contact_details: contactDetailsSchema.optional(),
 });
 
 const updateInteractionValidator = Joi.object({
@@ -47,9 +58,8 @@ const updateInteractionValidator = Joi.object({
         "*": "Please enter valid interaction Id",
     }),
     folder_id: Joi.string().optional(),
-    answer_type: Joi.string().valid(...Object.values(answerType)).optional(),
-    answer_format:Joi.array().optional(),
     is_deleted:Joi.boolean().optional(),
+    contact_details: contactDetailsSchema.optional(),
 });
 
 const createNodeValidator = Joi.object({
@@ -73,6 +83,8 @@ const createNodeValidator = Joi.object({
     title: Joi.string().required(),
     sourceId: Joi.string().required(),
     targetId: Joi.string().required(),
+    answer_type: Joi.string().valid(...Object.values(answerType)).optional(),
+    answer_format:Joi.array().optional(),
 });
 
 const updateNodeValidator = Joi.object({
@@ -89,6 +101,8 @@ const updateNodeValidator = Joi.object({
         .optional(),
     video_align: Joi.boolean().optional(),
     overlay_text: Joi.string().optional(),
+    answer_type: Joi.string().valid(...Object.values(answerType)).optional(),
+    answer_format:Joi.array().optional(),
     text_size: Joi.string().optional(),
     fade_reveal: Joi.string().optional(),
 });

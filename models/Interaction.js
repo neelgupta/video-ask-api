@@ -30,15 +30,32 @@ const interactionSchema = new mongoose.Schema(
             type: mongoose.Types.ObjectId,
             ref: modelName.FOLDER,
         },
-        answer_type: {
-            type: String,
-            enum: Object.values(answerType), // Use Object.values for enum
-        },
-        answer_format: [
-            {
-                type: mongoose.Schema.Types.Mixed,
+        contact_details:{
+            is_name: {
+                type: Boolean,
+                default:false,
             },
-        ],
+            is_email: {
+                type: Boolean,
+                default:false,
+            },
+            is_phone: {
+                type: Boolean,
+                default:false,
+            },
+            is_product: {
+                type: Boolean,
+                default:false,
+            },
+            is_note: {
+                type: Boolean,
+                default:false,
+            },
+            note:{
+                type: String, 
+                default:"",
+            },
+        },
         added_by: {
             type: mongoose.Types.ObjectId,
             ref: modelName.USER,

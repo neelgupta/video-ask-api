@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { modelName, flowType } = require("../utils/constant");
+const { modelName, flowType, answerType } = require("../utils/constant");
 
 const nodeSchema = new mongoose.Schema(
     {
@@ -59,9 +59,11 @@ const nodeSchema = new mongoose.Schema(
         },
         answer_type: {
             type: String,
+            enum: Object.values(answerType), // Use Object.values for enum
         },
         answer_format: {
-            type: Object,
+            type: mongoose.Schema.Types.Mixed,
+            default: {},
         },
         collect_contact: {
             type: Boolean,
@@ -71,7 +73,7 @@ const nodeSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         }
-    }, { timestamps: true }
+    }, { minimize: false,timestamps: true },
 );
 
 module.exports = mongoose.model(modelName.NODE, nodeSchema);

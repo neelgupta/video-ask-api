@@ -123,6 +123,7 @@ const createInteraction = catchAsyncError(async (req, res) => {
             position: val.position,
             title: val.title,
             added_by: Id,
+            answer_format: val.answer_format || {}, 
           });
           sourceId = nodeData._id;
           // targetId = nodeData._id;
@@ -135,6 +136,7 @@ const createInteraction = catchAsyncError(async (req, res) => {
             position: val.position,
             title: val.title,
             added_by: Id,
+            answer_format: val.answer_format || {}, 
           });
           // sourceId = nodeData._id;
           targetId = nodeData._id;
@@ -260,6 +262,7 @@ const createNode = catchAsyncError(async (req, res) => {
   });
 
   req.body.added_by = Id;
+  req.body.answer_format ={};
   req.body.position = {
     x: positionX,
     y: positionY,
@@ -426,6 +429,7 @@ const createDefaultFlow = catchAsyncError(async (req, res) => {
             position: val.position,
             title: val.title,
             added_by: Id,
+            answer_format:{},
           });
           sourceId = nodeData._id;
         }
@@ -437,6 +441,7 @@ const createDefaultFlow = catchAsyncError(async (req, res) => {
             position: val.position,
             title: val.title,
             added_by: Id,
+            answer_format:{},
           });
           targetId = nodeData._id;
         }
