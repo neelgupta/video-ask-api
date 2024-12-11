@@ -107,6 +107,11 @@ const updateNodeValidator = Joi.object({
     answer_format:Joi.array().optional(),
     text_size: Joi.string().optional(),
     fade_reveal: Joi.string().optional(),
+    title: Joi.string().optional(),
+    sourceId: Joi.string().optional(),
+    targetId: Joi.string().optional(),
+    answer_type: Joi.string().valid(...Object.values(answerType)).optional(),
+    answer_format:Joi.array().optional(),
 });
 
 const updateCordinates = Joi.object({
