@@ -267,6 +267,7 @@ const createNode = catchAsyncError(async (req, res) => {
     options: ["Audio", "Video", "Text"],
     time_limit: "10",
     delay: "0 Sec",
+    contact_form: false
   };
   req.body.position = {
     x: positionX,
