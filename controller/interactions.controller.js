@@ -9,7 +9,7 @@ const {
 } = require("../lib/uploader/upload");
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { organization_services, interactions_services } = require("../service");
-const { msg, CloudFolder, nodeType } = require("../utils/constant");
+const { msg, CloudFolder, nodeType, answerType } = require("../utils/constant");
 
 const addFolder = catchAsyncError(async (req, res) => {
   const Id = req.user;
@@ -262,7 +262,12 @@ const createNode = catchAsyncError(async (req, res) => {
   });
 
   req.body.added_by = Id;
-  req.body.answer_format ={};
+  req.body.answer_type = answerType.OpenEnded;
+  req.body.answer_format ={
+    options: ["Audio", "Video", "Text"],
+    time_limit: "10",
+    delay: "0 Sec",
+  };
   req.body.position = {
     x: positionX,
     y: positionY,
