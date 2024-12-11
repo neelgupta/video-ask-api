@@ -328,6 +328,7 @@ const updateCordinates = catchAsyncError(async (req, res) => {
 });
 
 const updateNode = catchAsyncError(async (req, res) => {
+  const Id = req.user;
   const { flow_id } = req.body;
 
   const flowData = await interactions_services.get_single_node({
