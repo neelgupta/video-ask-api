@@ -706,6 +706,30 @@ const updateNodeAnswerFormat = catchAsyncError(async(req,res)=>{
   return response200(res, msg.update_success, []);
 });
 
+const collectAnswer = catchAsyncError(async(req,res)=>{
+  const {interaction_id,node_id,answer_format,answer_type,answer,contact_name,contact_email} = req.body;
+
+  const interactionData = await interactions_services.get_single_interaction({
+    _id: interaction_id,
+    is_deleted: false,
+  });
+
+  if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+  const nodeData = await interactions_services.get_single_node({
+    _id: node_id,
+    is_deleted: false,
+  });
+  if (!nodeData) return response400(res, msg.nodeNotExists);
+
+  if(answer_type !== nodeData.answer_type){
+    return response400(res,msg.answerTypeNotMatched);
+  }
+
+  // if()
+
+});
+
 module.exports = {
   addFolder,
   getFolderList,
@@ -726,4 +750,5 @@ module.exports = {
   getArchivedInteractions,
   removeForeverInteraction,
   updateNodeAnswerFormat,
+  collectAnswer,
 };

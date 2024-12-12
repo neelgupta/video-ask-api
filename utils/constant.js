@@ -57,7 +57,7 @@ const msg = {
   someThingsWrong:"Something is wrong",
   paymentMethodAdd :"Payment method added successfully",
   paymentMethodNotEXists :"Payment method is not exists",
-  // paymentMethodAdd :"Payment method added successfully",
+  answerTypeNotMatched :"Answer type is not matched with the flow answer type",
 };
 
 const invitationTokenType = {
@@ -114,6 +114,7 @@ const modelName = {
   EDGE: "Edge",
   NODE: "Node",
   PAYMENT_METHOD:"Payment_method",
+  NODE_ANSWER:"Node_answer"
 };
 
 const subscriptionPlanType = {
