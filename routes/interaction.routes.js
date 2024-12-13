@@ -134,4 +134,10 @@ router.delete(
     interactionsController.removeForeverInteraction
   );
 
+  router.get(
+    "/get-interaction-contact/:interaction_id",
+    isAuthenticated,
+    interactionsController.getInteractionContactDetails
+  );
+
 module.exports = router;

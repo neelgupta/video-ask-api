@@ -123,7 +123,7 @@ const createInteraction = catchAsyncError(async (req, res) => {
             position: val.position,
             title: val.title,
             added_by: Id,
-            answer_format: val.answer_format || {}, 
+            answer_format: val.answer_format || {},
           });
           sourceId = nodeData._id;
           // targetId = nodeData._id;
@@ -136,7 +136,7 @@ const createInteraction = catchAsyncError(async (req, res) => {
             position: val.position,
             title: val.title,
             added_by: Id,
-            answer_format: val.answer_format || {}, 
+            answer_format: val.answer_format || {},
           });
           // sourceId = nodeData._id;
           targetId = nodeData._id;
@@ -263,11 +263,11 @@ const createNode = catchAsyncError(async (req, res) => {
 
   req.body.added_by = Id;
   req.body.answer_type = answerType.OpenEnded;
-  req.body.answer_format ={
+  req.body.answer_format = {
     options: ["Audio", "Video", "Text"],
     time_limit: "10",
     delay: "0 Sec",
-    contact_form: false
+    contact_form: false,
   };
   req.body.position = {
     x: positionX,
@@ -436,7 +436,7 @@ const createDefaultFlow = catchAsyncError(async (req, res) => {
             position: val.position,
             title: val.title,
             added_by: Id,
-            answer_format:{},
+            answer_format: {},
           });
           sourceId = nodeData._id;
         }
@@ -448,7 +448,7 @@ const createDefaultFlow = catchAsyncError(async (req, res) => {
             position: val.position,
             title: val.title,
             added_by: Id,
-            answer_format:{},
+            answer_format: {},
           });
           targetId = nodeData._id;
         }
@@ -691,7 +691,7 @@ const removeForeverInteraction = catchAsyncError(async (req, res) => {
   return response200(res, msg.delete_success, []);
 });
 
-const updateNodeAnswerFormat = catchAsyncError(async(req,res)=>{
+const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
   const Id = req.user;
   const { node_id } = req.body;
 
@@ -706,8 +706,30 @@ const updateNodeAnswerFormat = catchAsyncError(async(req,res)=>{
   return response200(res, msg.update_success, []);
 });
 
-const collectAnswer = catchAsyncError(async(req,res)=>{
-  const {interaction_id,node_id,answer_format,answer_type,answer,contact_name,contact_email} = req.body;
+const getInteractionContactDetails = catchAsyncError(async (req, res) => {
+  const { interaction_id } = req.params;
+
+  const interactionData = await interactions_services.get_single_interaction(
+    {
+      _id: interaction_id,
+      is_deleted: false,
+    },
+    { contact_details: 1 } 
+  );
+
+  return response200(res, msg.fetch_success, interactionData);
+});
+
+const collectAnswer = catchAsyncError(async (req, res) => {
+  const {
+    interaction_id,
+    node_id,
+    answer_format,
+    answer_type,
+    answer,
+    contact_name,
+    contact_email,
+  } = req.body;
 
   const interactionData = await interactions_services.get_single_interaction({
     _id: interaction_id,
@@ -722,12 +744,11 @@ const collectAnswer = catchAsyncError(async(req,res)=>{
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  if(answer_type !== nodeData.answer_type){
-    return response400(res,msg.answerTypeNotMatched);
+  if (answer_type !== nodeData.answer_type) {
+    return response400(res, msg.answerTypeNotMatched);
   }
 
   // if()
-
 });
 
 module.exports = {
@@ -751,4 +772,5 @@ module.exports = {
   removeForeverInteraction,
   updateNodeAnswerFormat,
   collectAnswer,
+  getInteractionContactDetails,
 };

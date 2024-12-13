@@ -50,9 +50,10 @@ const get_all_interactions = async (query, project) => {
   }
 };
 
-const get_single_interaction = async (query) => {
+const get_single_interaction = async (query,projection={}) => {
+  console.log("projection",projection)
   try {
-    return mongoService.findOne(modelName.INTERACTION, query);
+    return mongoService.findOne(modelName.INTERACTION, query,projection);
   } catch (error) {
     return error;
   }
