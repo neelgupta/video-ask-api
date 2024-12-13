@@ -129,15 +129,22 @@ router.get(
 
 // remove permanently
 router.delete(
-    "/delete-forever-interaction/:interaction_id",
-    isAuthenticated,
-    interactionsController.removeForeverInteraction
-  );
+  "/delete-forever-interaction/:interaction_id",
+  isAuthenticated,
+  interactionsController.removeForeverInteraction
+);
 
-  router.get(
-    "/get-interaction-contact/:interaction_id",
-    isAuthenticated,
-    interactionsController.getInteractionContactDetails
-  );
+router.get(
+  "/get-interaction-contact/:interaction_id",
+  isAuthenticated,
+  interactionsController.getInteractionContactDetails
+);
+
+router.post(
+  "/add-answer",
+  uploadFile.single("answer"),
+  multerErrorHandler,
+  interactionsController.collectAnswer
+);
 
 module.exports = router;

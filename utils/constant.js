@@ -156,6 +156,12 @@ const answerType = Object.freeze({
   Payment: "payment",
 });
 
+const openEndedType ={
+  audio:"audio",
+  video:"video",
+  text:"text"
+}
+
 const hashPassword = (password) => {
   return bcrypt.hashSync(password, 10);
 };
@@ -220,6 +226,7 @@ module.exports = {
   flowType,
   nodeType,
   answerType,
+  openEndedType,
   hashPassword,
   validatePassword,
   generateUUID,

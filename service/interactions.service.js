@@ -242,6 +242,14 @@ const find_Edge = async (query) => {
   }
 };
 
+const add_answer = async(payload) =>{
+  try {
+    return mongoService.createOne(modelName.NODE_ANSWER, payload);
+  } catch (error) {
+    return error;
+  }
+}
+
 module.exports = {
   add_folder,
   get_folder_list,
@@ -265,4 +273,5 @@ module.exports = {
   remove_Edge,
   remove_Node,
   remove_interaction,
+  add_answer,
 };

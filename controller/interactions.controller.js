@@ -9,7 +9,7 @@ const {
 } = require("../lib/uploader/upload");
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { organization_services, interactions_services } = require("../service");
-const { msg, CloudFolder, nodeType, answerType } = require("../utils/constant");
+const { msg, CloudFolder, nodeType, answerType, openEndedType } = require("../utils/constant");
 
 const addFolder = catchAsyncError(async (req, res) => {
   const Id = req.user;
@@ -724,11 +724,9 @@ const collectAnswer = catchAsyncError(async (req, res) => {
   const {
     interaction_id,
     node_id,
-    answer_format,
-    answer_type,
-    answer,
-    contact_name,
-    contact_email,
+    node_answer_type,
+    type,
+    contact_details,
   } = req.body;
 
   const interactionData = await interactions_services.get_single_interaction({
@@ -744,11 +742,38 @@ const collectAnswer = catchAsyncError(async (req, res) => {
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  if (answer_type !== nodeData.answer_type) {
+  if (node_answer_type !== nodeData.answer_type) {
     return response400(res, msg.answerTypeNotMatched);
   }
 
-  // if()
+  req.body.answer_details ={}
+  if(node_answer_type === answerType.OpenEnded){
+    let tempType = [openEndedType.audio,openEndedType.video];
+    if(tempType.includes(type)){
+      if (req.file) {
+        const uploadedFile = await uploadVideoToCloudinary(
+          req.file,
+          `${CloudFolder}/${interaction_id}/ans/${node_id}`
+        );
+        req.body.answer_details.ansThumbnail = uploadedFile.thumbnailUrl;
+        req.body.answer_details.answer = uploadedFile.videoUrl;
+      }
+    }
+  }
+
+  if(node_answer_type === answerType.FileUpload){
+    if (req.file) {
+      const uploadedFile = await uploadVideoToCloudinary(
+        req.file,
+        `${CloudFolder}/${interaction_id}/ans/${node_id}`
+      );
+      req.body.answer_details.video_thumbnail = uploadedFile.thumbnailUrl;
+      req.body.answer_details.video_url = uploadedFile.videoUrl;
+    }
+  }
+
+  await interactions_services.add_answer(req.body);
+  return response201(res,msg.fetch_success,[])
 });
 
 module.exports = {
