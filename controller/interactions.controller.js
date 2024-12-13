@@ -9,7 +9,13 @@ const {
 } = require("../lib/uploader/upload");
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { organization_services, interactions_services } = require("../service");
-const { msg, CloudFolder, nodeType, answerType, openEndedType } = require("../utils/constant");
+const {
+  msg,
+  CloudFolder,
+  nodeType,
+  answerType,
+  openEndedType,
+} = require("../utils/constant");
 
 const addFolder = catchAsyncError(async (req, res) => {
   const Id = req.user;
@@ -714,20 +720,15 @@ const getInteractionContactDetails = catchAsyncError(async (req, res) => {
       _id: interaction_id,
       is_deleted: false,
     },
-    { contact_details: 1 } 
+    { contact_details: 1 }
   );
 
   return response200(res, msg.fetch_success, interactionData);
 });
 
 const collectAnswer = catchAsyncError(async (req, res) => {
-  const {
-    interaction_id,
-    node_id,
-    node_answer_type,
-    type,
-    contact_details,
-  } = req.body;
+  const { interaction_id, node_id, node_answer_type, type, contact_details } =
+    req.body;
 
   const interactionData = await interactions_services.get_single_interaction({
     _id: interaction_id,
@@ -746,10 +747,10 @@ const collectAnswer = catchAsyncError(async (req, res) => {
     return response400(res, msg.answerTypeNotMatched);
   }
 
-  req.body.answer_details ={}
-  if(node_answer_type === answerType.OpenEnded){
-    let tempType = [openEndedType.audio,openEndedType.video];
-    if(tempType.includes(type)){
+  req.body.answer_details = {};
+  if (node_answer_type === answerType.OpenEnded) {
+    let tempType = [openEndedType.audio, openEndedType.video];
+    if (tempType.includes(type)) {
       if (req.file) {
         const uploadedFile = await uploadVideoToCloudinary(
           req.file,
@@ -761,7 +762,7 @@ const collectAnswer = catchAsyncError(async (req, res) => {
     }
   }
 
-  if(node_answer_type === answerType.FileUpload){
+  if (node_answer_type === answerType.FileUpload) {
     if (req.file) {
       const uploadedFile = await uploadVideoToCloudinary(
         req.file,
@@ -773,7 +774,7 @@ const collectAnswer = catchAsyncError(async (req, res) => {
   }
 
   await interactions_services.add_answer(req.body);
-  return response201(res,msg.fetch_success,[])
+  return response201(res, msg.answerSuccess, []);
 });
 
 module.exports = {

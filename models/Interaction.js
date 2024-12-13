@@ -37,7 +37,7 @@ const interactionSchema = new mongoose.Schema(
             },
             is_email: {
                 type: Boolean,
-                default:false,
+                default:true,
             },
             is_phone: {
                 type: Boolean,
