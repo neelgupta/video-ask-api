@@ -272,7 +272,7 @@ const createNode = catchAsyncError(async (req, res) => {
   req.body.answer_format = {
     options: ["Audio", "Video", "Text"],
     time_limit: "10",
-    delay: "0 Sec",
+    delay: "0",
     contact_form: false,
   };
   req.body.position = {
@@ -727,8 +727,10 @@ const getInteractionContactDetails = catchAsyncError(async (req, res) => {
 });
 
 const collectAnswer = catchAsyncError(async (req, res) => {
-  const { interaction_id, node_id, node_answer_type, type, contact_details } =
+  const { interaction_id, node_id, node_answer_type, type, contact_details, answer } =
     req.body;
+    console.log("req", req.body)
+    console.log("req.file", req.file)
 
   const interactionData = await interactions_services.get_single_interaction({
     _id: interaction_id,
@@ -759,6 +761,8 @@ const collectAnswer = catchAsyncError(async (req, res) => {
         req.body.answer_details.ansThumbnail = uploadedFile.thumbnailUrl;
         req.body.answer_details.answer = uploadedFile.videoUrl;
       }
+    }else{
+      req.body.answer_details.answer = answer;
     }
   }
 
@@ -768,8 +772,17 @@ const collectAnswer = catchAsyncError(async (req, res) => {
         req.file,
         `${CloudFolder}/${interaction_id}/ans/${node_id}`
       );
-      req.body.answer_details.video_thumbnail = uploadedFile.thumbnailUrl;
-      req.body.answer_details.video_url = uploadedFile.videoUrl;
+      // req.body.answer_details.video_thumbnail = "";
+      req.body.answer_details.answer = uploadedFile.videoUrl;
+    }
+  }
+
+  if (node_answer_type === answerType.MultipleChoice ||node_answer_type === answerType.Button  ) {
+    const ansType = ["true", "false"]
+    if(ansType.includes(answer)){
+      req.body.answer_details.answer =   answer === "true"? true: false
+    }else{
+    req.body.answer_details.answer = answer;
     }
   }
 
