@@ -657,6 +657,8 @@ const copyInteraction = catchAsyncError(async (req, res) => {
   return response200(res, msg.fetch_success, newInteraction);
 });
 
+
+
 const getArchivedInteractions = catchAsyncError(async (req, res) => {
   const { organization_id } = req.params;
 
@@ -666,10 +668,30 @@ const getArchivedInteractions = catchAsyncError(async (req, res) => {
   });
   if (!organizationData) return response400(res, msg.organizationNotExists);
 
-  const interactionList = await interactions_services.get_all_interactions({
+  let interactionList = await interactions_services.get_all_interactions({
     organization_id,
     is_deleted: true,
   });
+
+  await Promise.all(
+    interactionList.map(async (val) => {
+      const getNodes = await interactions_services.get_flow_list({
+        interaction_id: val._id,
+        is_deleted: false,
+      });
+      
+      if (getNodes?.length) {
+        const nodesWithThumbnails = getNodes.filter(
+          (node) => node.video_thumbnail
+        );
+        val.thumbnailUrl = nodesWithThumbnails?.length
+          ? nodesWithThumbnails[0].video_thumbnail
+          : "";
+      } else {
+        val.thumbnailUrl = "";
+      }
+    })
+  );
 
   return response200(res, msg.fetch_success, interactionList);
 });
