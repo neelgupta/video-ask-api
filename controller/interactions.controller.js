@@ -178,24 +178,26 @@ const getInteractionList = catchAsyncError(async (req, res) => {
     { updatedAt: 0, __v: 0 }
   );
 
-  await Promise.all(
-    data.map(async (val) => {
-      const getNodes = await interactions_services.get_flow_list({
-        interaction_id: val._id,
-        is_deleted: false,
-      });
-      if (getNodes?.length) {
-        const nodesWithThumbnails = getNodes.filter(
-          (node) => node.video_thumbnail
-        );
-        val.thumbnailUrl = nodesWithThumbnails?.length
-          ? nodesWithThumbnails[0].video_thumbnail
-          : "";
-      } else {
-        val.thumbnailUrl = "";
-      }
-    })
-  );
+  if(data?.length){
+    await Promise.all(
+      data.map(async (val) => {
+        const getNodes = await interactions_services.get_flow_list({
+          interaction_id: val._id,
+          is_deleted: false,
+        });
+        if (getNodes?.length) {
+          const nodesWithThumbnails = getNodes.filter(
+            (node) => node.video_thumbnail
+          );
+          val.thumbnailUrl = nodesWithThumbnails?.length
+            ? nodesWithThumbnails[0].video_thumbnail
+            : "";
+        } else {
+          val.thumbnailUrl = "";
+        }
+      })
+    );
+  }
   return response200(res, msg.fetch_success, data);
 });
 
@@ -673,25 +675,27 @@ const getArchivedInteractions = catchAsyncError(async (req, res) => {
     is_deleted: true,
   });
 
-  await Promise.all(
-    interactionList.map(async (val) => {
-      const getNodes = await interactions_services.get_flow_list({
-        interaction_id: val._id,
-        is_deleted: false,
-      });
-      
-      if (getNodes?.length) {
-        const nodesWithThumbnails = getNodes.filter(
-          (node) => node.video_thumbnail
-        );
-        val.thumbnailUrl = nodesWithThumbnails?.length
-          ? nodesWithThumbnails[0].video_thumbnail
-          : "";
-      } else {
-        val.thumbnailUrl = "";
-      }
-    })
-  );
+  if(interactionList?.length){
+    await Promise.all(
+      interactionList.map(async (val) => {
+        const getNodes = await interactions_services.get_flow_list({
+          interaction_id: val._id,
+          is_deleted: false,
+        });
+        
+        if (getNodes?.length) {
+          const nodesWithThumbnails = getNodes.filter(
+            (node) => node.video_thumbnail
+          );
+          val.thumbnailUrl = nodesWithThumbnails?.length
+            ? nodesWithThumbnails[0].video_thumbnail
+            : "";
+        } else {
+          val.thumbnailUrl = "";
+        }
+      })
+    );
+  }
 
   return response200(res, msg.fetch_success, interactionList);
 });
