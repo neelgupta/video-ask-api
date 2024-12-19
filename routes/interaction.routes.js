@@ -148,4 +148,10 @@ router.post(
   interactionsController.collectAnswer
 );
 
+router.get(
+  "/get-interaction-answers/:interaction_id",
+  isAuthenticated,
+  interactionsController.getInteractionAnswers
+);
+
 module.exports = router;

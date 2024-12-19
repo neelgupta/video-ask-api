@@ -265,6 +265,108 @@ const update_answer = async (query, payload) => {
   }
 };
 
+const get_interaction_answer = async (match) => {
+  try {
+    let pipeline = [
+      {
+        $match: {
+          interaction_id: new mongoose.Types.ObjectId(match.interactionId),
+          is_deleted: false,
+        },
+      },
+      {
+        $unwind: {
+          path: "$answers",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "nodes",
+          localField: "answers.node_id",
+          foreignField: "_id",
+          as: "answers.nodeDetails",
+          pipeline: [
+            { $project: { updatedAt: 0, __v: 0, added_by: 0 } },
+          ],
+        },
+      },
+      {
+        $unwind: {
+          path: "$answers.nodeDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          interaction_id: { $first: "$interaction_id" },
+          is_deleted: { $first: "$is_deleted" },
+          contact_id: { $first: "$contact_id" },
+          answers: {
+            $push: "$answers",
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "contacts",
+          localField: "contact_id",
+          foreignField: "_id",
+          as: "contact_details",
+          pipeline: [
+            {
+              $project: {
+                updatedAt: 0,
+                __v: 0,
+                is_deleted: 0,
+                is_favorite: 0,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $unwind: {
+          path: "$contact_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "interactions",
+          localField: "interaction_id",
+          foreignField: "_id",
+          as: "interaction_details",
+          pipeline: [
+            {
+              $project: {
+                organization_id: 1,
+                interaction_type: 1,
+                is_lead_crm: 1,
+                title: 1,
+                is_collect_contact: 1,
+                language: 1,
+                folder_id: 1,
+                contact_details: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $unwind: {
+          path: "$interaction_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
+    return await mongoService.aggregation(modelName.NODE_ANSWER, pipeline);
+  } catch (error) {
+    return error;
+  }
+};
+
 module.exports = {
   add_folder,
   get_folder_list,
@@ -291,4 +393,5 @@ module.exports = {
   add_answer,
   update_answer,
   get_answer,
+  get_interaction_answer,
 };

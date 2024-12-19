@@ -902,6 +902,23 @@ const collectAnswer = catchAsyncError(async (req, res) => {
   });
 });
 
+const getInteractionAnswers = catchAsyncError(async (req, res) => {
+  const { interaction_id } = req.params;
+
+  const interactionData = await interactions_services.get_single_interaction({
+    _id: interaction_id,
+    is_deleted: false,
+  });
+
+  if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+  const data = await interactions_services.get_interaction_answer({
+    interactionId: interaction_id,
+  });
+
+  return response200(res,msg.fetch_success,data);
+});
+
 module.exports = {
   addFolder,
   getFolderList,
@@ -924,4 +941,5 @@ module.exports = {
   updateNodeAnswerFormat,
   collectAnswer,
   getInteractionContactDetails,
+  getInteractionAnswers,
 };
