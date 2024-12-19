@@ -8,13 +8,18 @@ const {
   copyVideoInCloudinary,
 } = require("../lib/uploader/upload");
 const catchAsyncError = require("../middleware/catchAsyncError");
-const { organization_services, interactions_services } = require("../service");
+const {
+  organization_services,
+  interactions_services,
+  contact_services,
+} = require("../service");
 const {
   msg,
   CloudFolder,
   nodeType,
   answerType,
   openEndedType,
+  generateUUID,
 } = require("../utils/constant");
 
 const addFolder = catchAsyncError(async (req, res) => {
@@ -178,7 +183,7 @@ const getInteractionList = catchAsyncError(async (req, res) => {
     { updatedAt: 0, __v: 0 }
   );
 
-  if(data?.length){
+  if (data?.length) {
     await Promise.all(
       data.map(async (val) => {
         const getNodes = await interactions_services.get_flow_list({
@@ -659,8 +664,6 @@ const copyInteraction = catchAsyncError(async (req, res) => {
   return response200(res, msg.fetch_success, newInteraction);
 });
 
-
-
 const getArchivedInteractions = catchAsyncError(async (req, res) => {
   const { organization_id } = req.params;
 
@@ -675,14 +678,14 @@ const getArchivedInteractions = catchAsyncError(async (req, res) => {
     is_deleted: true,
   });
 
-  if(interactionList?.length){
+  if (interactionList?.length) {
     await Promise.all(
       interactionList.map(async (val) => {
         const getNodes = await interactions_services.get_flow_list({
           interaction_id: val._id,
           is_deleted: false,
         });
-        
+
         if (getNodes?.length) {
           const nodesWithThumbnails = getNodes.filter(
             (node) => node.video_thumbnail
@@ -753,10 +756,15 @@ const getInteractionContactDetails = catchAsyncError(async (req, res) => {
 });
 
 const collectAnswer = catchAsyncError(async (req, res) => {
-  const { interaction_id, node_id, node_answer_type, type, contact_details, answer } =
-    req.body;
-    console.log("req", req.body)
-    console.log("req.file", req.file)
+  const {
+    answer_id,
+    interaction_id,
+    node_id,
+    node_answer_type,
+    type,
+    contact_details,
+    answer,
+  } = req.body;
 
   const interactionData = await interactions_services.get_single_interaction({
     _id: interaction_id,
@@ -768,15 +776,25 @@ const collectAnswer = catchAsyncError(async (req, res) => {
   const nodeData = await interactions_services.get_single_node({
     _id: node_id,
     is_deleted: false,
+    type: nodeType.Question,
   });
-  if (!nodeData) return response400(res, msg.nodeNotExists);
+  if (!nodeData) return response400(res, msg.nodeTypeQuestion);
 
   if (node_answer_type !== nodeData.answer_type) {
     return response400(res, msg.answerTypeNotMatched);
   }
 
-  req.body.answer_details = {};
+  if (answer_id) {
+    const answerData = await interactions_services.get_answer({
+      _id: answer_id,
+    });
+    if (!answerData) return response400(res, "Answer details not exists");
+  }
+
+  let answer_details = {};
   if (node_answer_type === answerType.OpenEnded) {
+    if (!type) return response400(res, "Open ended answer type is required");
+
     let tempType = [openEndedType.audio, openEndedType.video];
     if (tempType.includes(type)) {
       if (req.file) {
@@ -784,11 +802,13 @@ const collectAnswer = catchAsyncError(async (req, res) => {
           req.file,
           `${CloudFolder}/${interaction_id}/ans/${node_id}`
         );
-        req.body.answer_details.ansThumbnail = uploadedFile.thumbnailUrl;
-        req.body.answer_details.answer = uploadedFile.videoUrl;
+        answer_details.ansThumbnail = uploadedFile.thumbnailUrl;
+        answer_details.answer = uploadedFile.videoUrl;
+        answer_details.type = type;
       }
-    }else{
-      req.body.answer_details.answer = answer;
+    } else {
+      answer_details.answer = answer;
+      answer_details.type = type;
     }
   }
 
@@ -798,22 +818,88 @@ const collectAnswer = catchAsyncError(async (req, res) => {
         req.file,
         `${CloudFolder}/${interaction_id}/ans/${node_id}`
       );
-      // req.body.answer_details.video_thumbnail = "";
-      req.body.answer_details.answer = uploadedFile.videoUrl;
+      answer_details.answer = uploadedFile.videoUrl;
     }
   }
 
-  if (node_answer_type === answerType.MultipleChoice ||node_answer_type === answerType.Button  ) {
-    const ansType = ["true", "false"]
-    if(ansType.includes(answer)){
-      req.body.answer_details.answer =   answer === "true"? true: false
-    }else{
-    req.body.answer_details.answer = answer;
+  if (
+    node_answer_type === answerType.MultipleChoice ||
+    node_answer_type === answerType.Button
+  ) {
+    const ansType = ["true", "false"];
+    if (ansType.includes(answer)) {
+      answer_details.answer = answer === "true" ? true : false;
+    } else {
+      answer_details.answer = answer;
     }
   }
 
-  await interactions_services.add_answer(req.body);
-  return response201(res, msg.answerSuccess, []);
+  let answerId;
+  req.body.answers = [
+    {
+      node_id,
+      node_answer_type,
+      answer_details,
+    },
+  ];
+
+  delete req.body.node_id;
+  delete req.body.node_answer_type;
+  delete req?.body?.type;
+
+  if (contact_details) {
+    const { name, email, phone, product } = contact_details;
+    if (email) {
+      const contactIsExists = await contact_services.get_single_contact({
+        contact_email: email,
+        is_deleted: false,
+      });
+      if (contactIsExists) {
+        req.body.contact_id = contactIsExists._id;
+      } else {
+        const contactUUID = generateUUID("CON");
+        const newContact = await contact_services.add_contact({
+          organization_id: interactionData.organization_id,
+          contact_uuid: contactUUID,
+          contact_name: name,
+          contact_email: email,
+          phone_number: phone,
+          product_name: product,
+        });
+        req.body.contact_id = newContact._id;
+      }
+    } else {
+      const contactUUID = generateUUID("CON");
+      const newContact = await contact_services.add_contact({
+        organization_id: interactionData.organization_id,
+        contact_uuid: contactUUID,
+        contact_name: name,
+        contact_email: email,
+        phone_number: phone,
+        product_name: product,
+      });
+      req.body.contact_id = newContact._id;
+    }
+  }
+
+  if (answer_id) {
+    await interactions_services.update_answer(
+      { _id: answer_id },
+      {
+        $push: { answers: req.body.answers },
+        contact_id: req.body.contact_id,
+      }
+    );
+    answerId = answer_id;
+  } else {
+    const result = await interactions_services.add_answer(req.body);
+    answerId = result._id;
+  }
+
+  return response201(res, msg.answerSuccess, {
+    answerId,
+    contactId: req.body.contact_id,
+  });
 });
 
 module.exports = {

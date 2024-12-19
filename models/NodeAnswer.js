@@ -8,19 +8,23 @@ const nodeAnswerSchema = new mongoose.Schema(
       ref: modelName.INTERACTION,
       required: true,
     },
-    node_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: modelName.NODE,
-      required: true,
-    },
-    node_answer_type: {
-      type: String,
-      enum: Object.values(answerType),
-    },
-    answer_details: {
-      type: mongoose.Schema.Types.Mixed,
-      default: {},
-    },
+    answers: [
+      {
+        node_id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: modelName.NODE,
+          required: true,
+        },
+        node_answer_type: {
+          type: String,
+          enum: Object.values(answerType),
+        },
+        answer_details: {
+          type: mongoose.Schema.Types.Mixed,
+          default: {},
+        },
+      },
+    ],
     contact_id: {
       type: mongoose.Types.ObjectId,
       ref: modelName.CONTACT,

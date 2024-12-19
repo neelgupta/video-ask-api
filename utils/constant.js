@@ -59,6 +59,7 @@ const msg = {
   paymentMethodNotEXists :"Payment method is not exists",
   answerTypeNotMatched :"Answer type is not matched with the flow answer type",
   answerSuccess:"Answer added successfully",
+  nodeTypeQuestion:"Node type must be Question",
 };
 
 const invitationTokenType = {

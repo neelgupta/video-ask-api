@@ -144,6 +144,7 @@ router.post(
   "/add-answer",
   uploadFile.single("answer"),
   multerErrorHandler,
+  validateFormData(interactionsValidation.collectAnswerValidator),
   interactionsController.collectAnswer
 );
 

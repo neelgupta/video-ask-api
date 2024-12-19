@@ -13,24 +13,20 @@ const contactSchema = new mongoose.Schema(
         },
         contact_name: {
             type: String,
-            required: true
         },
         contact_email: {
             type: String,
-            required: true
         },
         added_by: {
             type: mongoose.Types.ObjectId,
             ref: modelName.USER,
-            required: true,
-        },
-        country_code: {
-            type: String,
-            required: false
+            // required: true,
         },
         phone_number: {
             type: String,
-            required: false
+        },
+        product_name:{
+            type:String,
         },
         is_favorite: {
             type: Boolean,

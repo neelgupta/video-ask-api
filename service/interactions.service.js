@@ -50,9 +50,9 @@ const get_all_interactions = async (query, project) => {
   }
 };
 
-const get_single_interaction = async (query,projection={}) => {
+const get_single_interaction = async (query, projection = {}) => {
   try {
-    return mongoService.findOne(modelName.INTERACTION, query,projection);
+    return mongoService.findOne(modelName.INTERACTION, query, projection);
   } catch (error) {
     return error;
   }
@@ -140,7 +140,7 @@ const remove_Edge = async (query) => {
 };
 
 // delete permanently
-remove_multiple_Edge  = async (query) => {
+remove_multiple_Edge = async (query) => {
   try {
     return mongoService.deleteManyDocument(modelName.EDGE, query);
   } catch (error) {
@@ -158,13 +158,13 @@ const remove_Node = async (query) => {
 };
 
 // delete permanently
-const remove_interaction = async(query) =>{
+const remove_interaction = async (query) => {
   try {
     return mongoService.deleteDocument(modelName.INTERACTION, query);
   } catch (error) {
     return error;
   }
-}
+};
 
 const getNodesList = async (interactionId) => {
   try {
@@ -241,13 +241,29 @@ const find_Edge = async (query) => {
   }
 };
 
-const add_answer = async(payload) =>{
+const add_answer = async (payload) => {
   try {
     return mongoService.createOne(modelName.NODE_ANSWER, payload);
   } catch (error) {
     return error;
   }
-}
+};
+
+const get_answer = async (query) => {
+  try {
+    return mongoService.findOne(modelName.NODE_ANSWER, query);
+  } catch (error) {
+    return error;
+  }
+};
+
+const update_answer = async (query, payload) => {
+  try {
+    return mongoService.updateOne(modelName.NODE_ANSWER, query, payload);
+  } catch (error) {
+    return error;
+  }
+};
 
 module.exports = {
   add_folder,
@@ -273,4 +289,6 @@ module.exports = {
   remove_Node,
   remove_interaction,
   add_answer,
+  update_answer,
+  get_answer,
 };
