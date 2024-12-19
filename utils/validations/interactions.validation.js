@@ -223,7 +223,8 @@ const collectAnswerValidator = Joi.object({
   answer: Joi.alternatives()
     .try(
       Joi.string(), // For text-based answers
-      Joi.object() // For file-based answers (Multer attaches file as an object)
+      Joi.object(),
+      Joi.array()
     )
     .optional(),
   type: Joi.string()
