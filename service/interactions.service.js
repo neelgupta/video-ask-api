@@ -303,6 +303,7 @@ const get_interaction_answer = async (match) => {
           interaction_id: { $first: "$interaction_id" },
           is_deleted: { $first: "$is_deleted" },
           contact_id: { $first: "$contact_id" },
+          createdAt: { $first: "$createdAt" },
           answers: {
             $push: "$answers",
           },
