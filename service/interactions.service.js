@@ -332,34 +332,34 @@ const get_interaction_answer = async (match) => {
           preserveNullAndEmptyArrays: true,
         },
       },
-      {
-        $lookup: {
-          from: "interactions",
-          localField: "interaction_id",
-          foreignField: "_id",
-          as: "interaction_details",
-          pipeline: [
-            {
-              $project: {
-                organization_id: 1,
-                interaction_type: 1,
-                is_lead_crm: 1,
-                title: 1,
-                is_collect_contact: 1,
-                language: 1,
-                folder_id: 1,
-                contact_details: 1,
-              },
-            },
-          ],
-        },
-      },
-      {
-        $unwind: {
-          path: "$interaction_details",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
+      // {
+      //   $lookup: {
+      //     from: "interactions",
+      //     localField: "interaction_id",
+      //     foreignField: "_id",
+      //     as: "interaction_details",
+      //     pipeline: [
+      //       {
+      //         $project: {
+      //           organization_id: 1,
+      //           interaction_type: 1,
+      //           is_lead_crm: 1,
+      //           title: 1,
+      //           is_collect_contact: 1,
+      //           language: 1,
+      //           folder_id: 1,
+      //           contact_details: 1,
+      //         },
+      //       },
+      //     ],
+      //   },
+      // },
+      // {
+      //   $unwind: {
+      //     path: "$interaction_details",
+      //     preserveNullAndEmptyArrays: true,
+      //   },
+      // },
     ];
     return await mongoService.aggregation(modelName.NODE_ANSWER, pipeline);
   } catch (error) {

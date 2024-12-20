@@ -916,7 +916,10 @@ const getInteractionAnswers = catchAsyncError(async (req, res) => {
     interactionId: interaction_id,
   });
 
-  return response200(res,msg.fetch_success,data);
+  return response200(res, msg.fetch_success, {
+    interactionData,
+    contactData: data,
+  });
 });
 
 module.exports = {
