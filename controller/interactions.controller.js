@@ -905,7 +905,7 @@ const collectAnswer = catchAsyncError(async (req, res) => {
 const getInteractionAnswers = catchAsyncError(async (req, res) => {
   const { interaction_id } = req.params;
 
-  const interactionData = await interactions_services.get_single_interaction({
+  let interactionData = await interactions_services.get_single_interaction({
     _id: interaction_id,
     is_deleted: false,
   });
@@ -915,6 +915,22 @@ const getInteractionAnswers = catchAsyncError(async (req, res) => {
   const data = await interactions_services.get_interaction_answer({
     interactionId: interaction_id,
   });
+
+  const nodeList = await interactions_services.get_flow_list({
+    interaction_id,
+    is_deleted: false,
+  });
+
+  if (nodeList?.length) {
+    const nodesWithThumbnails = nodeList.filter(
+      (node) => node?.video_thumbnail
+    );
+    interactionData.thumbnailUrl = nodesWithThumbnails?.length
+      ? nodesWithThumbnails?.[0]?.video_thumbnail
+      : "";
+  } else {
+    interactionData.thumbnailUrl = "";
+  }
 
   return response200(res, msg.fetch_success, {
     interactionData,
