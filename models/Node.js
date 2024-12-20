@@ -72,6 +72,9 @@ const nodeSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        index:{
+            type:Number,
+        },
         is_deleted: {
             type: Boolean,
             default: false

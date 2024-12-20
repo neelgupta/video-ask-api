@@ -135,6 +135,7 @@ const createInteraction = catchAsyncError(async (req, res) => {
             title: val.title,
             added_by: Id,
             answer_format: val.answer_format || {},
+            index: 0,
           });
           sourceId = nodeData._id;
           // targetId = nodeData._id;
@@ -148,6 +149,7 @@ const createInteraction = catchAsyncError(async (req, res) => {
             title: val.title,
             added_by: Id,
             answer_format: val.answer_format || {},
+            index: 1,
           });
           // sourceId = nodeData._id;
           targetId = nodeData._id;
@@ -295,6 +297,33 @@ const createNode = catchAsyncError(async (req, res) => {
     req.body.video_url = uploadedFile.videoUrl;
   }
 
+  // Get all nodes for the interaction and sort by index
+  const nodes = await interactions_services.get_flow_list({ interaction_id });
+  nodes.sort((a, b) => a.index - b.index);
+
+  // Find the insertion point (source node index + 1)
+  const sourceIndex = sourceData.index;
+  const newNodeIndex = sourceIndex + 1;
+
+  // Increment indices of subsequent nodes
+  const updatedNodes = nodes.map((node) => {
+    if (node.index >= newNodeIndex) {
+      node.index += 1;
+    }
+    return node;
+  });
+
+  // Update the indices in the database
+  await Promise.all(
+    updatedNodes.map((node) =>
+      interactions_services.update_Node(
+        { _id: node._id },
+        { index: node.index }
+      )
+    )
+  );
+
+  req.body.index = newNodeIndex;
   const newNode = await interactions_services.add_Node(req.body);
   if (newNode) {
     const newEdge = await interactions_services.add_Edge({
@@ -390,10 +419,6 @@ const removeNode = catchAsyncError(async (req, res) => {
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  const allEdges = await interactions_services.getNodesList(
-    nodeData.interaction_id
-  );
-
   const sourceEdge = await interactions_services.find_Edge({
     source: nodeData._id,
     is_deleted: false,
@@ -418,6 +443,26 @@ const removeNode = catchAsyncError(async (req, res) => {
       { _id: node_id },
       { is_deleted: true }
     );
+
+    // Re index remaining nodes
+    const remainingNodes = await interactions_services.get_flow_list({
+      interaction_id: nodeData.interaction_id,
+      is_deleted: false,
+    });
+    remainingNodes.sort((a, b) => a.index - b.index);
+
+    // Update indices to maintain sequential order
+    let newIndex = 0;
+    for (const node of remainingNodes) {
+      if (node.index !== newIndex) {
+        await interactions_services.update_Node(
+          { _id: node._id },
+          { index: newIndex }
+        );
+      }
+      newIndex++;
+    }
+
     return response200(res, msg.delete_success, []);
   } else {
     return response400(res, msg.someThingsWrong);
