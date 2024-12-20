@@ -181,7 +181,10 @@ const getNodesList = async (interactionId) => {
           localField: "_id",
           foreignField: "interaction_id",
           as: "nodes",
-          pipeline: [{ $match: { is_deleted: false } }],
+          pipeline: [
+            { $match: { is_deleted: false } },
+            { $sort: { index: 1 } },
+          ],
         },
       },
       {
@@ -286,9 +289,7 @@ const get_interaction_answer = async (match) => {
           localField: "answers.node_id",
           foreignField: "_id",
           as: "answers.nodeDetails",
-          pipeline: [
-            { $project: { updatedAt: 0, __v: 0, added_by: 0 } },
-          ],
+          pipeline: [{ $project: { updatedAt: 0, __v: 0, added_by: 0 } }],
         },
       },
       {
