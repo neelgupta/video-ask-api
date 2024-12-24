@@ -154,4 +154,10 @@ router.get(
   interactionsController.getInteractionAnswers
 );
 
+router.get(
+  "/get-node-wise-answers/:interaction_id",
+  isAuthenticated,
+  interactionsController.getNodeWiseAnswers
+);
+
 module.exports = router;

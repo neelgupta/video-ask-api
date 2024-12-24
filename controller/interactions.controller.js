@@ -326,7 +326,6 @@ const createNode = catchAsyncError(async (req, res) => {
   req.body.index = newNodeIndex;
   let newNode = await interactions_services.add_Node(req.body);
   if (newNode) {
-    newNode.allowedToEditAnswerType= true;
     const newEdge = await interactions_services.add_Edge({
       interaction_id: interaction_id,
       source: sourceId,
@@ -342,7 +341,6 @@ const createNode = catchAsyncError(async (req, res) => {
       { source: newNode._id }
     );
   }
-
   return response201(res, msg.flowCreated, newNode);
 });
 
@@ -984,9 +982,22 @@ const getInteractionAnswers = catchAsyncError(async (req, res) => {
   });
 });
 
-const getNodeWiseAnswer = catchAsyncError(async(req,res)=>{
+const getNodeWiseAnswers = catchAsyncError(async(req,res)=>{
+  const { interaction_id } = req.params;
 
-})
+  let interactionData = await interactions_services.get_single_interaction({
+    _id: interaction_id,
+    is_deleted: false,
+  });
+
+  if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+  const data = await interactions_services.node_wise_answer({
+    interactionId: interaction_id,
+  });
+
+  return response200(res, msg.fetch_success,  data,);
+});
 
 module.exports = {
   addFolder,
@@ -1011,5 +1022,5 @@ module.exports = {
   collectAnswer,
   getInteractionContactDetails,
   getInteractionAnswers,
-  getNodeWiseAnswer,
+  getNodeWiseAnswers,
 };
