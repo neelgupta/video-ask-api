@@ -218,7 +218,39 @@ const getNodesList = async (interactionId) => {
   }
 };
 
-const getLibrary = async (query, search) => {
+const addLibrary = async (payload) => {
+  try {
+    return mongoService.createOne(modelName.LIBRARY, payload);
+  } catch (error) {
+    return error;
+  }
+};
+
+const getLibrary = async(query,project) =>{
+  try {
+    return mongoService.findAll(modelName.LIBRARY, query, project);
+  } catch (error) {
+    return error;
+  }
+}
+
+const editLibrary = async (query, payload) => {
+  try {
+    return mongoService.updateOne(modelName.LIBRARY, query, payload);
+  } catch (error) {
+    return error;
+  }
+};
+
+const deleteLibrary = async(query) =>{
+  try {
+    return mongoService.deleteDocument(modelName.LIBRARY, query);
+  } catch (error) {
+    return error;
+  }
+}
+
+const getNodeLibrary = async (query, search) => {
   if (query.length) {
     query.map((ele) => {
       return new mongoose.Types.ObjectId(ele);
@@ -445,22 +477,26 @@ const node_wise_answer = async (match) => {
 
     if (result.length > 0) {
       const interactionData = result[0];
-      if(interactionData?.nodeDetails?.length && interactionData?.answerDetails?.length){
+      if (
+        interactionData?.nodeDetails?.length &&
+        interactionData?.answerDetails?.length
+      ) {
         const { nodeDetails, answerDetails } = interactionData;
-  
+
         // Group answers by node
         const groupedData = nodeDetails.map((node) => {
           const answersForNode = answerDetails.flatMap((detail) =>
             detail.answers
               .filter(
-                (answer) => answer.node_id.toString() === node._id.toString()
+                (answer) =>
+                  answer?.node_id?.toString() === node?._id?.toString()
               )
               .map((answer) => ({
                 ...answer,
                 contactDetails: detail.contactDetails,
               }))
           );
-  
+
           return {
             ...node,
             answers: answersForNode,
@@ -477,10 +513,10 @@ const node_wise_answer = async (match) => {
         } else {
           interactionData.thumbnailUrl = "";
         }
-  
+
         // Replace or append grouped data in the response
         interactionData.groupedNodeAnswers = groupedData;
-  
+
         delete interactionData.nodeDetails;
         delete interactionData.answerDetails;
       }
@@ -512,7 +548,11 @@ module.exports = {
   add_Edge,
   getNodesList,
   update_Edge,
+  addLibrary,
   getLibrary,
+  getNodeLibrary,
+  editLibrary,
+  deleteLibrary,
   find_Edge,
   remove_Edge,
   remove_Node,

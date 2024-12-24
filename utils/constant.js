@@ -9,6 +9,7 @@ const defaultOrganization = "My Organization";
 const defaultFolderName = "Default";
 
 const msg = {
+  notFound: "Data not found",
   invalidCredentials: "Invalid credentials",
   loginSuccess: "Login successfully",
   invalidRole: "Invalid role",
@@ -54,12 +55,14 @@ const msg = {
   nodeNotExists: "Node is not exists",
   sourceNotFound: "Source Id is not exists",
   targetNotFound: "Target Id is not exists",
-  someThingsWrong:"Something is wrong",
-  paymentMethodAdd :"Payment method added successfully",
-  paymentMethodNotEXists :"Payment method is not exists",
-  answerTypeNotMatched :"Answer type is not matched with the flow answer type",
-  answerSuccess:"Answer added successfully",
-  nodeTypeQuestion:"Node type must be Question",
+  someThingsWrong: "Something is wrong",
+  paymentMethodAdd: "Payment method added successfully",
+  paymentMethodNotEXists: "Payment method is not exists",
+  answerTypeNotMatched: "Answer type is not matched with the flow answer type",
+  answerSuccess: "Answer added successfully",
+  nodeTypeQuestion: "Node type must be Question",
+  libraryUpload: "The media has been created",
+  mediaDelete: "Media deleted successfully",
 };
 
 const invitationTokenType = {
@@ -82,7 +85,7 @@ const memberRole = {
   Owner: "owner",
   Admin: "admin",
   Member: "member",
-}
+};
 
 const replyTypes = {
   DO_NOT_NOTIFY: "DoNotNotify",
@@ -93,12 +96,12 @@ const replyTypes = {
 const memberInvitationStatus = {
   Pending: "pending",
   Completed: "completed",
-}
+};
 
 const addressType = {
   Shipping: "Shipping",
   Billing: "Billing",
-}
+};
 
 const CloudFolder = "video-ask";
 
@@ -114,40 +117,41 @@ const modelName = {
   INTERACTION: "Interaction",
   // FLOW: "Flow",
   EDGE: "Edge",
+  LIBRARY: "Library",
   NODE: "Node",
-  PAYMENT_METHOD:"Payment_method",
-  NODE_ANSWER:"Node_answer"
+  PAYMENT_METHOD: "Payment_method",
+  NODE_ANSWER: "Node_answer",
 };
 
 const subscriptionPlanType = {
   Free: "free",
   Basic: "basic",
   Pro: "pro",
-  Enterprise: "enterprise"
+  Enterprise: "enterprise",
 };
 
 const interactionType = {
   Scratch: "Scratch",
   Template: "Template",
-  FlowAI: "FlowAI"
-}
+  FlowAI: "FlowAI",
+};
 
 const flowType = {
   Webcam: "Webcam",
   Upload: "Upload",
   Library: "Library",
   Screen: "Screen",
-  FlowAI: "FlowAI"
-}
+  FlowAI: "FlowAI",
+};
 
 const nodeType = {
   Start: "Start",
   End: "End",
   Question: "Question",
-}
+};
 
 const answerType = Object.freeze({
-  OpenEnded:"open-ended",
+  OpenEnded: "open-ended",
   AIChatbot: "ai-chatbot",
   MultipleChoice: "multiple-choice",
   Button: "button",
@@ -158,11 +162,11 @@ const answerType = Object.freeze({
   Payment: "payment",
 });
 
-const openEndedType ={
-  audio:"audio",
-  video:"video",
-  text:"text"
-}
+const openEndedType = {
+  audio: "audio",
+  video: "video",
+  text: "text",
+};
 
 const hashPassword = (password) => {
   return bcrypt.hashSync(password, 10);
@@ -187,26 +191,32 @@ const generateEncryptedToken = (payload) => {
 
 const decryptToken = (encryptedToken) => {
   try {
-    const decipher = crypto.createDecipher("aes-256-cbc", process.env.SECRET_KEY);
+    const decipher = crypto.createDecipher(
+      "aes-256-cbc",
+      process.env.SECRET_KEY
+    );
     let decrypted = decipher.update(encryptedToken, "hex", "utf8");
     decrypted += decipher.final("utf8");
     const payload = JSON.parse(decrypted);
     return payload;
   } catch (error) {
-    return error
+    return error;
   }
 };
 
 const generateResetPasswordToken = () => {
   const resetToken = crypto.randomBytes(20).toString("hex");
-  const resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
   const resetPasswordExpires = Date.now() + 15 * 60 * 1000;
 
   return { resetPasswordToken, resetPasswordExpires };
-}
+};
 
 const generateUid = () => {
-  return uuidv4().replace(/-/g, '').slice(0, 8);
+  return uuidv4().replace(/-/g, "").slice(0, 8);
 };
 
 module.exports = {

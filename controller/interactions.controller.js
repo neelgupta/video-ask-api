@@ -350,7 +350,8 @@ const getNodes = catchAsyncError(async (req, res) => {
   const interactionData = await interactions_services.getNodesList(
     interaction_id
   );
-  if (!interactionData?.length) return response400(res, msg.interactionIsNotExists);
+  if (!interactionData?.length)
+    return response400(res, msg.interactionIsNotExists);
 
   return response200(res, msg.fetch_success, interactionData?.[0] || {});
 });
@@ -557,11 +558,32 @@ const getMediaLibrary = catchAsyncError(async (req, res) => {
     interActionIds.push(val._id);
   });
 
-  const results = await interactions_services.getLibrary(
+  const results = await interactions_services.getNodeLibrary(
     interActionIds,
     search
   );
-  return response200(res, msg.fetch_success, results);
+
+  if(results?.length) results.map(val => val.type = "Node");
+
+  const data = await interactions_services.getLibrary(
+    {
+      organization_id,
+      is_deleted: false,
+    },
+    {
+      organization_id: 1,
+      video_thumbnail: 1,
+      video_url: 1,
+      is_connected_with_node: 1,
+      added_by: 1,
+    }
+  );
+
+  if(data?.length) data.map(val => val.type = "Media");
+
+  let result = [...results, ...data];
+
+  return response200(res, msg.fetch_success, result);
 });
 
 const copyInteraction = catchAsyncError(async (req, res) => {
@@ -982,7 +1004,7 @@ const getInteractionAnswers = catchAsyncError(async (req, res) => {
   });
 });
 
-const getNodeWiseAnswers = catchAsyncError(async(req,res)=>{
+const getNodeWiseAnswers = catchAsyncError(async (req, res) => {
   const { interaction_id } = req.params;
 
   let interactionData = await interactions_services.get_single_interaction({
@@ -996,7 +1018,7 @@ const getNodeWiseAnswers = catchAsyncError(async(req,res)=>{
     interactionId: interaction_id,
   });
 
-  return response200(res, msg.fetch_success,  data,);
+  return response200(res, msg.fetch_success, data);
 });
 
 module.exports = {
