@@ -197,7 +197,23 @@ const getNodesList = async (interactionId) => {
         },
       },
     ];
-    return await mongoService.aggregation(modelName.INTERACTION, pipeline);
+    let data = await mongoService.aggregation(modelName.INTERACTION, pipeline);
+
+    if (data?.length && data?.[0]?.nodes?.length) {
+      await Promise.all(
+        data?.[0]?.nodes.map(async (val) => {
+          val.allowedToEditAnswerType = true;
+          console.log("val._id",val._id)
+          const answerData = await mongoService.findOne(modelName.NODE_ANSWER, {
+            "answers.node_id": val._id,
+          });
+          if (answerData) {
+            val.allowedToEditAnswerType = false;
+          }
+        })
+      );
+    }
+    return data;
   } catch (error) {
     throw error;
   }
