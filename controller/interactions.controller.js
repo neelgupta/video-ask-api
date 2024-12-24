@@ -324,8 +324,9 @@ const createNode = catchAsyncError(async (req, res) => {
   );
 
   req.body.index = newNodeIndex;
-  const newNode = await interactions_services.add_Node(req.body);
+  let newNode = await interactions_services.add_Node(req.body);
   if (newNode) {
+    newNode.allowedToEditAnswerType= true;
     const newEdge = await interactions_services.add_Edge({
       interaction_id: interaction_id,
       source: sourceId,
@@ -983,6 +984,10 @@ const getInteractionAnswers = catchAsyncError(async (req, res) => {
   });
 });
 
+const getNodeWiseAnswer = catchAsyncError(async(req,res)=>{
+
+})
+
 module.exports = {
   addFolder,
   getFolderList,
@@ -1006,4 +1011,5 @@ module.exports = {
   collectAnswer,
   getInteractionContactDetails,
   getInteractionAnswers,
+  getNodeWiseAnswer,
 };
