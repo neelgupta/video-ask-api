@@ -411,7 +411,7 @@ const node_wise_answer = async (match) => {
                 title: 1,
                 video_url: 1,
                 index: 1,
-                answer_formate:1
+                answer_format:1
               },
             },
             { $sort: { index: 1 } },
