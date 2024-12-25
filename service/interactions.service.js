@@ -226,13 +226,13 @@ const addLibrary = async (payload) => {
   }
 };
 
-const getLibrary = async(query,project) =>{
+const getLibrary = async (query, project) => {
   try {
     return mongoService.findAll(modelName.LIBRARY, query, project);
   } catch (error) {
     return error;
   }
-}
+};
 
 const editLibrary = async (query, payload) => {
   try {
@@ -242,13 +242,13 @@ const editLibrary = async (query, payload) => {
   }
 };
 
-const deleteLibrary = async(query) =>{
+const deleteLibrary = async (query) => {
   try {
     return mongoService.deleteDocument(modelName.LIBRARY, query);
   } catch (error) {
     return error;
   }
-}
+};
 
 const getNodeLibrary = async (query, search) => {
   if (query.length) {
@@ -411,7 +411,8 @@ const node_wise_answer = async (match) => {
                 title: 1,
                 video_url: 1,
                 index: 1,
-                answer_format:1
+                answer_format: 1,
+                createdAt: 1,
               },
             },
             { $sort: { index: 1 } },
@@ -439,6 +440,7 @@ const node_wise_answer = async (match) => {
                       contact_email: 1,
                       product_name: 1,
                       is_favorite: 1,
+                      createdAt: 1,
                     },
                   },
                 ],
@@ -454,6 +456,7 @@ const node_wise_answer = async (match) => {
               $project: {
                 answers: 1,
                 contactDetails: 1,
+                createdAt:1
               },
             },
           ],
