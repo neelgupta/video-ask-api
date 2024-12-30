@@ -240,6 +240,21 @@ const collectAnswerValidator = Joi.object({
       }).optional(),
 });
 
+
+const createNewEdgeValidator = Joi.object({
+  interaction_id: Joi.string().required().messages({
+    "*": "Please enter valid interaction Id",
+  }),
+  source: Joi.string().required().messages({
+    "*": "Please enter valid source",
+  }),
+  target: Joi.string().required().messages({
+    "*": "Please enter valid target",
+  }),
+  label:Joi.string().optional(),
+
+});
+
 module.exports = {
   addFolderValidator,
   updateFolderValidator,
@@ -252,4 +267,5 @@ module.exports = {
   copyInteractionValidator,
   updateAnswerFormatValidator,
   collectAnswerValidator,
+  createNewEdgeValidator
 };

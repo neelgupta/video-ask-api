@@ -1021,6 +1021,41 @@ const getNodeWiseAnswers = catchAsyncError(async (req, res) => {
   return response200(res, msg.fetch_success, data);
 });
 
+
+const createNewEdgeConnections = catchAsyncError(async (req, res) => {
+  const {body} = req
+  const Id = req.user;
+  let interactionData = await interactions_services.get_single_interaction({
+    _id: body.interaction_id,
+    is_deleted: false,
+  });
+
+  if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+  const findEdge = await interactions_services.find_Edge({
+    source: body.source,
+    target:body.target,
+    is_deleted: false,
+  });
+
+  if(findEdge) return response400(res, msg.existEdge);
+
+
+
+  if (body.source && body.target) {
+    await interactions_services.add_Edge({
+      ...body,
+      added_by: Id,
+    });
+    await interactions_services.remove_Edge({
+      interaction_id: body.interaction_id,
+      source:body.source
+    });
+  }
+
+  return response200(res, msg.createNewEdge, findEdge);
+})
+
 module.exports = {
   addFolder,
   getFolderList,
@@ -1045,4 +1080,5 @@ module.exports = {
   getInteractionContactDetails,
   getInteractionAnswers,
   getNodeWiseAnswers,
+  createNewEdgeConnections
 };

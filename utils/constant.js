@@ -63,6 +63,8 @@ const msg = {
   nodeTypeQuestion: "Node type must be Question",
   libraryUpload: "The media has been created",
   mediaDelete: "Media deleted successfully",
+  existEdge:"Don't create a new connection; there is already an existing.",
+  createNewEdge:"connection successfully created."
 };
 
 const invitationTokenType = {

@@ -18,6 +18,12 @@ const librarySchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        title: {
+            type: String,
+        },
+        description: {
+            type: String,
+        },
         added_by: {
             type: mongoose.Types.ObjectId,
             ref: modelName.USER,
@@ -27,6 +33,7 @@ const librarySchema = new mongoose.Schema(
             type: Boolean,
             default: false
         }
+
     }, { timestamps: true }
 );
 

@@ -160,4 +160,11 @@ router.get(
   interactionsController.getNodeWiseAnswers
 );
 
+router.post(
+  "/create-new-edge",
+  isAuthenticated,
+  validateRequest(interactionsValidation.createNewEdgeValidator),
+  interactionsController.createNewEdgeConnections
+);
+
 module.exports = router;

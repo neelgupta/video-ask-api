@@ -188,6 +188,9 @@ const uploadMediaValidator = Joi.object({
       })
     )
     .optional(),
+    title:Joi.string().optional(),
+    description:Joi.string().optional()
+
 });
 
 module.exports = {
