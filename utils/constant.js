@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const { v4: uuidv4 } = require("uuid");
+const dayjs = require("dayjs");
 
 const frontBaseUrl = "https://adorable-custard-9de130.netlify.app";
 
@@ -63,8 +64,8 @@ const msg = {
   nodeTypeQuestion: "Node type must be Question",
   libraryUpload: "The media has been created",
   mediaDelete: "Media deleted successfully",
-  existEdge:"Don't create a new connection; there is already an existing.",
-  createNewEdge:"connection successfully created."
+  existEdge: "Don't create a new connection; there is already an existing.",
+  createNewEdge: "connection successfully created.",
 };
 
 const invitationTokenType = {
@@ -221,6 +222,43 @@ const generateUid = () => {
   return uuidv4().replace(/-/g, "").slice(0, 8);
 };
 
+const getDateRangeForFilter = (tag) => {
+  const now = dayjs();
+  let startDate, endDate;
+
+  switch (tag) {
+    case "all":
+      startDate = null; // No start date filter
+      endDate = null; // No end date filter
+      break;
+
+    case "thisMonth":
+      startDate = now.startOf("month").toDate();
+      endDate = now.endOf("month").toDate();
+      break;
+
+    case "thisWeek":
+      startDate = now.startOf("week").toDate();
+      endDate = now.endOf("week").toDate();
+      break;
+
+    case "previousMonth":
+      startDate = now.subtract(1, "month").startOf("month").toDate();
+      endDate = now.subtract(1, "month").endOf("month").toDate();
+      break;
+
+    case "previousWeek":
+      startDate = now.subtract(1, "week").startOf("week").toDate();
+      endDate = now.subtract(1, "week").endOf("week").toDate();
+      break;
+
+    default:
+      throw new Error("Invalid tag provided");
+  }
+
+  return { startDate, endDate };
+};
+
 module.exports = {
   userType,
   frontBaseUrl,
@@ -248,4 +286,5 @@ module.exports = {
   decryptToken,
   generateResetPasswordToken,
   generateUid,
+  getDateRangeForFilter,
 };

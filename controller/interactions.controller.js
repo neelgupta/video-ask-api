@@ -20,6 +20,7 @@ const {
   answerType,
   openEndedType,
   generateUUID,
+  getDateRangeForFilter,
 } = require("../utils/constant");
 
 const addFolder = catchAsyncError(async (req, res) => {
@@ -563,7 +564,7 @@ const getMediaLibrary = catchAsyncError(async (req, res) => {
     search
   );
 
-  if(results?.length) results.map(val => val.type = "Node");
+  if (results?.length) results.map((val) => (val.type = "Node"));
 
   const data = await interactions_services.getLibrary(
     {
@@ -579,7 +580,7 @@ const getMediaLibrary = catchAsyncError(async (req, res) => {
     }
   );
 
-  if(data?.length) data.map(val => val.type = "Media");
+  if (data?.length) data.map((val) => (val.type = "Media"));
 
   let result = [...results, ...data];
 
@@ -1021,9 +1022,8 @@ const getNodeWiseAnswers = catchAsyncError(async (req, res) => {
   return response200(res, msg.fetch_success, data);
 });
 
-
 const createNewEdgeConnections = catchAsyncError(async (req, res) => {
-  const {body} = req
+  const { body } = req;
   const Id = req.user;
   let interactionData = await interactions_services.get_single_interaction({
     _id: body.interaction_id,
@@ -1034,13 +1034,11 @@ const createNewEdgeConnections = catchAsyncError(async (req, res) => {
 
   const findEdge = await interactions_services.find_Edge({
     source: body.source,
-    target:body.target,
+    target: body.target,
     is_deleted: false,
   });
 
-  if(findEdge) return response400(res, msg.existEdge);
-
-
+  if (findEdge) return response400(res, msg.existEdge);
 
   if (body.source && body.target) {
     await interactions_services.add_Edge({
@@ -1049,12 +1047,52 @@ const createNewEdgeConnections = catchAsyncError(async (req, res) => {
     });
     await interactions_services.remove_Edge({
       interaction_id: body.interaction_id,
-      source:body.source
+      source: body.source,
     });
   }
 
   return response200(res, msg.createNewEdge, findEdge);
-})
+});
+
+const getAllInteraction = catchAsyncError(async (req, res) => {
+  const { organization_id, filterType } = req.params;
+
+  const { startDate, endDate } = getDateRangeForFilter(filterType);
+
+  const intList = await interactions_services.get_all_interaction(
+    organization_id
+  );
+
+  if (intList?.length < 0) return response200(res, msg.fetch_success, intList);
+
+  const data = await interactions_services.get_all_interaction_answer(
+    intList,
+    startDate,
+    endDate,
+    filterType
+  );
+
+  return response200(res, msg.fetch_success, data);
+});
+
+const updateIsCompletedInt = catchAsyncError(async (req, res) => {
+  const answerId = req.body.answer_id;
+
+  const answerData = await interactions_services.get_answer({
+    _id: answerId,
+  });
+
+  if (!answerData) return response400(res, "Answer details not exists");
+
+  await interactions_services.update_answer(
+    { _id: answerId },
+    {
+      is_completed_interaction: true,
+    }
+  );
+
+  return response200(res, msg.update_success, []);
+});
 
 module.exports = {
   addFolder,
@@ -1080,5 +1118,7 @@ module.exports = {
   getInteractionContactDetails,
   getInteractionAnswers,
   getNodeWiseAnswers,
-  createNewEdgeConnections
+  createNewEdgeConnections,
+  getAllInteraction,
+  updateIsCompletedInt,
 };

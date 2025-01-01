@@ -23,15 +23,19 @@ const nodeAnswerSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.Mixed,
           default: {},
         },
-        createdAt:{
-          type:Date,
-          default:new Date(),
-        }
+        createdAt: {
+          type: Date,
+          default: new Date(),
+        },
       },
     ],
     contact_id: {
       type: mongoose.Types.ObjectId,
       ref: modelName.CONTACT,
+    },
+    is_completed_interaction: {
+      type: Boolean,
+      default: false,
     },
     is_deleted: {
       type: Boolean,

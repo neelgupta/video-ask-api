@@ -456,7 +456,7 @@ const node_wise_answer = async (match) => {
               $project: {
                 answers: 1,
                 contactDetails: 1,
-                createdAt:1
+                createdAt: 1,
               },
             },
           ],
@@ -534,6 +534,141 @@ const node_wise_answer = async (match) => {
   }
 };
 
+const get_all_interaction = async (org_id) => {
+  try {
+    let query = {
+      is_deleted: false,
+      organization_id: new mongoose.Types.ObjectId(org_id),
+    };
+    return mongoService.findAll(modelName.INTERACTION, query);
+  } catch (error) {
+    return error;
+  }
+};
+
+const get_all_interaction_answer = async (
+  interactionArray,
+  startDate,
+  endDate,
+  teg
+) => {
+  console.log("interactionArray", interactionArray);
+  try {
+    let pipeline = [
+      {
+        $match: {
+          interaction_id: {
+            $in: interactionArray.map(
+              (obj) => new mongoose.Types.ObjectId(obj._id)
+            ),
+          },
+          ...(teg !== "all"
+            ? {
+                createdAt: {
+                  $gte: startDate,
+                  $lte: endDate,
+                },
+              }
+            : {}),
+          is_deleted: false,
+        },
+      },
+      {
+        $unwind: {
+          path: "$answers",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "nodes",
+          localField: "answers.node_id",
+          foreignField: "_id",
+          as: "answers.nodeDetails",
+          pipeline: [{ $project: { updatedAt: 0, __v: 0, added_by: 0 } }],
+        },
+      },
+      {
+        $unwind: {
+          path: "$answers.nodeDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          interaction_id: { $first: "$interaction_id" },
+          is_deleted: { $first: "$is_deleted" },
+          contact_id: { $first: "$contact_id" },
+          createdAt: { $first: "$createdAt" },
+          answers: {
+            $push: "$answers",
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "contacts",
+          localField: "contact_id",
+          foreignField: "_id",
+          as: "contact_details",
+          pipeline: [
+            {
+              $project: {
+                updatedAt: 0,
+                __v: 0,
+                is_deleted: 0,
+                is_favorite: 0,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $unwind: {
+          path: "$contact_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
+
+    console.log("pipeline", pipeline?.[0]);
+
+    return await mongoService.aggregation(modelName.NODE_ANSWER, pipeline);
+  } catch (error) {
+    return error;
+  }
+};
+
+const get_all_answer = async (interactions, query) => {
+  try {
+    let pipeline = [
+      {
+        $match: {
+          interaction_id: {
+            $in: interactions.map(
+              (obj) => new mongoose.Types.ObjectId(obj._id)
+            ),
+          },
+          ...query,
+          is_deleted: false,
+        },
+      },
+    ];
+    return await mongoService.aggregation(modelName.NODE_ANSWER, pipeline);
+  } catch (error) {
+    return error;
+  }
+};
+
+const get_all_contact = async (query) => {
+  try {
+    return await mongoService.findAll(modelName.CONTACT, query);
+  } catch (error) {
+    return error;
+  }
+};
+
 module.exports = {
   add_folder,
   get_folder_list,
@@ -566,4 +701,8 @@ module.exports = {
   get_answer,
   get_interaction_answer,
   node_wise_answer,
+  get_all_interaction,
+  get_all_interaction_answer,
+  get_all_answer,
+  get_all_contact,
 };

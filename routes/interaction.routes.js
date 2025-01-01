@@ -148,10 +148,21 @@ router.post(
   interactionsController.collectAnswer
 );
 
+router.put(
+  "/update-is-completed-answer",
+  interactionsController.updateIsCompletedInt
+);
+
 router.get(
   "/get-interaction-answers/:interaction_id",
   isAuthenticated,
   interactionsController.getInteractionAnswers
+);
+
+router.get(
+  "/get-all-interaction-answers/:organization_id/:filterType",
+  isAuthenticated,
+  interactionsController.getAllInteraction
 );
 
 router.get(
