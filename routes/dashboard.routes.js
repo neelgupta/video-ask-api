@@ -8,4 +8,16 @@ router.get(
   dashboardController.getDashboardCount
 );
 
+router.get(
+  "/dashboard-contact/:organization_id",
+  isAuthenticated,
+  dashboardController.getDashboardContact
+);
+
+router.get(
+  "/dashboard-interaction/:organization_id",
+  isAuthenticated,
+  dashboardController.getDashboardInteraction
+);
+
 module.exports = router;

@@ -534,13 +534,13 @@ const node_wise_answer = async (match) => {
   }
 };
 
-const get_all_interaction = async (org_id) => {
+const get_all_interaction = async (org_id, options = {}) => {
   try {
     let query = {
       is_deleted: false,
       organization_id: new mongoose.Types.ObjectId(org_id),
     };
-    return mongoService.findAll(modelName.INTERACTION, query);
+    return mongoService.findAll(modelName.INTERACTION, query, {}, options);
   } catch (error) {
     return error;
   }
@@ -669,6 +669,105 @@ const get_all_contact = async (query) => {
   }
 };
 
+const get_dashboard_recent_interaction = async (
+  organization_id,
+  searchText,
+  skip,
+  limit
+) => {
+  try {
+    const pipeline = [
+      {
+        $match: {
+          organization_id: new mongoose.Types.ObjectId(organization_id),
+          is_deleted: false,
+          title: { $regex: searchText || "", $options: "i" },
+        },
+      },
+      {
+        $lookup: {
+          from: "node_answers",
+          localField: "_id",
+          foreignField: "interaction_id",
+          as: "landed",
+        },
+      },
+      {
+        $lookup: {
+          from: "nodes",
+          let: { interactionId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: ["$interaction_id", "$$interactionId"],
+                    },
+                    { $eq: ["$type", "Question"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "nodes",
+        },
+      },
+      {
+        $addFields: {
+          landedCount: { $size: "$landed" },
+          interactionCount: { $size: "$nodes" },
+          contactCount: {
+            $size: {
+              $filter: {
+                input: "$landed",
+                as: "item",
+                cond: {
+                  $ifNull: ["$$item.contact_id", false],
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          landed: 0,
+          nodes: 0,
+        },
+      },
+      {
+        $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+      },
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          Records: [
+            { $skip: skip || 0 }, // Replace 0 with the desired skip value for pagination
+            { $limit: limit || 5 }, // Replace 5 with the desired limit value for pagination
+          ],
+        },
+      },
+      {
+        $addFields: {
+          totalRecords: {
+            $arrayElemAt: ["$metadata.total", 0],
+          },
+        },
+      },
+      {
+        $project: {
+          metadata: 0,
+        },
+      },
+    ];
+
+    return await mongoService.aggregation(modelName.INTERACTION, pipeline);
+  } catch (error) {
+    return error;
+  }
+};
+
 module.exports = {
   add_folder,
   get_folder_list,
@@ -705,4 +804,5 @@ module.exports = {
   get_all_interaction_answer,
   get_all_answer,
   get_all_contact,
+  get_dashboard_recent_interaction,
 };
