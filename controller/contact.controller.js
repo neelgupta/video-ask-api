@@ -4,7 +4,11 @@ const {
   response200,
 } = require("../lib/response-messages");
 const catchAsyncError = require("../middleware/catchAsyncError");
-const { contact_services, organization_services } = require("../service");
+const {
+  contact_services,
+  organization_services,
+  interactions_services,
+} = require("../service");
 const { msg, generateUUID } = require("../utils/constant");
 
 const addContact = catchAsyncError(async (req, res) => {
@@ -144,4 +148,120 @@ const deleteContact = catchAsyncError(async (req, res) => {
   return response200(res, msg.delete_success, []);
 });
 
-module.exports = { addContact, getContactList, updateContact, deleteContact };
+const createAnonymousContact = catchAsyncError(async (req, res) => {
+  const { answer_id, ...contactBody } = req.body;
+  const { organization_id, contact_email, phone_number } = contactBody;
+  const Id = req.user;
+
+  const organizationData = await organization_services.get_organization({
+    _id: organization_id,
+    is_deleted: false,
+  });
+  if (!organizationData) return response400(res, msg.organizationNotExists);
+
+  const answer = await contact_services.find_node_answer({ _id: answer_id });
+  if (!answer) {
+    return response400(res, "Conversation not found.");
+  }
+  if (answer?.contact_id) {
+    return response400(res, "Contact details already exist.");
+  }
+
+  const contactEmailExists = await contact_services.get_single_contact({
+    organization_id,
+    contact_email,
+    is_deleted: false,
+  });
+  if (contactEmailExists) return response400(res, msg.emailIsExists);
+
+  if (phone_number) {
+    const phoneNumberExists = await contact_services.get_single_contact({
+      organization_id,
+      phone_number,
+      is_deleted: false,
+    });
+    if (phoneNumberExists) return response400(res, msg.phoneExists);
+  }
+
+  contactBody.contact_uuid = generateUUID("CON");
+  contactBody.added_by = Id;
+
+  const contact = await contact_services.add_contact(contactBody);
+
+  await interactions_services.update_answer(
+    { _id: answer_id },
+    { contact_id: contact._id }
+  );
+
+  return response201(res, msg.contactAddSuccess, {});
+});
+
+const assignContact = catchAsyncError(async (req, res) => {
+  const { answer_id, contact_id, organization_id } = req.body;
+
+  const organizationData = await organization_services.get_organization({
+    _id: organization_id,
+    is_deleted: false,
+  });
+  if (!organizationData) return response400(res, msg.organizationNotExists);
+
+  const answer = await contact_services.find_node_answer({ _id: answer_id });
+  if (!answer) {
+    return response400(res, "Conversation not found.");
+  }
+  if (answer.contact_id) {
+    return response400(res, "Contact details already exist.");
+  }
+
+  const contactEmailExists = await contact_services.get_single_contact({
+    organization_id,
+    _id: contact_id,
+    is_deleted: false,
+  });
+  if (!contactEmailExists) return response400(res, msg.validMemberEmail);
+
+  const data = await interactions_services.update_answer(
+    { _id: answer_id },
+    { contact_id: contact_id }
+  );
+
+  return response200(res, "Assign contact.", {});
+});
+
+const filterContact = catchAsyncError(async (req, res) => {
+  const { organization_id } = req.params;
+  const { search } = req.query;
+
+  const organizationData = await organization_services.get_organization({
+    _id: organization_id,
+    is_deleted: false,
+  });
+  if (!organizationData) return response400(res, msg.organizationNotExists);
+
+  let matchQuery = {
+    organization_id,
+    is_deleted: false,
+    $or: [
+      { contact_name: { $regex: search, $options: "i" } },
+      { contact_email: { $regex: search, $options: "i" } },
+    ],
+  };
+
+  const contactData = await contact_services.get_all_contacts(
+    matchQuery,
+    { __v: 0, updatedAt: 0 },
+    {}
+  );
+
+  return response200(res, msg.fetch_success, contactData);
+});
+
+module.exports = {
+  addContact,
+  getContactList,
+  updateContact,
+  deleteContact,
+  createAnonymousContact,
+  assignContact,
+  filterContact,
+};

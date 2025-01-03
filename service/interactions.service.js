@@ -552,7 +552,6 @@ const get_all_interaction_answer = async (
   endDate,
   teg
 ) => {
-  console.log("interactionArray", interactionArray);
   try {
     let pipeline = [
       {
