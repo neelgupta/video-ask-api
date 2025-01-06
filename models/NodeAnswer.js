@@ -3,6 +3,11 @@ const { modelName, answerType } = require("../utils/constant");
 
 const nodeAnswerSchema = new mongoose.Schema(
   {
+    organization_id: {
+      type: mongoose.Types.ObjectId,
+      ref: modelName.ORGANIZATION,
+      required: true,
+    },
     interaction_id: {
       type: mongoose.Types.ObjectId,
       ref: modelName.INTERACTION,

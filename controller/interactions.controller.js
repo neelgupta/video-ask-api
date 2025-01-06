@@ -919,6 +919,7 @@ const collectAnswer = catchAsyncError(async (req, res) => {
     if (email) {
       const contactIsExists = await contact_services.get_single_contact({
         contact_email: email,
+        organization_id:interactionData.organization_id,
         is_deleted: false,
       });
       if (contactIsExists) {
@@ -1069,7 +1070,8 @@ const getAllInteraction = catchAsyncError(async (req, res) => {
     intList,
     startDate,
     endDate,
-    filterType
+    filterType,
+    organization_id,
   );
 
   return response200(res, msg.fetch_success, data);

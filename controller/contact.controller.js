@@ -71,7 +71,7 @@ const getContactList = catchAsyncError(async (req, res) => {
       { contact_uuid: { $regex: search, $options: "i" } },
     ];
   }
-
+  
   const contactCount = await contact_services.contact_count(matchQuery);
 
   const contactData = await contact_services.get_all_contacts(

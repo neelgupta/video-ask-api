@@ -550,7 +550,8 @@ const get_all_interaction_answer = async (
   interactionArray,
   startDate,
   endDate,
-  teg
+  tag,
+  organization_id
 ) => {
   try {
     let pipeline = [
@@ -561,7 +562,7 @@ const get_all_interaction_answer = async (
               (obj) => new mongoose.Types.ObjectId(obj._id)
             ),
           },
-          ...(teg !== "all"
+          ...(tag !== "all"
             ? {
                 createdAt: {
                   $gte: startDate,
@@ -613,6 +614,11 @@ const get_all_interaction_answer = async (
           as: "contact_details",
           pipeline: [
             {
+              $match: {
+                organization_id: new mongoose.Types.ObjectId(organization_id),
+              },
+            },
+            {
               $project: {
                 updatedAt: 0,
                 __v: 0,
@@ -623,6 +629,7 @@ const get_all_interaction_answer = async (
           ],
         },
       },
+      { $match: { contact_details: { $gt: [] } } },
       {
         $unwind: {
           path: "$contact_details",
@@ -630,8 +637,6 @@ const get_all_interaction_answer = async (
         },
       },
     ];
-
-    console.log("pipeline", pipeline?.[0]);
 
     return await mongoService.aggregation(modelName.NODE_ANSWER, pipeline);
   } catch (error) {
