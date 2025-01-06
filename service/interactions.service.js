@@ -428,6 +428,9 @@ const node_wise_answer = async (match) => {
           as: "answerDetails",
           pipeline: [
             {
+              $match: { is_deleted: false },
+            },
+            {
               $lookup: {
                 from: "contacts",
                 localField: "contact_id",
@@ -680,10 +683,10 @@ const get_dashboard_recent_interaction = async (
   skip,
   limit,
   startDate,
-  endDate,
+  endDate
 ) => {
   try {
-    let matchQuery ={
+    let matchQuery = {
       organization_id: new mongoose.Types.ObjectId(organization_id),
       is_deleted: false,
       title: { $regex: searchText || "", $options: "i" },
@@ -701,12 +704,14 @@ const get_dashboard_recent_interaction = async (
     }
 
     if (endDate) {
-      matchQuery.createdAt = { $lte: new Date(new Date(endDate).setUTCHours(23, 59, 59, 999)), };
+      matchQuery.createdAt = {
+        $lte: new Date(new Date(endDate).setUTCHours(23, 59, 59, 999)),
+      };
     }
 
     const pipeline = [
       {
-        $match: matchQuery
+        $match: matchQuery,
       },
       {
         $lookup: {
@@ -766,10 +771,7 @@ const get_dashboard_recent_interaction = async (
       {
         $facet: {
           metadata: [{ $count: "total" }],
-          Records: [
-            { $skip: skip || 0 }, 
-            { $limit: limit || 5 },
-          ],
+          Records: [{ $skip: skip || 0 }, { $limit: limit || 5 }],
         },
       },
       {

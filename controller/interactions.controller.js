@@ -1072,7 +1072,7 @@ const getAllInteraction = catchAsyncError(async (req, res) => {
     startDate,
     endDate,
     filterType,
-    organization_id,
+    organization_id
   );
 
   return response200(res, msg.fetch_success, data);

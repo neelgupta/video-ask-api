@@ -62,7 +62,7 @@ const nodeSchema = new mongoose.Schema(
         },
         answer_type: {
             type: String,
-            enum: Object.values(answerType), // Use Object.values for enum
+            enum: Object.values(answerType), 
         },
         answer_format: {
             type: mongoose.Schema.Types.Mixed,
@@ -75,6 +75,9 @@ const nodeSchema = new mongoose.Schema(
         index:{
             type:Number,
         },
+        // media_type:{
+
+        // },
         is_deleted: {
             type: Boolean,
             default: false
