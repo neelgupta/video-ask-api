@@ -3,11 +3,11 @@ const { modelName, interactionType, answerType } = require("../utils/constant");
 
 const interactionSchema = new mongoose.Schema(
     {
-        organization_id: {
-            type: mongoose.Types.ObjectId,
-            ref: modelName.ORGANIZATION,
-            required: true,
-        },
+        // organization_id: {
+        //     type: mongoose.Types.ObjectId,
+        //     ref: modelName.ORGANIZATION,
+        //     required: true,
+        // },
         interaction_type: {
             type: String,
             enum: [interactionType.Scratch, interactionType.FlowAI, interactionType.Template],
