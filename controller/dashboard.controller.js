@@ -53,7 +53,7 @@ const getDashboardContact = catchAsyncError(async (req, res) => {
 
 const getDashboardInteraction = catchAsyncError(async (req, res) => {
   const { organization_id } = req.params;
-  const { search } = req.query;
+  const { search, startDate, endDate } = req.query;
 
   const limit = parseInt(req.query?.limit || "5");
   const skip = parseInt(req.query?.page || "0") * limit;
@@ -63,7 +63,9 @@ const getDashboardInteraction = catchAsyncError(async (req, res) => {
       organization_id,
       search,
       skip,
-      limit
+      limit,
+      startDate,
+      endDate
     );
 
   return response200(res, msg.fetchSuccessfully, interactions?.[0]);

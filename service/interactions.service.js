@@ -677,16 +677,35 @@ const get_dashboard_recent_interaction = async (
   organization_id,
   searchText,
   skip,
-  limit
+  limit,
+  startDate,
+  endDate,
 ) => {
   try {
+    let matchQuery ={
+      organization_id: new mongoose.Types.ObjectId(organization_id),
+      is_deleted: false,
+      title: { $regex: searchText || "", $options: "i" },
+    };
+
+    if (startDate && endDate) {
+      matchQuery.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(new Date(endDate).setUTCHours(23, 59, 59, 999)),
+      };
+    }
+
+    if (startDate) {
+      matchQuery.createdAt = { $gte: new Date(startDate) };
+    }
+
+    if (endDate) {
+      matchQuery.createdAt = { $lte: new Date(new Date(endDate).setUTCHours(23, 59, 59, 999)), };
+    }
+
     const pipeline = [
       {
-        $match: {
-          organization_id: new mongoose.Types.ObjectId(organization_id),
-          is_deleted: false,
-          title: { $regex: searchText || "", $options: "i" },
-        },
+        $match: matchQuery
       },
       {
         $lookup: {
@@ -741,14 +760,14 @@ const get_dashboard_recent_interaction = async (
         },
       },
       {
-        $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+        $sort: { createdAt: -1 },
       },
       {
         $facet: {
           metadata: [{ $count: "total" }],
           Records: [
-            { $skip: skip || 0 }, // Replace 0 with the desired skip value for pagination
-            { $limit: limit || 5 }, // Replace 5 with the desired limit value for pagination
+            { $skip: skip || 0 }, 
+            { $limit: limit || 5 },
           ],
         },
       },
