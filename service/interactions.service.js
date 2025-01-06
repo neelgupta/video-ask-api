@@ -201,10 +201,11 @@ const getNodesList = async (interactionId) => {
 
     if (data?.length && data?.[0]?.nodes?.length) {
       await Promise.all(
-        data?.[0]?.nodes.map(async (val) => {
+        data?.[0]?.nodes?.map(async (val) => {
           val.allowedToEditAnswerType = true;
           const answerData = await mongoService.findOne(modelName.NODE_ANSWER, {
             "answers.node_id": val._id,
+            is_deleted: false,
           });
           if (answerData) {
             val.allowedToEditAnswerType = false;

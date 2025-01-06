@@ -71,7 +71,7 @@ const getContactList = catchAsyncError(async (req, res) => {
       { contact_uuid: { $regex: search, $options: "i" } },
     ];
   }
-  
+
   const contactCount = await contact_services.contact_count(matchQuery);
 
   const contactData = await contact_services.get_all_contacts(
@@ -256,6 +256,39 @@ const filterContact = catchAsyncError(async (req, res) => {
   return response200(res, msg.fetch_success, contactData);
 });
 
+const getContactConversation = catchAsyncError(async (req, res) => {
+  const { contact_id } = req.params;
+
+  const contactData = await contact_services.get_single_contact({
+    _id: contact_id,
+    is_deleted: false,
+  });
+
+  if (!contactData) return response400(res, msg.contactNotFound);
+
+  const data = await contact_services.get_conversations({contact_id});
+
+  return response200(res, msg.fetch_success, data?.[0] || 0);
+});
+
+const deleteConversation = catchAsyncError(async (req, res) => {
+  const { answer_id } = req.params;
+
+  const answerData = await interactions_services.get_answer({
+    _id: answer_id,
+    is_deleted: false,
+  });
+
+  if (!answerData) return response400(res, msg.answerNotFound);
+
+  await interactions_services.update_answer(
+    { _id: answer_id },
+    { is_deleted: true }
+  );
+
+  return response200(res, msg.update_success, msg.deleteConversationSuccess);
+});
+
 module.exports = {
   addContact,
   getContactList,
@@ -264,4 +297,6 @@ module.exports = {
   createAnonymousContact,
   assignContact,
   filterContact,
+  getContactConversation,
+  deleteConversation,
 };

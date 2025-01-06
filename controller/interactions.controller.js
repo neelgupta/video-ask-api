@@ -854,6 +854,7 @@ const collectAnswer = catchAsyncError(async (req, res) => {
   if (answer_id) {
     const answerData = await interactions_services.get_answer({
       _id: answer_id,
+      is_deleted: false,
     });
     if (!answerData) return response400(res, "Answer details not exists");
   }
@@ -919,7 +920,7 @@ const collectAnswer = catchAsyncError(async (req, res) => {
     if (email) {
       const contactIsExists = await contact_services.get_single_contact({
         contact_email: email,
-        organization_id:interactionData.organization_id,
+        organization_id: interactionData.organization_id,
         is_deleted: false,
       });
       if (contactIsExists) {
@@ -1082,9 +1083,10 @@ const updateIsCompletedInt = catchAsyncError(async (req, res) => {
 
   const answerData = await interactions_services.get_answer({
     _id: answerId,
+    is_deleted: false,
   });
 
-  if (!answerData) return response400(res, "Answer details not exists");
+  if (!answerData) return response400(res, msg.answerNotFound);
 
   await interactions_services.update_answer(
     { _id: answerId },

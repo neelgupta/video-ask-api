@@ -50,4 +50,16 @@ router.get(
   contactController.filterContact
 );
 
+router.get(
+  "/contact-conversation/:contact_id",
+  isAuthenticated,
+  contactController.getContactConversation
+);
+
+router.delete(
+  "/remove-conversation/:answer_id",
+  isAuthenticated,
+  contactController.deleteConversation
+);
+
 module.exports = router;

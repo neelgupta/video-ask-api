@@ -66,6 +66,8 @@ const msg = {
   mediaDelete: "Media deleted successfully",
   existEdge: "Don't create a new connection; there is already an existing.",
   createNewEdge: "connection successfully created.",
+  answerNotFound: "Answer details not exists",
+  deleteConversationSuccess: "Conversation removed successfully",
 };
 
 const invitationTokenType = {
