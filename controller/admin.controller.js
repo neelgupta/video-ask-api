@@ -18,9 +18,16 @@ const adminSigning = catchAsyncError(async (req, res) => {
 });
 
 const addSubscriptionPlan = catchAsyncError(async (req, res) => {
+  const userId = req.user;
   const currency = "$";
   const plan_uuid = generateUUID("SUB");
-  req.body = { ...req.body, currency, plan_uuid };
+  req.body = {
+    ...req.body,
+    currency,
+    plan_uuid,
+    added_by: userId,
+    interval: 30,
+  };
   const subscription = await subscription_services.createSubscriptionPlan(
     req.body
   );
@@ -41,11 +48,13 @@ const updateSubscriptionPlan = catchAsyncError(async (req, res) => {
 });
 
 const getSubscriptionPlan = catchAsyncError(async (req, res) => {
-  let subscriptions = await subscription_services.getAllSubscriptionPlan({
-    select: "",
-    lean: true,
-    sort: { createdAt: -1 },
-  });
+  let subscriptions = await subscription_services.getAllSubscriptionPlan(
+    {
+      is_deleted: false,
+      is_active: true,
+    },
+    { sort: { createdAt: -1 } }
+  );
   return response200(res, msg.fetch_success, { subscriptions });
 });
 
@@ -56,6 +65,7 @@ const deleteSubscriptionPlan = catchAsyncError(async (req, res) => {
   });
   return response200(res, "deleted successfully", { subscription });
 });
+
 module.exports = {
   adminSigning,
   addSubscriptionPlan,

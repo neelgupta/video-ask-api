@@ -130,7 +130,28 @@ const deleteOrganization = catchAsyncError(async (req, res) => {
 const addMember = catchAsyncError(async (req, res) => {
   const Id = req.user;
   const { organization_id, member_email, member_phone, member_name } = req.body;
-  const userData = await user_services.findUser({ _id: Id });
+
+  const userData = await user_services.getUserSubscriptionPlan(
+    { _id: Id },
+    {
+      path: "current_subscription_id",
+      populate: { path: "subscription_plan_id" },
+    }
+  );
+
+  if(userData?.current_subscription_id){
+    const planData = userData?.current_subscription_id?.subscription_plan_id;
+    const allowedMembers = planData?.members;
+
+    const totalMembersCount = await organization_services.get_member_counts({
+      organization_id,
+      is_deleted: false,
+    });
+
+    if(allowedMembers <= totalMembersCount){
+      return response400(res,msg.upgradeSubscription);
+    }
+  }
 
   const organizationData = await organization_services.get_organization({
     _id: organization_id,
@@ -412,10 +433,13 @@ const getReferrals = catchAsyncError(async (req, res) => {
 });
 
 const getSubscriptionPlans = catchAsyncError(async (req, res) => {
-  const data = await subscription_services.getAllSubscriptionPlan({
-    is_deleted: false,
-    is_active: true,
-  });
+  const data = await subscription_services.getAllSubscriptionPlan(
+    {
+      is_deleted: false,
+      is_active: true,
+    },
+    { sort: { createdAt: -1 } }
+  );
 
   return response200(res, msg.fetch_success, data);
 });

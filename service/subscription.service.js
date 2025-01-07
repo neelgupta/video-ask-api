@@ -9,11 +9,11 @@ const createSubscriptionPlan = async (payload) => {
   }
 };
 
-const getAllSubscriptionPlan = async (options) => {
+const getAllSubscriptionPlan = async (query,options) => {
   try {
     return await mongoService.findAll(
       modelName.SUBSCRIPTION_PLAN,
-      {},
+      query,
       {},
       options
     );

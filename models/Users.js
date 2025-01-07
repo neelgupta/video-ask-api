@@ -59,6 +59,11 @@ const userSchema = mongoose.Schema(
       type: String,
       enum: [memberRole.Owner, memberRole.Member, memberRole.Admin],
     },
+    current_subscription_id: {
+      type: mongoose.Types.ObjectId,
+      ref: modelName.SUBSCRIPTIONS,
+      // required: true,
+    },
     reset_password_token: {
       type: String,
     },
@@ -67,7 +72,7 @@ const userSchema = mongoose.Schema(
     },
     is_member: {
       type: Boolean,
-      default: false
+      default: false,
     },
     is_deleted: {
       type: Boolean,

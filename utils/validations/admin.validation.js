@@ -5,7 +5,7 @@ const addPlanValidator = Joi.object({
     title: Joi.string().required().messages({
         "*": "Please enter title",
     }),
-    plan_type: Joi.string().required().valid(subscriptionPlanType.Free, subscriptionPlanType.Basic, subscriptionPlanType.Pro, subscriptionPlanType.Enterprise),
+    plan_type: Joi.string().required().valid(subscriptionPlanType.Free, subscriptionPlanType.Premium),
     sub_title: Joi.string().required().messages({
         "*": "Please enter Sub Title",
     }),
@@ -21,18 +21,13 @@ const addPlanValidator = Joi.object({
     members: Joi.number().required().messages({
         "*": "Please enter Members",
     }),
-    description: Joi.array()
-        .items(Joi.string().required())
-        .min(1)
-        .required(),
-    currency: Joi.string().optional(),
-    discount: Joi.string().optional(),
-    is_best_deal: Joi.boolean().required(),
-    is_upgrade: Joi.boolean().required(),
-    is_custom: Joi.boolean().required(),
+    description:Joi.string().required().messages({
+        "*": "Please enter Description",
+    }),
     button_text: Joi.string().required().messages({
         "*": "Please enter Button Text",
     }),
+    currency: Joi.string().optional(),
 });
 
 const updatePlanValidator = Joi.object({
@@ -40,21 +35,15 @@ const updatePlanValidator = Joi.object({
         "*": "Subscription plan id is required",
     }),
     title: Joi.string().optional(),
-    plan_type: Joi.string().optional().valid(subscriptionPlanType.Free, subscriptionPlanType.Basic, subscriptionPlanType.Pro, subscriptionPlanType.Enterprise),
+    plan_type: Joi.string().optional().valid(subscriptionPlanType.Free, subscriptionPlanType.Premium),
     subTitle: Joi.string().optional(),
     price: Joi.string().optional(),
     page: Joi.number().optional(),
     storage: Joi.number().optional(),
     members: Joi.number().optional(),
-    description: Joi.array()
-        .items(Joi.string().required())
-        .min(1)
-        .optional(),
+    description: Joi.string().optional(),
     currency: Joi.string().optional(),
-    discount: Joi.string().optional(),
     is_best_deal: Joi.boolean().optional(),
-    is_upgrade: Joi.boolean().optional(),
-    is_custom: Joi.boolean().optional(),
     button_text: Joi.string().optional(),
 });
 

@@ -52,6 +52,21 @@ const deleteAccountValidator = Joi.object({
   }),
 });
 
+const addSubscriptionsValidator = Joi.object({
+  subscription_plan_id: Joi.string().required().messages({
+    "*": "Plan is required",
+  }),
+  plan_type: Joi.string().required().messages({
+    "*": "Plan type is required",
+  }),
+  price: Joi.string().required().messages({
+    "*": "Price is required",
+  }),
+  currency: Joi.string().required().messages({
+    "*": "Currency is required",
+  }),
+});
+
 module.exports = {
   signUpValidator,
   signInValidator,
@@ -59,4 +74,5 @@ module.exports = {
   forgotPasswordValidator,
   resetPasswordValidator,
   deleteAccountValidator,
+  addSubscriptionsValidator,
 };

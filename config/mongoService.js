@@ -48,8 +48,9 @@ const findAll = async (
   projection = {},
   options = { lean: true, populate: "" }
 ) => {
+  console.log("before options",options)
   options.lean = true;
-
+  console.log("after options",options)
   let query = mongoose.model(model).find(criteria, projection, options);
 
   if (options.populate) query = query.populate(options.populate);

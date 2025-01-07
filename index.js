@@ -9,6 +9,7 @@ const fs = require("fs")
 const errorMiddleware = require("./middleware/Error");
 const connectDatabase = require("./config/connect");
 const router = require("./routes");
+require("./models");
 
 const app = express();
 

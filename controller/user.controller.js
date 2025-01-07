@@ -1,7 +1,31 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
-const { response200, response400 } = require("../lib/response-messages");
-const { msg, hashPassword, validatePassword, generateUUID, defaultOrganization, decryptToken, memberInvitationStatus, userType, memberRole, invitationTokenType, generateResetPasswordToken, frontBaseUrl, defaultFolderName } = require("../utils/constant");
-const { user_services, organization_services, interactions_services } = require("../service");
+const {
+  response200,
+  response400,
+  response201,
+} = require("../lib/response-messages");
+const {
+  msg,
+  hashPassword,
+  validatePassword,
+  generateUUID,
+  defaultOrganization,
+  decryptToken,
+  memberInvitationStatus,
+  userType,
+  memberRole,
+  invitationTokenType,
+  generateResetPasswordToken,
+  frontBaseUrl,
+  defaultFolderName,
+  subscriptionsStatus,
+} = require("../utils/constant");
+const {
+  user_services,
+  organization_services,
+  interactions_services,
+  subscription_services,
+} = require("../service");
 const { forgotPasswordMail } = require("../utils/emailTemplates");
 
 // sign-up
@@ -50,9 +74,29 @@ const userSignup = catchAsyncError(async (req, res) => {
   const userData = await user_services.registerUser(req.body);
 
   const organizationUUID = generateUUID("ORG");
-  const organizationRequest = { organization_name: defaultOrganization, members: { userId: [userData._id], role: memberRole.Admin }, added_by: userData._id, organization_uuid: organizationUUID, }
-  const organizationData = await organization_services.add_organization(organizationRequest);
-  await interactions_services.add_folder({ organization_id: organizationData._id, added_by: userData._id, folder_name: defaultFolderName, is_default: true });
+  const organizationRequest = {
+    organization_name: defaultOrganization,
+    members: { userId: [userData._id], role: memberRole.Admin },
+    added_by: userData._id,
+    organization_uuid: organizationUUID,
+    branding: "flow-ai",
+    language: "english",
+    primary_color: "#7B5AFF",
+    secondary_color: "#B3A1FF",
+    background_color: "#FFFFFF",
+    font: "Arial",
+    border_radius: 10,
+  };
+
+  const organizationData = await organization_services.add_organization(
+    organizationRequest
+  );
+  await interactions_services.add_folder({
+    organization_id: organizationData._id,
+    added_by: userData._id,
+    folder_name: defaultFolderName,
+    is_default: true,
+  });
 
   if (memberId && memberData) {
     await organization_services.update_member({ _id: memberId, }, { invitation_status: memberInvitationStatus.Completed, invitation_token: null });
@@ -213,6 +257,47 @@ const deleteAccount = catchAsyncError(async (req, res) => {
   return response200(res, msg.accountDeleted, []);
 })
 
+const addSubscriptions = catchAsyncError(async (req, res) => {
+  const userId = req.user;
+  const { subscription_plan_id, plan_type, price, currency } = req.body;
+
+  const alreadySubscribe = await user_services.get_subscriptions({
+    user_id: userId,
+    status:subscriptionsStatus.active,
+  });
+
+  if (alreadySubscribe) return response400(res, msg.alreadyActivePlan);
+
+  const planData = await subscription_services.findPlanById({
+    _id: subscription_plan_id,
+    is_deleted: false,
+  });
+
+  if (!planData) return response400(res, msg.planNotExists);
+
+  const planStartDate = new Date();
+  const planEndDate = new Date(planStartDate);
+  planEndDate.setDate(planEndDate.getDate() + 30);
+  
+  const data = await user_services.purchase_plan({
+    user_id: userId,
+    subscription_plan_id,
+    plan_type,
+    price,
+    currency,
+    start_date: planStartDate,
+    end_date: planEndDate,
+    status: subscriptionsStatus.active,
+  });
+
+  await user_services.updateUser(
+    { _id: userId },
+    { current_subscription_id: data._id }
+  );
+
+  return response201(res, msg.planPurchaseSuccess, data);
+});
+
 module.exports = {
   userSignup,
   userSignIn,
@@ -223,4 +308,5 @@ module.exports = {
   changePassword,
   updateProfile,
   deleteAccount,
+  addSubscriptions,
 };

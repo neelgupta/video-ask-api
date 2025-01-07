@@ -68,6 +68,11 @@ const msg = {
   createNewEdge: "connection successfully created.",
   answerNotFound: "Answer details not exists",
   deleteConversationSuccess: "Conversation removed successfully",
+  planNotExists:"Subscription plan is not exists",
+  alreadyActivePlan:
+    "You cannot switch to a different subscription plan while your current plan is still active",
+  planPurchaseSuccess:"New subscription plan purchased successfully",
+  upgradeSubscription:"Please upgrade your current subscription",
 };
 
 const invitationTokenType = {
@@ -126,13 +131,12 @@ const modelName = {
   NODE: "Node",
   PAYMENT_METHOD: "Payment_method",
   NODE_ANSWER: "Node_answer",
+  SUBSCRIPTIONS: "Subscriptions",
 };
 
 const subscriptionPlanType = {
   Free: "free",
-  Basic: "basic",
-  Pro: "pro",
-  Enterprise: "enterprise",
+  Premium: "premium",
 };
 
 const interactionType = {
@@ -171,6 +175,12 @@ const openEndedType = {
   audio: "audio",
   video: "video",
   text: "text",
+};
+
+const subscriptionsStatus = {
+  active: "active",
+  canceled: "canceled",
+  incomplete: "incomplete",
 };
 
 const hashPassword = (password) => {
@@ -281,6 +291,7 @@ module.exports = {
   nodeType,
   answerType,
   openEndedType,
+  subscriptionsStatus,
   hashPassword,
   validatePassword,
   generateUUID,

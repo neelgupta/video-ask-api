@@ -12,3 +12,4 @@ module.exports.Edge = require("./Edge");
 module.exports.PaymentMethod = require("./PaymentMethod");
 module.exports.NodeAnswer = require("./NodeAnswer");
 module.exports.Library = require("./Library");
+module.exports.Subscriptions = require("./Subscriptions");

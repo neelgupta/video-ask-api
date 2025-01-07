@@ -84,6 +84,30 @@ const fetchUser = async (match, project, populateQuery) => {
   }
 };
 
+const getUserSubscriptionPlan = async(query,populate) =>{
+  try {
+    return await mongoService.findOnePopulate(modelName.USER, query, {}, {}, populate);
+  } catch (error) {
+    throw error;
+  }
+}
+
+const get_subscriptions = async (query) => {
+  try {
+    return await mongoService.findOne(modelName.SUBSCRIPTIONS, query);
+  } catch (error) {
+    throw error;
+  }
+};
+
+const purchase_plan = async(payload) =>{
+  try {
+    return await mongoService.createOne(modelName.SUBSCRIPTIONS, payload);
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   findUser,
   registerUser,
@@ -93,4 +117,7 @@ module.exports = {
   updateAllUser,
   getAllUsersByAggregation,
   fetchUser,
+  get_subscriptions,
+  purchase_plan,
+  getUserSubscriptionPlan,
 };

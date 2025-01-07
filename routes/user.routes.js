@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const { userController, organizationController } = require("../controller");
-const { isAuthenticated } = require("../middleware/auth");
+const { isAuthenticated, isAuthenticatedUser } = require("../middleware/auth");
 const {
   userValidation,
   organizationValidation,
@@ -199,6 +199,14 @@ router.get(
   "/get-plans",
   isAuthenticated,
   organizationController.getSubscriptionPlans
+);
+
+router.post(
+  "/purchase-plan",
+  isAuthenticated,
+  isAuthenticatedUser("user"),
+  validateRequest(userValidation.addSubscriptionsValidator),
+  userController.addSubscriptions
 );
 
 const organizationSwaggerSchemas = (swaggerDoc) => {
