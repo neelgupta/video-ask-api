@@ -33,7 +33,7 @@ const interactionSchema = new mongoose.Schema(
         contact_details:{
             is_name: {
                 type: Boolean,
-                default:false,
+                default:true,
             },
             is_email: {
                 type: Boolean,
