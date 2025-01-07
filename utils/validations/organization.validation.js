@@ -31,7 +31,9 @@ const updateOrganizationValidator = Joi.object({
   branding: Joi.string().optional(),
   language: Joi.string().optional(),
   font: Joi.string().optional(),
-  colors: Joi.string().optional(),
+  primary_color: Joi.string().optional(),
+  secondary_color: Joi.string().optional(),
+  background_color: Joi.string().optional(),
   border_radius: Joi.number().optional(),
   notification_settings: Joi.object({
     new_user_contacts: Joi.boolean().optional(),
