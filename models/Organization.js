@@ -31,9 +31,9 @@ const organizationSchema = mongoose.Schema(
     branding: { type: String, required: false },
     language: { type: String, required: false },
     font: { type: String, required: false },
-    primary_color: { type: String, default: "#7B5AFF" },
-    secondary_color: { type: String, default: "#B3A1FF" },
-    background_color: { type: String, default: "#FFFFFF" },
+    primary_color: { type: String },
+    secondary_color: { type: String },
+    background_color: { type: String },
     border_radius: { type: Number, required: false },
     notification_settings: {
       type: {

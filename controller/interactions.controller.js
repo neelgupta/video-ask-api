@@ -118,6 +118,12 @@ const createInteraction = catchAsyncError(async (req, res) => {
   if (!organizationData) return response400(res, msg.organizationNotExists);
 
   req.body.added_by = Id;
+  req.body.language = organizationData?.language;
+  req.body.font = organizationData?.font;
+  req.body.primary_color = organizationData?.primary_color;
+  req.body.secondary_color = organizationData?.secondary_color;
+  req.body.background_color = organizationData?.background_color;
+  req.body.border_radius = organizationData?.border_radius;
 
   const interactionData = await interactions_services.add_new_interaction(
     req.body
@@ -610,9 +616,14 @@ const copyInteraction = catchAsyncError(async (req, res) => {
     is_lead_crm: oldInteraction.is_lead_crm,
     title: `${oldInteraction.title} (copy)`,
     is_collect_contact: oldInteraction.is_collect_contact,
-    language: oldInteraction.language,
+    language: oldInteraction?.language,
     folder_id: folder_id,
     added_by: Id,
+    font: oldInteraction?.font,
+    primary_color: oldInteraction?.primary_color,
+    secondary_color: oldInteraction?.secondary_color,
+    background_color: oldInteraction?.background_color,
+    border_radius: oldInteraction?.border_radius,
   });
 
   if (interactionData?.length && interactionData?.[0]?.nodes?.length) {
