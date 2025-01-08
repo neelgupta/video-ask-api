@@ -28,6 +28,7 @@ const organizationSchema = mongoose.Schema(
         },
       },
     ],
+    storage_occupied: { type: Number, required: false, default: 0 },
     branding: { type: String, required: false },
     language: { type: String, required: false },
     font: { type: String, required: false },

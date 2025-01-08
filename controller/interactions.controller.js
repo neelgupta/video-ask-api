@@ -295,6 +295,7 @@ const createNode = catchAsyncError(async (req, res) => {
     x: positionX,
     y: positionY,
   };
+
   if (req.file) {
     const uploadedFile = await uploadVideoToCloudinary(
       req.file,
@@ -302,6 +303,12 @@ const createNode = catchAsyncError(async (req, res) => {
     );
     req.body.video_thumbnail = uploadedFile.thumbnailUrl;
     req.body.video_url = uploadedFile.videoUrl;
+    req.body.video_size = uploadedFile?.fileSize;
+
+    await organization_services.update_organization(
+      { _id: interactionData.organization_id },
+      { $inc: { storage_occupied: uploadedFile?.fileSize } }
+    );
   }
 
   // Get all nodes for the interaction and sort by index
@@ -386,14 +393,14 @@ const updateNode = catchAsyncError(async (req, res) => {
   const Id = req.user;
   const { node_id } = req.body;
 
-  const flowData = await interactions_services.get_single_node({
+  const nodeData = await interactions_services.get_single_node({
     _id: node_id,
     is_deleted: false,
   });
-  if (!flowData) return response400(res, msg.nodeNotExists);
+  if (!nodeData) return response400(res, msg.nodeNotExists);
 
   const interactionData = await interactions_services.get_single_interaction({
-    _id: flowData?.interaction_id,
+    _id: nodeData?.interaction_id,
     is_deleted: false,
   });
   if (!interactionData) return response400(res, msg.interactionIsNotExists);
@@ -410,6 +417,20 @@ const updateNode = catchAsyncError(async (req, res) => {
     );
     req.body.video_thumbnail = uploadedFile.thumbnailUrl;
     req.body.video_url = uploadedFile.videoUrl;
+    req.body.video_size = uploadedFile?.fileSize;
+
+    if(nodeData?.video_size){
+
+      await organization_services.update_organization(
+        { _id: interactionData.organization_id, },
+        { $inc: { storage_occupied: -nodeData?.video_size } }
+      );
+
+      await organization_services.update_organization(
+        { _id: interactionData.organization_id, },
+        { $inc: { storage_occupied: uploadedFile?.fileSize } }
+      );
+    }
   }
 
   await interactions_services.update_Node({ _id: node_id }, req.body);
@@ -425,6 +446,11 @@ const removeNode = catchAsyncError(async (req, res) => {
     is_deleted: false,
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
+
+  const interactionData = await interactions_services.get_single_interaction({
+    _id: nodeData?.interaction_id,
+    is_deleted: false,
+  });
 
   const sourceEdge = await interactions_services.find_Edge({
     source: nodeData._id,
@@ -450,6 +476,13 @@ const removeNode = catchAsyncError(async (req, res) => {
       { _id: node_id },
       { is_deleted: true }
     );
+
+    if(nodeData?.video_size){
+      await organization_services.update_organization(
+        { _id: interactionData.organization_id },
+        { $inc: { storage_occupied: -nodeData?.video_size } }
+      );
+    }
 
     // Re index remaining nodes
     const remainingNodes = await interactions_services.get_flow_list({
@@ -653,6 +686,12 @@ const copyInteraction = catchAsyncError(async (req, res) => {
         );
         node.video_url = videoData?.videoUrl;
         node.video_thumbnail = videoData?.thumbnailUrl;
+        node.video_size = videoData?.fileSize;
+
+        await organization_services.update_organization(
+          { _id: oldInteraction.organization_id, },
+          { $inc: { storage_occupied: videoData?.fileSize } }
+        );
       }
 
       const { _id, createdAt, updatedAt, __v, ...rest } = node;
