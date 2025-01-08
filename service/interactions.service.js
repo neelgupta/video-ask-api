@@ -633,7 +633,7 @@ const get_all_interaction_answer = async (
           ],
         },
       },
-      { $match: { contact_details: { $gt: [] } } },
+      // { $match: { contact_details: { $gt: [] } } },
       {
         $unwind: {
           path: "$contact_details",
