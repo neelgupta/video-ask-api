@@ -699,15 +699,15 @@ const get_dashboard_recent_interaction = async (
       };
     }
 
-    if (startDate) {
-      matchQuery.createdAt = { $gte: new Date(startDate) };
-    }
+    // if (startDate) {
+    //   matchQuery.createdAt = { $gte: new Date(startDate) };
+    // }
 
-    if (endDate) {
-      matchQuery.createdAt = {
-        $lte: new Date(new Date(endDate).setUTCHours(23, 59, 59, 999)),
-      };
-    }
+    // if (endDate) {
+    //   matchQuery.createdAt = {
+    //     $lte: new Date(new Date(endDate).setUTCHours(23, 59, 59, 999)),
+    //   };
+    // }
 
     const pipeline = [
       {
