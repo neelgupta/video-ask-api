@@ -12,6 +12,10 @@ const Schema = mongoose.Schema(
       ref: modelName.USER,
       required: true,
     },
+    stripe_subscription_id:{
+      type: String,
+      required: true,
+    },
     subscription_plan_id: {
       type: mongoose.Types.ObjectId,
       ref: modelName.SUBSCRIPTION_PLAN,

@@ -25,6 +25,7 @@ const {
   organization_services,
   interactions_services,
   subscription_services,
+  stripe_service,
 } = require("../service");
 const { forgotPasswordMail } = require("../utils/emailTemplates");
 
@@ -341,9 +342,18 @@ const addSubscriptions = catchAsyncError(async (req, res) => {
   const userId = req.user;
   const { subscription_plan_id, plan_type, price, currency } = req.body;
 
+  const userData = await user_services.findUser({ _id: userId });
+  const paymentMethodData = await organization_services.get_payment_method_list(
+    {
+      user_id: userId,
+      stripe_payment_method_id: { $ne: "" },
+      is_deleted: false,
+    }
+  );
+
   const alreadySubscribe = await user_services.get_subscriptions({
     user_id: userId,
-    status:subscriptionsStatus.active,
+    status: subscriptionsStatus.active,
   });
 
   if (alreadySubscribe) return response400(res, msg.alreadyActivePlan);
@@ -355,25 +365,38 @@ const addSubscriptions = catchAsyncError(async (req, res) => {
 
   if (!planData) return response400(res, msg.planNotExists);
 
-  const planStartDate = new Date();
-  const planEndDate = new Date(planStartDate);
-  planEndDate.setDate(planEndDate.getDate() + 30);
-  
-  const data = await user_services.purchase_plan({
-    user_id: userId,
-    subscription_plan_id,
-    plan_type,
-    price,
-    currency,
-    start_date: planStartDate,
-    end_date: planEndDate,
-    status: subscriptionsStatus.active,
-  });
+  // const planStartDate = new Date();
+  // const planEndDate = new Date(planStartDate);
+  // planEndDate.setDate(planEndDate.getDate() + 30);
 
-  await user_services.updateUser(
-    { _id: userId },
-    { current_subscription_id: data._id }
-  );
+  // const customerId = userData.customer_id;
+  // console.log("paymentMethodData",paymentMethodData)
+  // const paymentMethodId = paymentMethodData[0].stripe_payment_method_id;
+  // const priceId = planData.stripe_price_id;
+
+  // const purchase = await stripe_service.createSubscription(
+  //   customerId,
+  //   paymentMethodId,
+  //   priceId
+  // );
+  // console.log("🚀 ~ addSubscriptions ~ purchase:", purchase);
+
+  // const data = await user_services.purchase_plan({
+  //   user_id: userId,
+  //   stripe_subscription_id,
+  //   subscription_plan_id,
+  //   plan_type,
+  //   price,
+  //   currency,
+  //   start_date: planStartDate,
+  //   end_date: planEndDate,
+  //   status: subscriptionsStatus.active,
+  // });
+
+  // await user_services.updateUser(
+  //   { _id: userId },
+  //   { current_subscription_id: data._id }
+  // );
 
   return response201(res, msg.planPurchaseSuccess, data);
 });

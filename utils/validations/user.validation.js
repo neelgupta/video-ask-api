@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const { subscriptionPlanType } = require("../constant");
 
 const signUpValidator = Joi.object({
   user_name: Joi.string().required().messages({
@@ -56,9 +57,9 @@ const addSubscriptionsValidator = Joi.object({
   subscription_plan_id: Joi.string().required().messages({
     "*": "Plan is required",
   }),
-  plan_type: Joi.string().required().messages({
-    "*": "Plan type is required",
-  }),
+  plan_type: Joi.string()
+    .required()
+    .valid(subscriptionPlanType.Free, subscriptionPlanType.Premium),
   price: Joi.number().required().messages({
     "*": "Price is required",
   }),

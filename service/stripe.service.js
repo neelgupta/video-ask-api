@@ -119,12 +119,25 @@ const generatePaymentMethod = async (payload) => {
   }
 };
 
-const createSubscription = async (payload) => {
+const createSubscription = async (customerId, paymentMethodId, priceId) => {
   try {
+    await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: customerId,
+    });
+
+    // Set the payment method as default for the customer
+    await stripe.customers.update(customerId, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId,
+      },
+    });
+
+    // Create the subscription
     const subscription = await stripe.subscriptions.create({
-      customer: payload.customerId,
-      items: [{ price: payload.priceId }],
-      expand: ["latest_invoice.payment_intent"], // Expands to include payment details
+      customer: customerId,
+      items: [{ price: priceId }], // The price_id for the plan
+      payment_behavior: "default_incomplete", // Handle failed payments gracefully
+      expand: ["latest_invoice.payment_intent"], // Expand to include payment intent details
     });
     return subscription;
   } catch (error) {
