@@ -13,6 +13,10 @@ const paymentMethodSchema = new mongoose.Schema(
       ref: modelName.USER,
       required: true,
     },
+    // Stripe payment method
+    stripe_payment_method_id: {
+      type: String,
+    },
     card_type: {
       type: String,
       required: true,

@@ -37,7 +37,6 @@ const getStripePlan = async (planId) => {
 
 // for update subscription plan details
 const updateStripePlan = async (planId, payload) => {
-  console.log("🚀 ~ updateStripePlan ~ payload:", payload)
   try {
     const product = await stripe.products.update(planId, payload);
     console.log("product", product);
@@ -47,15 +46,15 @@ const updateStripePlan = async (planId, payload) => {
   }
 };
 
-// for remove Subscription Plan 
-const removeSubscriptionPlan = async(planId) =>{
+// for remove Subscription Plan
+const removeSubscriptionPlan = async (planId) => {
   try {
     const subscription = await stripe.products.del(planId);
     return subscription;
   } catch (error) {
     return error;
   }
-}
+};
 
 // for create subscription plan price
 const createStripePrice = async (payload) => {
@@ -66,7 +65,7 @@ const createStripePrice = async (payload) => {
       unit_amount: payload.amount,
       recurring: {
         interval: "month",
-        interval_count: 1
+        interval_count: 1,
       },
       // product_data: {
       //   name: "Gold Plan",
@@ -74,7 +73,7 @@ const createStripePrice = async (payload) => {
     });
     return price;
   } catch (error) {
-    console.log("🚀 ~ createStripePrice ~ error:", error)
+    console.log("🚀 ~ createStripePrice ~ error:", error);
     return error;
   }
 };
@@ -102,6 +101,24 @@ const updateStripePrice = async (priceId, payload) => {
   }
 };
 
+const generatePaymentMethod = async (payload) => {
+  try {
+    const { cardNumber, cardMonth, cardYear, cardCVC } = payload;
+    const paymentMethod = await stripe.paymentMethods.create({
+      type: "card",
+      card: {
+        number: cardNumber,
+        exp_month: cardMonth,
+        exp_year: cardYear,
+        cvc: cardCVC,
+      },
+    });
+    return paymentMethod;
+  } catch (error) {
+    return error;
+  }
+};
+
 const createSubscription = async (payload) => {
   try {
     const subscription = await stripe.subscriptions.create({
@@ -124,5 +141,6 @@ module.exports = {
   createStripePrice,
   getStripePrice,
   updateStripePrice,
+  generatePaymentMethod,
   createSubscription,
 };

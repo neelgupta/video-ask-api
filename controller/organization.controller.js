@@ -4,6 +4,7 @@ const {
   user_services,
   subscription_services,
   interactions_services,
+  stripe_service,
 } = require("../service");
 const {
   msg,
@@ -139,7 +140,7 @@ const addMember = catchAsyncError(async (req, res) => {
     }
   );
 
-  if(userData?.current_subscription_id){
+  if (userData?.current_subscription_id) {
     const planData = userData?.current_subscription_id?.subscription_plan_id;
     const allowedMembers = planData?.members;
 
@@ -148,8 +149,8 @@ const addMember = catchAsyncError(async (req, res) => {
       is_deleted: false,
     });
 
-    if(allowedMembers <= totalMembersCount){
-      return response400(res,msg.upgradeSubscription);
+    if (allowedMembers <= totalMembersCount) {
+      return response400(res, msg.upgradeSubscription);
     }
   }
 
@@ -447,13 +448,9 @@ const getSubscriptionPlans = catchAsyncError(async (req, res) => {
 });
 
 const addPaymentMethod = catchAsyncError(async (req, res) => {
-  const { organization_id } = req.body;
+  const { organization_id, card_number, cvv, expiry_date } = req.body;
   const Id = req.user;
-
-  const paymentMethodData = await organization_services.get_payment_method_list(
-    { organization_id, is_deleted: false }
-  );
-  if (!paymentMethodData?.length) req.body.is_primary = true;
+  const userData = await user_services.findUser({ _id: Id });
 
   const organizationData = await organization_services.get_organization({
     _id: organization_id,
@@ -462,7 +459,48 @@ const addPaymentMethod = catchAsyncError(async (req, res) => {
   });
   if (!organizationData) return response400(res, msg.organizationNotExists);
 
+  const expiryDate = "2027-01-01";
+const date = new Date(expiry_date);
+
+// Extract year and month
+const year = date.getFullYear();
+const month = String(date.getMonth() + 1).padStart(2, '0'); 
+
+  // Handle customer Id
+  let customerId;
+  if (!userData.customer_id) {
+    const createCustomer = await stripe_service.createCustomer(userData.email);
+    if (createCustomer?.id) {
+      customerId = createCustomer?.id;
+      await user_services.updateUser({ _id: Id }, { customer_id: customerId });
+    } else {
+      return response400(res, msg.paymentMethodError);
+    }
+  } else {
+    customerId = userData.customer_id;
+  }
+
+  console.log("customerId", customerId);
+
+  // Handle stripe payment method
+  const paymentMethod = await stripe_service.generatePaymentMethod({
+    cardNumber:card_number,
+    cardMonth: month,
+    cardYear: year,
+    cardCVC: cvv,
+  });
+  
+  if(!paymentMethod.id){
+    return response400(res,msg.paymentMethodError);
+  }
+
+  const paymentMethodData = await organization_services.get_payment_method_list(
+    { organization_id, is_deleted: false }
+  );
+  if (!paymentMethodData?.length) req.body.is_primary = true;
+
   req.body.user_id = Id;
+  req.body.stripe_payment_method_id = paymentMethod.id;
 
   const data = await organization_services.add_payment_method(req.body);
 

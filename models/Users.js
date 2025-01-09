@@ -80,8 +80,8 @@ const userSchema = mongoose.Schema(
     terms: {
       type: termsSchema,
     },
+    // Stripe customer Id
     customer_id:{
-      // Stripe customer Id
       type:String
     },
   },
