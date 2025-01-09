@@ -185,9 +185,11 @@ const addMember = catchAsyncError(async (req, res) => {
     userId: Id,
     timestamp: Date.now(),
     type: invitationTokenType.Team_Member,
+    is_already_registered: data?.is_already_registered,
   });
+
   const inviteToken = await generateEncryptedToken(payload);
-  const emailUrl = `${frontBaseUrl}/signup/${inviteToken}`;
+  const emailUrl = `${frontBaseUrl}/sign-up/${inviteToken}`;
 
   await sendInvitation({
     email: member_email,
