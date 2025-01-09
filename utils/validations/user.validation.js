@@ -59,7 +59,7 @@ const addSubscriptionsValidator = Joi.object({
   plan_type: Joi.string().required().messages({
     "*": "Plan type is required",
   }),
-  price: Joi.string().required().messages({
+  price: Joi.number().required().messages({
     "*": "Price is required",
   }),
   currency: Joi.string().required().messages({

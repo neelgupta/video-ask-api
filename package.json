@@ -33,6 +33,7 @@
     "nodemailer": "^6.9.13",
     "nodemon": "^3.1.0",
     "setup": "file:",
+    "stripe": "^17.5.0",
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",

@@ -22,7 +22,7 @@ const Schema = mongoose.Schema(
       enum: [subscriptionPlanType.Free, subscriptionPlanType.Premium],
     },
     price: {
-      type: String,
+      type: Number,
       required: true,
     },
     currency: {

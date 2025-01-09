@@ -440,7 +440,7 @@ const getSubscriptionPlans = catchAsyncError(async (req, res) => {
       is_deleted: false,
       is_active: true,
     },
-    { sort: { createdAt: -1 } }
+    { sort: { price: 1 } }
   );
 
   return response200(res, msg.fetch_success, data);

@@ -62,7 +62,6 @@ const userSchema = mongoose.Schema(
     current_subscription_id: {
       type: mongoose.Types.ObjectId,
       ref: modelName.SUBSCRIPTIONS,
-      // required: true,
     },
     reset_password_token: {
       type: String,
@@ -80,7 +79,10 @@ const userSchema = mongoose.Schema(
     },
     terms: {
       type: termsSchema,
-      // required: true,
+    },
+    customer_id:{
+      // Stripe customer Id
+      type:String
     },
   },
   { timestamps: true }

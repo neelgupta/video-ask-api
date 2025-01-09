@@ -22,25 +22,12 @@ const getAllSubscriptionPlan = async (query,options) => {
   }
 };
 
-const updateSubscriptionPlan = async (query, payload) => {
+const updateSubscription = async (query, payload) => {
   try {
     return await mongoService.updateOne(
       modelName.SUBSCRIPTION_PLAN,
       query,
       payload,
-      {}
-    );
-  } catch (error) {
-    throw error;
-  }
-};
-
-const deleteSubscriptionPlan = async (query) => {
-  try {
-    return await mongoService.updateOne(
-      modelName.SUBSCRIPTION_PLAN,
-      query,
-      { isDeleted: true },
       {}
     );
   } catch (error) {
@@ -59,7 +46,6 @@ const findPlanById = async (payload) => {
 module.exports = {
   createSubscriptionPlan,
   getAllSubscriptionPlan,
-  updateSubscriptionPlan,
+  updateSubscription,
   findPlanById,
-  deleteSubscriptionPlan,
 };

@@ -69,11 +69,14 @@ const msg = {
   createNewEdge: "connection successfully created.",
   answerNotFound: "Answer details not exists",
   deleteConversationSuccess: "Conversation removed successfully",
-  planNotExists:"Subscription plan is not exists",
+  planNotExists: "Subscription plan is not exists",
   alreadyActivePlan:
     "You cannot switch to a different subscription plan while your current plan is still active",
-  planPurchaseSuccess:"New subscription plan purchased successfully",
-  upgradeSubscription:"Please upgrade your current subscription",
+  planPurchaseSuccess: "New subscription plan purchased successfully",
+  upgradeSubscription: "Please upgrade your current subscription",
+  createPlanError: "Something went wrong while creating the subscription plan",
+  subscriptionPlanAdded: "Subscription add successfully",
+  subscriptionPlanNotFound:"Subscription details not found",
 };
 
 const invitationTokenType = {
@@ -177,6 +180,10 @@ const openEndedType = {
   video: "video",
   text: "text",
 };
+
+const Currencies = {
+  USD:"USD"
+}
 
 const subscriptionsStatus = {
   active: "active",
@@ -293,6 +300,7 @@ module.exports = {
   answerType,
   openEndedType,
   subscriptionsStatus,
+  Currencies,
   hashPassword,
   validatePassword,
   generateUUID,

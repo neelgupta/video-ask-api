@@ -86,6 +86,13 @@ const Schema = mongoose.Schema(
       type: String,
       required: true,
     },
+    stripe_plan_id:{
+      type:String,
+      // required:true,
+    },
+    stripe_price_id:{
+      type:String,
+    },
     title: {
       type: String,
       required: true,
@@ -99,7 +106,7 @@ const Schema = mongoose.Schema(
       enum: [subscriptionPlanType.Free, subscriptionPlanType.Premium],
     },
     price: {
-      type: String,
+      type: Number,
       required: true,
     },
     currency: {
@@ -119,7 +126,7 @@ const Schema = mongoose.Schema(
       required: true,
     },
     storage: {
-      // storage_limit
+      // storage_limit in the GB
       type: Number,
       required: true,
     },
