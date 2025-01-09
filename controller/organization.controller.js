@@ -376,7 +376,7 @@ const addReferral = catchAsyncError(async (req, res) => {
   });
 
   const inviteToken = await generateEncryptedToken(payload);
-  const emailUrl = `${frontBaseUrl}/signup/${inviteToken}`;
+  const emailUrl = `${frontBaseUrl}/sign-up/${inviteToken}`;
 
   await referralInvitation({
     email: referral_email,
