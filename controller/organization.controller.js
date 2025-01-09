@@ -130,7 +130,15 @@ const deleteOrganization = catchAsyncError(async (req, res) => {
 const addMember = catchAsyncError(async (req, res) => {
   const Id = req.user;
   const { organization_id, member_email, member_phone, member_name } = req.body;
-  const userData = await user_services.findUser({ _id: Id });
+  const userData = await user_services.findUser({ _id: Id, is_deleted: false });
+
+  const memberIsAlreadyRegistered = await user_services.findUser({
+    email: member_email,
+    is_deleted: false,
+  });
+
+  req.body.is_already_registered = false;
+  if (memberIsAlreadyRegistered) req.body.is_already_registered = true;
 
   const organizationData = await organization_services.get_organization({
     _id: organization_id,
@@ -164,9 +172,11 @@ const addMember = catchAsyncError(async (req, res) => {
     userId: Id,
     timestamp: Date.now(),
     type: invitationTokenType.Team_Member,
+    is_already_registered: data?.is_already_registered,
   });
+
   const inviteToken = await generateEncryptedToken(payload);
-  const emailUrl = `${frontBaseUrl}/signup/${inviteToken}`;
+  const emailUrl = `${frontBaseUrl}/sign-up/${inviteToken}`;
 
   await sendInvitation({
     email: member_email,

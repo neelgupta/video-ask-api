@@ -3,7 +3,8 @@ const crypto = require("crypto");
 const { v4: uuidv4 } = require("uuid");
 const dayjs = require("dayjs");
 
-const frontBaseUrl = "https://adorable-custard-9de130.netlify.app";
+// const frontBaseUrl = "https://adorable-custard-9de130.netlify.app";
+const frontBaseUrl = "http://localhost:3000";
 
 const defaultOrganization = "My Organization";
 

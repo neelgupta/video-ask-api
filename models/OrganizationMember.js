@@ -1,56 +1,71 @@
 const mongoose = require("mongoose");
-const { modelName, memberRole, memberInvitationStatus } = require("../utils/constant");
+const {
+  modelName,
+  memberRole,
+  memberInvitationStatus,
+} = require("../utils/constant");
 
-const organizationMemberSchema = mongoose.Schema({
+const organizationMemberSchema = mongoose.Schema(
+  {
     organization_id: {
-        type: mongoose.Types.ObjectId,
-        ref: modelName.ORGANIZATION
+      type: mongoose.Types.ObjectId,
+      ref: modelName.ORGANIZATION,
     },
     member_uuid: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     member_name: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     member_email: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     member_phone: {
-        type: String,
-        // required: true,
+      type: String,
+      // required: true,
     },
     member_role: {
-        type: String,
-        enum: [memberRole.Owner, memberRole.Admin, memberRole.Member],
-        required: true,
+      type: String,
+      enum: [memberRole.Owner, memberRole.Admin, memberRole.Member],
+      required: true,
     },
     invitation_status: {
-        type: String,
-        enum: [memberInvitationStatus.Pending, memberInvitationStatus.Completed],
-        default: memberInvitationStatus.Pending,
+      type: String,
+      enum: [memberInvitationStatus.Pending, memberInvitationStatus.Completed],
+      default: memberInvitationStatus.Pending,
     },
-    invitation_token: { // this field is only for the development purpose
-        type: String,
+    invitation_token: {
+      // this field is only for the development purpose
+      type: String,
     },
     is_parent: {
-        type: Boolean,
-        default: false,
+      type: Boolean,
+      default: false,
     },
     is_active: {
-        type: Boolean,
-        default: false,
+      type: Boolean,
+      default: false,
+    },
+    is_already_registered: {
+      type: Boolean,
+      default: true,
     },
     is_deleted: {
-        type: Boolean,
-        default: false,
+      type: Boolean,
+      default: false,
     },
     added_by: {
-        type: mongoose.Types.ObjectId,
-        ref: modelName.USER
+      type: mongoose.Types.ObjectId,
+      ref: modelName.USER,
     },
-}, { timestamps: true });
+  },
+  { timestamps: true }
+);
 
-module.exports = mongoose.model(modelName.ORGANIZATION_MEMBER, organizationMemberSchema);
+module.exports = mongoose.model(
+  modelName.ORGANIZATION_MEMBER,
+  organizationMemberSchema
+);
