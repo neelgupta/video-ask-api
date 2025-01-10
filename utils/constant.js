@@ -78,6 +78,7 @@ const msg = {
   subscriptionPlanAdded: "Subscription add successfully",
   subscriptionPlanNotFound:"Subscription details not found",
   paymentMethodError: "Something went wrong while generating payment method",
+  purchasePlanError :"Something went wrong while purchase plan",
 };
 
 const invitationTokenType = {

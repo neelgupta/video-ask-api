@@ -480,8 +480,6 @@ const month = String(date.getMonth() + 1).padStart(2, '0');
     customerId = userData.customer_id;
   }
 
-  console.log("customerId", customerId);
-
   // Handle stripe payment method
   const paymentMethod = await stripe_service.generatePaymentMethod({
     cardNumber:card_number,

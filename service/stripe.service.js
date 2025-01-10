@@ -115,6 +115,7 @@ const generatePaymentMethod = async (payload) => {
     });
     return paymentMethod;
   } catch (error) {
+    console.log("🚀 ~ generatePaymentMethod ~ error:", error);
     return error;
   }
 };
@@ -135,10 +136,50 @@ const createSubscription = async (customerId, paymentMethodId, priceId) => {
     // Create the subscription
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
+      default_payment_method: paymentMethodId,
       items: [{ price: priceId }], // The price_id for the plan
-      payment_behavior: "default_incomplete", // Handle failed payments gracefully
-      expand: ["latest_invoice.payment_intent"], // Expand to include payment intent details
+      payment_behavior: "default_incomplete", // Create subscription with incomplete status
+      expand: ["latest_invoice.payment_intent"], // Expand to include the payment intent
     });
+
+    const paymentIntent = subscription?.latest_invoice?.payment_intent;
+    // const clientSecret = subscription;
+    // console.log("🚀 ~ createSubscription ~ clientSecret:", clientSecret)
+
+    if (paymentIntent?.status === "requires_confirmation") {
+      const confirmedIntent = await stripe.paymentIntents.confirm(
+        paymentIntent.id
+      );
+      // console.log(
+      //   "🚀 ~ createSubscription ~ confirmedIntent:",
+      //   confirmedIntent
+      // );
+
+      if (confirmedIntent.status === "succeeded") {
+        console.log("Payment succeeded, subscription is active.");
+        // Fetch the updated subscription status
+        const updatedSubscription = await stripe.subscriptions.retrieve(
+          subscription.id
+        );
+        return updatedSubscription;
+      } else if (confirmedIntent.status === "requires_action") {
+        console.log("Additional action required for payment confirmation.");
+        const confirmedIntent = await stripe.paymentIntents.confirm(paymentIntent.id,{
+          payment_method: 'pm_card_visa',
+          // return_url: 'https://www.example.com',
+        });
+        console.log("🚀 ~ createSubscription ~ confirmedIntent:", confirmedIntent)
+        return {
+          subscription,
+          requiresAction: true,
+          clientSecret: paymentIntent.client_secret,
+        };
+      } else {
+        console.error("Payment failed or incomplete:", confirmedIntent.status);
+        throw new Error("Payment failed or incomplete.");
+      }
+    }
+
     return subscription;
   } catch (error) {
     return error;

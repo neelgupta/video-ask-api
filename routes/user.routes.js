@@ -159,13 +159,13 @@ router.delete(
 
 // payment method routes
 router.post(
-  "/add-payment_method",
+  "/add-payment-method",
   isAuthenticated,
   validateRequest(organizationValidation.addPaymentMethodValidator),
   organizationController.addPaymentMethod
 );
 router.get(
-  "/get-payment_methods/:organization_id",
+  "/get-payment-methods/:organization_id",
   isAuthenticated,
   organizationController.getPaymentMethods
 );

@@ -340,7 +340,7 @@ const deleteAccount = catchAsyncError(async (req, res) => {
 
 const addSubscriptions = catchAsyncError(async (req, res) => {
   const userId = req.user;
-  const { subscription_plan_id, plan_type, price, currency } = req.body;
+  const { subscription_plan_id, plan_type, price } = req.body;
 
   const userData = await user_services.findUser({ _id: userId });
   const paymentMethodData = await organization_services.get_payment_method_list(
@@ -365,21 +365,43 @@ const addSubscriptions = catchAsyncError(async (req, res) => {
 
   if (!planData) return response400(res, msg.planNotExists);
 
-  // const planStartDate = new Date();
-  // const planEndDate = new Date(planStartDate);
-  // planEndDate.setDate(planEndDate.getDate() + 30);
+  const planStartDate = new Date();
+  const planEndDate = new Date(planStartDate);
+  planEndDate.setDate(planEndDate.getDate() + 30);
 
-  // const customerId = userData.customer_id;
-  // console.log("paymentMethodData",paymentMethodData)
-  // const paymentMethodId = paymentMethodData[0].stripe_payment_method_id;
-  // const priceId = planData.stripe_price_id;
+  const customerId = userData.customer_id;
+  const paymentMethodId = paymentMethodData[0].stripe_payment_method_id;
+  const priceId = planData.stripe_price_id;
 
-  // const purchase = await stripe_service.createSubscription(
-  //   customerId,
-  //   paymentMethodId,
-  //   priceId
-  // );
-  // console.log("🚀 ~ addSubscriptions ~ purchase:", purchase);
+  const purchase = await stripe_service.createSubscription(
+    customerId,
+    paymentMethodId,
+    priceId
+  );
+  console.log("🚀 ~ addSubscriptions ~ purchase:", purchase);
+  if (!purchase) {
+    return response400(res, msg.purchasePlanError);
+  }
+
+  const {
+    id,
+    current_period_start,
+    current_period_end,
+    currency,
+    customer,
+    latest_invoice,
+    payment_intent,
+  } = purchase;
+
+  const paymentIntentId = payment_intent?.id;
+  const amount = payment_intent?.amount;
+  const invoiceId = latest_invoice?.id;
+
+  // subid: purchase.id,
+  // current_period_end
+  // current_period_start
+  // customerId
+  // currency
 
   // const data = await user_services.purchase_plan({
   //   user_id: userId,
@@ -398,7 +420,7 @@ const addSubscriptions = catchAsyncError(async (req, res) => {
   //   { current_subscription_id: data._id }
   // );
 
-  return response201(res, msg.planPurchaseSuccess, data);
+  return response201(res, msg.planPurchaseSuccess, purchase);
 });
 
 module.exports = {

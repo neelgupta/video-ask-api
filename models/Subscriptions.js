@@ -25,7 +25,12 @@ const Schema = mongoose.Schema(
       type: String,
       enum: [subscriptionPlanType.Free, subscriptionPlanType.Premium],
     },
-    price: {
+    payment_method_id:{
+      type: mongoose.Types.ObjectId,
+      ref: modelName.PAYMENT_METHOD,
+      required: true,
+    },
+    amount: {
       type: Number,
       required: true,
     },
