@@ -107,6 +107,14 @@ const get_address_list = async (query, project) => {
     }
 }
 
+const get_address_details = async (query) => {
+    try {
+        return mongoService.findOne(modelName.ADDRESS, query)
+    } catch (error) {
+        return error
+    }
+}
+
 const update_address = async (query, payload) => {
     try {
         return mongoService.updateOne(modelName.ADDRESS, query, payload);
@@ -163,6 +171,14 @@ const get_payment_method_list = async (query, project) => {
     }
 }
 
+const get_payment_method = async (query) => {
+    try {
+        return mongoService.findOne(modelName.PAYMENT_METHOD, query)
+    } catch (error) {
+        return error
+    }
+}
+
 const update_payment_method = async (query, payload) => {
     try {
         return mongoService.updateOne(modelName.PAYMENT_METHOD, query, payload);
@@ -185,11 +201,13 @@ module.exports = {
     add_address,
     get_address_list,
     update_address,
+    get_address_details,
     delete_address,
     referral_list,
     add_referral,
     update_referral,
     add_payment_method,
     get_payment_method_list,
+    get_payment_method,
     update_payment_method,
 }

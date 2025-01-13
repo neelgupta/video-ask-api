@@ -17,6 +17,16 @@ const paymentMethodSchema = new mongoose.Schema(
     stripe_payment_method_id: {
       type: String,
     },
+    billing_address_id: {
+      type: mongoose.Types.ObjectId,
+      ref: modelName.ADDRESS,
+      // required: true,
+    },
+    shipping_address_id: {
+      type: mongoose.Types.ObjectId,
+      ref: modelName.ADDRESS,
+      required: true,
+    },
     card_type: {
       type: String,
       required: true,

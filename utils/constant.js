@@ -60,6 +60,7 @@ const msg = {
   someThingsWrong: "Something is wrong",
   paymentMethodAdd: "Payment method added successfully",
   paymentMethodNotEXists: "Payment method is not exists",
+  invalidPaymentMethod: "Payment method is invalid",
   answerTypeNotMatched: "Answer type is not matched with the flow answer type",
   answerSuccess: "Answer added successfully",
   nodeTypeQuestion: "Node type must be Question",
@@ -72,13 +73,19 @@ const msg = {
   planNotExists: "Subscription plan is not exists",
   alreadyActivePlan:
     "You cannot switch to a different subscription plan while your current plan is still active",
+  clientSecretSuccess: "New client secret generated successfully",
   planPurchaseSuccess: "New subscription plan purchased successfully",
   upgradeSubscription: "Please upgrade your current subscription",
   createPlanError: "Something went wrong while creating the subscription plan",
   subscriptionPlanAdded: "Subscription add successfully",
-  subscriptionPlanNotFound:"Subscription details not found",
+  subscriptionPlanNotFound: "Subscription details not found",
   paymentMethodError: "Something went wrong while generating payment method",
-  purchasePlanError :"Something went wrong while purchase plan",
+  purchasePlanError: "Something went wrong while purchase plan",
+  paymentFailedOrIncomplete: "Payment failed or incomplete",
+  clientSecretIsWrong: "Something is wrong in the confirm payment",
+  planAlreadyPurchase: "Subscription plan is already purchased",
+  validShippingAddress: "Please enter valid shipping address",
+  validBillingAddress: "Please enter valid billing address",
 };
 
 const invitationTokenType = {
@@ -184,13 +191,14 @@ const openEndedType = {
 };
 
 const Currencies = {
-  USD:"USD"
-}
+  USD: "USD",
+};
 
 const subscriptionsStatus = {
   active: "active",
   canceled: "canceled",
   incomplete: "incomplete",
+  succeeded: "succeeded",
 };
 
 const hashPassword = (password) => {

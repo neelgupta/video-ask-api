@@ -14,6 +14,7 @@ const {
   memberRole,
   invitationTokenType,
   CloudFolder,
+  addressType,
 } = require("../utils/constant");
 const {
   response400,
@@ -448,7 +449,15 @@ const getSubscriptionPlans = catchAsyncError(async (req, res) => {
 });
 
 const addPaymentMethod = catchAsyncError(async (req, res) => {
-  const { organization_id, card_number, cvv, expiry_date } = req.body;
+  const {
+    organization_id,
+    card_number,
+    cvv,
+    expiry_date,
+    shipping_address_id,
+    billing_address_id,
+  } = req.body;
+
   const Id = req.user;
   const userData = await user_services.findUser({ _id: Id });
 
@@ -459,19 +468,54 @@ const addPaymentMethod = catchAsyncError(async (req, res) => {
   });
   if (!organizationData) return response400(res, msg.organizationNotExists);
 
-  const expiryDate = "2027-01-01";
-const date = new Date(expiry_date);
+  const shippingAddressData = await organization_services.get_address_details({
+    _id: shipping_address_id,
+    organization_id: organization_id,
+    address_type: addressType.Shipping,
+    user_id: Id,
+    is_deleted:false,
+  });
 
-// Extract year and month
-const year = date.getFullYear();
-const month = String(date.getMonth() + 1).padStart(2, '0'); 
+  if (!shippingAddressData) return response400(res, msg.validShippingAddress);
+
+  if(billing_address_id){
+    const billingAddressData = await organization_services.get_address_details({
+      _id: billing_address_id,
+      organization_id: organization_id,
+      address_type: addressType.Billing,
+      user_id: Id,
+      is_deleted:false,
+    });
+  
+    if (!billingAddressData) return response400(res, msg.validBillingAddress);
+  }
+
+  const date = new Date(expiry_date);
+
+  // Extract year and month
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
 
   // Handle customer Id
   let customerId;
   if (!userData.customer_id) {
-    const createCustomer = await stripe_service.createCustomer(userData.email);
-    if (createCustomer?.id) {
-      customerId = createCustomer?.id;
+    const { apartment_number, street_name, state, pinCode, country } =
+      shippingAddressData;
+
+    const customerData = await stripe_service.createCustomer({
+      name: userData.user_name,
+      email: userData.email,
+      shippingAddress: {
+        line1: apartment_number,
+        line2: street_name,
+        // city: "surat",
+        state: state,
+        postal_code: pinCode,
+        country: country,
+      },
+    });
+    if (customerData?.id) {
+      customerId = customerData?.id;
       await user_services.updateUser({ _id: Id }, { customer_id: customerId });
     } else {
       return response400(res, msg.paymentMethodError);
@@ -481,15 +525,26 @@ const month = String(date.getMonth() + 1).padStart(2, '0');
   }
 
   // Handle stripe payment method
+  // const { apartment_number, street_name, state, pinCode, country } =
+  //   billingAddressData;
   const paymentMethod = await stripe_service.generatePaymentMethod({
-    cardNumber:card_number,
+    cardNumber: card_number,
     cardMonth: month,
     cardYear: year,
     cardCVC: cvv,
+    // billing_details: {
+    //   address: {
+    //     line1: apartment_number,
+    //     line2: street_name,
+    //     state: state,
+    //     postal_code: pinCode,
+    //     country: country,
+    //   },
+    // },
   });
-  
-  if(!paymentMethod.id){
-    return response400(res,msg.paymentMethodError);
+
+  if (!paymentMethod.id) {
+    return response400(res, msg.paymentMethodError);
   }
 
   const paymentMethodData = await organization_services.get_payment_method_list(
@@ -499,6 +554,8 @@ const month = String(date.getMonth() + 1).padStart(2, '0');
 
   req.body.user_id = Id;
   req.body.stripe_payment_method_id = paymentMethod.id;
+  // req.body.billing_address_id = billing_address_id;
+  req.body.shipping_address_id = shipping_address_id;
 
   const data = await organization_services.add_payment_method(req.body);
 

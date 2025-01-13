@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const { subscriptionPlanType } = require("../constant");
+const { subscriptionPlanType, subscriptionsStatus } = require("../constant");
 
 const signUpValidator = Joi.object({
   user_name: Joi.string().required().messages({
@@ -60,11 +60,33 @@ const addSubscriptionsValidator = Joi.object({
   plan_type: Joi.string()
     .required()
     .valid(subscriptionPlanType.Free, subscriptionPlanType.Premium),
-  price: Joi.number().required().messages({
-    "*": "Price is required",
+  shipping_address_id: Joi.string().required().messages({
+    "*": "Shipping address is required",
   }),
-  currency: Joi.string().required().messages({
-    "*": "Currency is required",
+  billing_address_id: Joi.string().required().messages({
+    "*": "Billing address is required",
+  }),
+  payment_method_id: Joi.string().required().messages({
+    "*": "Payment method is required",
+  }),
+  organization_id: Joi.string().required().messages({
+    "*": "Payment method is required",
+  }),
+});
+
+const confirmSubscriptionValidator = Joi.object({
+  currentSubscription: Joi.string().required().messages({
+    "*": "subscription id is required",
+  }),
+  status: Joi.string()
+    .required()
+    .valid(
+      subscriptionsStatus.active,
+      subscriptionsStatus.canceled,
+      subscriptionsStatus.incomplete
+    ),
+  clientSecret: Joi.string().required().messages({
+    "*": "client Secret is required",
   }),
 });
 
@@ -76,4 +98,5 @@ module.exports = {
   resetPasswordValidator,
   deleteAccountValidator,
   addSubscriptionsValidator,
+  confirmSubscriptionValidator,
 };

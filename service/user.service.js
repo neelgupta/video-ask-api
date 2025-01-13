@@ -72,7 +72,7 @@ const getAllUsersByAggregation = async (userId) => {
 
 const fetchUser = async (match, project, populateQuery) => {
   try {
-    return await mongoService.populate(
+    return await mongoService.findOnePopulate(
       modelName.USER,
       match,
       project,
@@ -84,13 +84,27 @@ const fetchUser = async (match, project, populateQuery) => {
   }
 };
 
-const getUserSubscriptionPlan = async(query,populate) =>{
+const getUserSubscriptionPlan = async (query, populate) => {
   try {
-    return await mongoService.findOnePopulate(modelName.USER, query, {}, {}, populate);
+    return await mongoService.findOnePopulate(
+      modelName.USER,
+      query,
+      {},
+      {},
+      populate
+    );
   } catch (error) {
     throw error;
   }
-}
+};
+
+const get_subscriptions_list = async (query) => {
+  try {
+    return await mongoService.findAll(modelName.SUBSCRIPTIONS, query);
+  } catch (error) {
+    throw error;
+  }
+};
 
 const get_subscriptions = async (query) => {
   try {
@@ -100,13 +114,25 @@ const get_subscriptions = async (query) => {
   }
 };
 
-const purchase_plan = async(payload) =>{
+const purchase_subscription = async (payload) => {
   try {
     return await mongoService.createOne(modelName.SUBSCRIPTIONS, payload);
   } catch (error) {
     throw error;
   }
-}
+};
+
+const update_subscription = async (query, payload) => {
+  try {
+    return await mongoService.updateOne(
+      modelName.SUBSCRIPTIONS,
+      query,
+      payload
+    );
+  } catch (error) {
+    throw error;
+  }
+};
 
 module.exports = {
   findUser,
@@ -117,7 +143,9 @@ module.exports = {
   updateAllUser,
   getAllUsersByAggregation,
   fetchUser,
+  get_subscriptions_list,
   get_subscriptions,
-  purchase_plan,
+  purchase_subscription,
   getUserSubscriptionPlan,
+  update_subscription,
 };

@@ -201,12 +201,27 @@ router.get(
   organizationController.getSubscriptionPlans
 );
 
+// for purchase subscription plan
 router.post(
   "/purchase-plan",
   isAuthenticated,
   isAuthenticatedUser("user"),
   validateRequest(userValidation.addSubscriptionsValidator),
   userController.addSubscriptions
+);
+
+// for change subscription plan status
+router.post(
+  "/confirm-subscription",
+  isAuthenticated,
+  isAuthenticatedUser("user"),
+  validateRequest(userValidation.confirmSubscriptionValidator),
+  userController.handleConfirmStripePayment
+);
+
+router.post(
+  "/webhook",
+  userController.handleWebhook
 );
 
 const organizationSwaggerSchemas = (swaggerDoc) => {

@@ -12,23 +12,38 @@ const Schema = mongoose.Schema(
       ref: modelName.USER,
       required: true,
     },
-    stripe_subscription_id:{
-      type: String,
-      required: true,
-    },
     subscription_plan_id: {
       type: mongoose.Types.ObjectId,
       ref: modelName.SUBSCRIPTION_PLAN,
       required: true,
     },
-    plan_type: {
-      type: String,
-      enum: [subscriptionPlanType.Free, subscriptionPlanType.Premium],
-    },
-    payment_method_id:{
+    payment_method_id: {
       type: mongoose.Types.ObjectId,
       ref: modelName.PAYMENT_METHOD,
       required: true,
+    },
+    stripe_client_secret: {
+      type: String,
+      required: true,
+    },
+    stripe_payment_method_id: {
+      type: String,
+      required: true,
+    },
+    stripe_subscription_id: {
+      type: String,
+      required: true,
+    },
+    stripe_invoice_id: {
+      type: String,
+      required: true,
+    },
+    stripe_payment_intent: {
+      type: String,
+      required: true,
+    },
+    stripe_charge_id:{
+      type:String,
     },
     amount: {
       type: Number,
@@ -37,6 +52,10 @@ const Schema = mongoose.Schema(
     currency: {
       type: String,
       required: true,
+    },
+    plan_type: {
+      type: String,
+      enum: [subscriptionPlanType.Free, subscriptionPlanType.Premium],
     },
     start_date: {
       type: Date,
@@ -50,7 +69,18 @@ const Schema = mongoose.Schema(
         subscriptionsStatus.active,
         subscriptionsStatus.canceled,
         subscriptionsStatus.incomplete,
+        subscriptionsStatus.succeeded,
       ],
+    },
+    billing_address_id: {
+      type: mongoose.Types.ObjectId,
+      ref: modelName.ADDRESS,
+      required: true,
+    },
+    shipping_address_id: {
+      type: mongoose.Types.ObjectId,
+      ref: modelName.ADDRESS,
+      required: true,
     },
   },
   { timestamps: true }

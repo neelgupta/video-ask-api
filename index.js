@@ -6,6 +6,7 @@ const morgan = require("morgan");
 const swaggerUi = require('swagger-ui-express')
 const path = require("path")
 const fs = require("fs")
+const bodyParser = require('body-parser');
 const errorMiddleware = require("./middleware/Error");
 const connectDatabase = require("./config/connect");
 const router = require("./routes");
@@ -13,11 +14,18 @@ require("./models");
 
 const app = express();
 
+app.use(
+    bodyParser.json({
+        verify: function(req, res, buf) {
+            req.rawBody = buf;
+        }
+    })
+);
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(cors({ origin: "*" }));
 app.use(helmet());
-// app.use('/public/photos/lead-attachments', express.static(__dirname + '/public/photos/lead-attachments'));
 
 const port = process.env.PORT || 3000;
 

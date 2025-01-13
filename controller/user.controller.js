@@ -19,6 +19,7 @@ const {
   frontBaseUrl,
   defaultFolderName,
   subscriptionsStatus,
+  addressType,
 } = require("../utils/constant");
 const {
   user_services,
@@ -28,6 +29,9 @@ const {
   stripe_service,
 } = require("../service");
 const { forgotPasswordMail } = require("../utils/emailTemplates");
+const stripe = require("stripe")(
+  "sk_test_51Mo53GSF7jse029jHMjdSJqH60MGgJZTO056vmY690KRkjdA2AtniAV9qJH4zcMaZTuVg8flAjGWVbTsSu7z1qrD00tKIJTDPd"
+);
 
 // sign-up
 const userSignup = catchAsyncError(async (req, res) => {
@@ -267,15 +271,20 @@ const getProfile = catchAsyncError(async (req, res) => {
 
   const profileDetails = await user_services.fetchUser(
     { _id: Id, is_deleted: false },
-    { password: 0, updatedAt: 0, __v: 0 }
+    { password: 0, updatedAt: 0, __v: 0 },
+    {
+      path: "current_subscription_id",
+      select: "subscription_plan_id start_date end_date",
+    }
   );
+  
   const organizationList = await organization_services.get_organization_list(
     { "members.userId": Id, is_deleted: false },
     { members: 0, __v: 0, updatedAt: 0 }
   );
 
   const response = {
-    profile: profileDetails?.[0],
+    profile: profileDetails,
     organizations: organizationList,
   };
 
@@ -338,25 +347,50 @@ const deleteAccount = catchAsyncError(async (req, res) => {
   return response200(res, msg.accountDeleted, []);
 });
 
+// purchase subscription plan
 const addSubscriptions = catchAsyncError(async (req, res) => {
   const userId = req.user;
-  const { subscription_plan_id, plan_type, price } = req.body;
+  const {
+    subscription_plan_id,
+    plan_type,
+    shipping_address_id,
+    billing_address_id,
+    payment_method_id,
+    organization_id,
+  } = req.body;
 
   const userData = await user_services.findUser({ _id: userId });
-  const paymentMethodData = await organization_services.get_payment_method_list(
-    {
-      user_id: userId,
-      stripe_payment_method_id: { $ne: "" },
-      is_deleted: false,
-    }
-  );
 
-  const alreadySubscribe = await user_services.get_subscriptions({
+  if (userData?.current_subscription_id) {
+    return response400(res, msg.alreadyActivePlan);
+  }
+
+  const shippingAddressData = await organization_services.get_address_details({
+    _id: shipping_address_id,
+    organization_id: organization_id,
+    address_type: addressType.Shipping,
     user_id: userId,
-    status: subscriptionsStatus.active,
+    is_deleted: false,
   });
 
-  if (alreadySubscribe) return response400(res, msg.alreadyActivePlan);
+  if (!shippingAddressData) return response400(res, msg.validShippingAddress);
+
+  const billingAddressData = await organization_services.get_address_details({
+    _id: billing_address_id,
+    organization_id: organization_id,
+    address_type: addressType.Billing,
+    user_id: userId,
+    is_deleted: false,
+  });
+
+  if (!billingAddressData) return response400(res, msg.validBillingAddress);
+
+  const paymentMethodData = await organization_services.get_payment_method({
+    _id: payment_method_id,
+    is_deleted: false,
+  });
+
+  if (!paymentMethodData) return response400(res, msg.invalidPaymentMethod);
 
   const planData = await subscription_services.findPlanById({
     _id: subscription_plan_id,
@@ -365,62 +399,119 @@ const addSubscriptions = catchAsyncError(async (req, res) => {
 
   if (!planData) return response400(res, msg.planNotExists);
 
-  const planStartDate = new Date();
-  const planEndDate = new Date(planStartDate);
-  planEndDate.setDate(planEndDate.getDate() + 30);
-
   const customerId = userData.customer_id;
-  const paymentMethodId = paymentMethodData[0].stripe_payment_method_id;
+
   const priceId = planData.stripe_price_id;
+  const stripePaymentMethodId = paymentMethodData?.stripe_payment_method_id;
 
   const purchase = await stripe_service.createSubscription(
     customerId,
-    paymentMethodId,
+    stripePaymentMethodId,
     priceId
   );
-  console.log("🚀 ~ addSubscriptions ~ purchase:", purchase);
-  if (!purchase) {
-    return response400(res, msg.purchasePlanError);
+  if (!purchase?.clientSecret) {
+    return response400(res, msg.paymentFailedOrIncomplete);
   }
 
-  const {
-    id,
-    current_period_start,
-    current_period_end,
-    currency,
-    customer,
-    latest_invoice,
-    payment_intent,
-  } = purchase;
+  const { subscription, clientSecret } = purchase;
 
-  const paymentIntentId = payment_intent?.id;
-  const amount = payment_intent?.amount;
+  const { latest_invoice, status } = subscription;
+
+  const subscriptionsId = subscription?.id;
+  const startDate = subscription?.current_period_start;
+  const endDate = subscription?.current_period_end;
+  const paymentIntentId = latest_invoice?.payment_intent?.id;
+  const amount = latest_invoice?.payment_intent?.amount;
   const invoiceId = latest_invoice?.id;
+  const startD = new Date(startDate * 1000);
+  const endD = new Date(endDate * 1000);
+  const startIsoString = startD.toISOString();
+  const endIsoString = endD.toISOString();
 
-  // subid: purchase.id,
-  // current_period_end
-  // current_period_start
-  // customerId
-  // currency
-
-  // const data = await user_services.purchase_plan({
-  //   user_id: userId,
-  //   stripe_subscription_id,
-  //   subscription_plan_id,
-  //   plan_type,
-  //   price,
-  //   currency,
-  //   start_date: planStartDate,
-  //   end_date: planEndDate,
-  //   status: subscriptionsStatus.active,
-  // });
+  const data = await user_services.purchase_subscription({
+    user_id: userId,
+    subscription_plan_id: subscription_plan_id,
+    payment_method_id: paymentMethodData?._id,
+    stripe_client_secret: clientSecret,
+    stripe_subscription_id: subscriptionsId,
+    stripe_invoice_id: invoiceId,
+    stripe_payment_intent: paymentIntentId,
+    stripe_payment_method_id: stripePaymentMethodId,
+    amount,
+    currency: planData?.currency,
+    plan_type: plan_type,
+    start_date: startIsoString,
+    end_date: endIsoString,
+    status: status,
+    shipping_address_id,
+    billing_address_id,
+  });
 
   // await user_services.updateUser(
   //   { _id: userId },
   //   { current_subscription_id: data._id }
   // );
 
-  return response201(res, msg.planPurchaseSuccess, purchase);
+  const response = {
+    clientSecret: clientSecret,
+    currentSubscription: data._id,
+  };
+
+  return response201(res, msg.clientSecretSuccess, response);
+});
+
+const handleConfirmStripePayment = catchAsyncError(async (req, res) => {
+  const userId = req.user;
+  const { clientSecret, currentSubscription, status } = req.body;
+
+  const currentSubscriptionData = await user_services.get_subscriptions({
+    _id: currentSubscription,
+    user_id: userId,
+    stripe_client_secret: clientSecret,
+    status: subscriptionsStatus.incomplete,
+  });
+
+  if (!currentSubscriptionData) {
+    return response400(res, msg.clientSecretIsWrong);
+  }
+
+  const stripeSubscriptionData =
+    await stripe_service.retrieve_stripe_subscription(
+      currentSubscriptionData.stripe_subscription_id
+    );
+  if (stripeSubscriptionData?.status === subscriptionsStatus.active) {
+    return response400(res, msg.planAlreadyPurchase);
+  }
+
+  await user_services.update_subscription(
+    { _id: currentSubscription },
+    { status }
+  );
+
+  await user_services.updateUser(
+    { _id: userId },
+    { current_subscription_id: currentSubscription }
+  );
+
+  return response200(res, msg.planPurchaseSuccess, []);
+});
+
+// handle webhooks which is connected with customer and subscription
+const handleWebhook = catchAsyncError(async (req, res) => {
+  const sig = req.headers["stripe-signature"]; // Get Stripe signature header
+  let event;
+  const endpointSecret = "whsec_cQstXsFBdE0rahN3CVHf7BP7Ov7c6kbA";
+  try {
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+  } catch (err) {
+    console.log("🚀 ~ handleWebhook ~ err.message:", err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+    return;
+  }
+
+  const stripeWebHook = await stripe_service.webHookService(event);
+
+  return response200(res, msg.fetch_success, []);
 });
 
 module.exports = {
@@ -434,4 +525,6 @@ module.exports = {
   updateProfile,
   deleteAccount,
   addSubscriptions,
+  handleConfirmStripePayment,
+  handleWebhook,
 };

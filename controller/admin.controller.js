@@ -1,6 +1,10 @@
 const { response400, response200 } = require("../lib/response-messages");
 const catchAsyncError = require("../middleware/catchAsyncError");
-const { subscription_services, stripe_service } = require("../service");
+const {
+  subscription_services,
+  stripe_service,
+  user_services,
+} = require("../service");
 const {
   msg,
   generateUUID,
@@ -63,7 +67,7 @@ const addSubscriptionPlan = catchAsyncError(async (req, res) => {
   return response200(res, msg.subscriptionPlanAdded, subscription);
 });
 
-const getAllSubscriptionPlan = catchAsyncError(async(req,res)=>{
+const getAllSubscriptionPlan = catchAsyncError(async (req, res) => {
   const data = await subscription_services.getAllSubscriptionPlan(
     {
       is_deleted: false,
@@ -91,13 +95,52 @@ const updateSubscriptionPlan = catchAsyncError(async (req, res) => {
     }
   }
 
-  // if(req.body.price){
-  //   if (planData?.plan_type === subscriptionPlanType.Premium && planData?.stripe_plan_id) {
-  //     await stripe_service.updateStripePlan(planData.stripe_plan_id, {
-  //       name: req.body.title,
-  //     });
-  //   }
-  // }
+  // if wanted to change price have to managed in the stripe price Id AS WELL
+  if (price) {
+    if (
+      planData?.plan_type === subscriptionPlanType.Premium &&
+      planData?.stripe_plan_id
+    ) {
+      const newPrice = await stripe_service.createStripePrice({
+        product_id: planData?.stripe_plan_id,
+        currency: Currencies.USD,
+        amount: price * 100,
+        transfer_lookup_key: true,
+      });
+      req.body.stripe_price_id = newPrice.id;
+
+      const subscriptionsData = await user_services.get_subscriptions_list({
+        subscription_plan_id: plan_id,
+      });
+
+      if (subscriptionsData?.length) {
+        await Promise.all(
+          subscriptionsData?.map(async (val) => {
+            const stripeSubscription =
+              await stripe_service.retrieve_stripe_subscription(
+                val?.stripe_subscription_id
+              );
+
+            if (stripeSubscription) {
+              await stripe_service.update_stripe_subscription(
+                stripeSubscription.id,
+                {
+                  cancel_at_period_end: false,
+                  proration_behavior: "none",
+                  items: [
+                    {
+                      id: stripeSubscription?.items?.data?.[0]?.id,
+                      price: newPrice.id,
+                    },
+                  ],
+                }
+              );
+            }
+          })
+        );
+      }
+    }
+  }
 
   await subscription_services.updateSubscription(
     { _id: plan_id },
@@ -123,8 +166,8 @@ const deleteSubscriptionPlan = catchAsyncError(async (req, res) => {
   }
 
   await subscription_services.updateSubscription(
-    {_id: plan_id},
-    { is_deleted: true },
+    { _id: plan_id },
+    { is_deleted: true }
   );
 
   return response200(res, msg.delete_success, []);

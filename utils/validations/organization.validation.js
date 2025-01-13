@@ -163,6 +163,13 @@ const addPaymentMethodValidator = Joi.object({
   email: Joi.string().required().messages({
     "*": "Email is required",
   }),
+  shipping_address_id: Joi.string().required().messages({
+    "*": "Shipping address is required",
+  }),
+  billing_address_id:Joi.string().optional(),
+  // billing_address_id: Joi.string().required().messages({
+  //   "*": "Billing address is required",
+  // }),
 });
 
 const updatePaymentMethodValidator = Joi.object({
@@ -190,9 +197,8 @@ const uploadMediaValidator = Joi.object({
       })
     )
     .optional(),
-    title:Joi.string().optional(),
-    description:Joi.string().optional()
-
+  title: Joi.string().optional(),
+  description: Joi.string().optional(),
 });
 
 module.exports = {
