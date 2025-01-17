@@ -119,6 +119,8 @@ const replyTypes = {
 const memberInvitationStatus = {
   Pending: "pending",
   Completed: "completed",
+  Reject: "reject",
+  Leave: "leave",
 };
 
 const addressType = {

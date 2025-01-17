@@ -5,3 +5,4 @@ module.exports.organizationController = require("./organization.controller");
 module.exports.contactController = require("./contact.controller");
 module.exports.interactionsController = require("./interactions.controller");
 module.exports.dashboardController = require("./dashboard.controller");
+module.exports.notificationController = require("./notification.controller");

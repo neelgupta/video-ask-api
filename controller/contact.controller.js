@@ -145,6 +145,8 @@ const deleteContact = catchAsyncError(async (req, res) => {
     { is_deleted: true }
   );
 
+  await contact_services.remove_contact_answer(contact_id);
+
   return response200(res, msg.delete_success, []);
 });
 
@@ -266,7 +268,7 @@ const getContactConversation = catchAsyncError(async (req, res) => {
 
   if (!contactData) return response400(res, msg.contactNotFound);
 
-  const data = await contact_services.get_conversations({contact_id});
+  const data = await contact_services.get_conversations({ contact_id });
 
   return response200(res, msg.fetch_success, data?.[0] || 0);
 });

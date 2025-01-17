@@ -58,9 +58,11 @@ const getFolderList = catchAsyncError(async (req, res) => {
       data.map(async (val) => {
         const interactionCounts =
           await interactions_services.get_interaction_counts({
+            organization_id,
             folder_id: val._id,
             is_deleted: false,
           });
+
         val.count = interactionCounts;
       })
     );
@@ -188,7 +190,7 @@ const getInteractionList = catchAsyncError(async (req, res) => {
   if (!folderData) return response400(res, msg.folderIsNotExists);
 
   const data = await interactions_services.get_all_interactions(
-    { folder_id, is_deleted: false, added_by: Id },
+    { folder_id, is_deleted: false },
     { updatedAt: 0, __v: 0 }
   );
 
@@ -419,15 +421,14 @@ const updateNode = catchAsyncError(async (req, res) => {
     req.body.video_url = uploadedFile.videoUrl;
     req.body.video_size = uploadedFile?.fileSize;
 
-    if(nodeData?.video_size){
-
+    if (nodeData?.video_size) {
       await organization_services.update_organization(
-        { _id: interactionData.organization_id, },
+        { _id: interactionData.organization_id },
         { $inc: { storage_occupied: -nodeData?.video_size } }
       );
 
       await organization_services.update_organization(
-        { _id: interactionData.organization_id, },
+        { _id: interactionData.organization_id },
         { $inc: { storage_occupied: uploadedFile?.fileSize } }
       );
     }
@@ -477,7 +478,7 @@ const removeNode = catchAsyncError(async (req, res) => {
       { is_deleted: true }
     );
 
-    if(nodeData?.video_size){
+    if (nodeData?.video_size) {
       await organization_services.update_organization(
         { _id: interactionData.organization_id },
         { $inc: { storage_occupied: -nodeData?.video_size } }
@@ -689,7 +690,7 @@ const copyInteraction = catchAsyncError(async (req, res) => {
         node.video_size = videoData?.fileSize;
 
         await organization_services.update_organization(
-          { _id: oldInteraction.organization_id, },
+          { _id: oldInteraction.organization_id },
           { $inc: { storage_occupied: videoData?.fileSize } }
         );
       }

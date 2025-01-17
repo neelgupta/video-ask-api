@@ -34,7 +34,12 @@ const organizationMemberSchema = mongoose.Schema(
     },
     invitation_status: {
       type: String,
-      enum: [memberInvitationStatus.Pending, memberInvitationStatus.Completed],
+      enum: [
+        memberInvitationStatus.Pending,
+        memberInvitationStatus.Completed,
+        memberInvitationStatus.Reject,
+        memberInvitationStatus.Leave,
+      ],
       default: memberInvitationStatus.Pending,
     },
     invitation_token: {

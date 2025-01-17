@@ -50,6 +50,18 @@ const find_node_answer = async (query) => {
   }
 };
 
+const remove_contact_answer = async (contact_id) => {
+  try {
+    return await mongoService.updateMany(
+      modelName.NODE_ANSWER,
+      { contact_id: new mongoose.Types.ObjectId(contact_id) }, // Filter: Update all active users
+      { $set: { contact_id: null } } // Update: Set `active` to false
+    );
+  } catch (error) {
+    return error;
+  }
+};
+
 const get_conversations = async (query) => {
   try {
     let pipeline = [
@@ -73,9 +85,6 @@ const get_conversations = async (query) => {
                 localField: "interaction_id",
                 foreignField: "_id",
                 as: "interactionDetails",
-                pipeline: [
-                  { $project: { title: 1, createdAt: 1, interaction_type: 1 } },
-                ],
               },
             },
             {
@@ -149,4 +158,5 @@ module.exports = {
   contact_count,
   find_node_answer,
   get_conversations,
+  remove_contact_answer,
 };

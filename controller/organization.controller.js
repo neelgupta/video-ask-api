@@ -77,7 +77,7 @@ const updateOrganization = catchAsyncError(async (req, res) => {
   const { organization_id, organization_name, replay_to_email } = req.body;
 
   const organizationData = await organization_services.get_organization(
-    { _id: organization_id, is_deleted: false, added_by: Id },
+    { _id: organization_id, is_deleted: false },
     "members.userId"
   );
   if (!organizationData) return response400(res, msg.organizationNotExists);
@@ -140,6 +140,15 @@ const addMember = catchAsyncError(async (req, res) => {
       populate: { path: "subscription_plan_id" },
     }
   );
+  let is_already_registered = false;
+
+  const isMemberRegistered = await user_services.findUser({
+    email: member_email,
+  });
+
+  if (isMemberRegistered) {
+    is_already_registered = true;
+  }
 
   if (userData?.current_subscription_id) {
     const planData = userData?.current_subscription_id?.subscription_plan_id;
@@ -177,7 +186,12 @@ const addMember = catchAsyncError(async (req, res) => {
   if (memberPhoneExists) return response400(res, msg.phoneExists);
 
   const organizationMemberUUID = generateUUID("ORG");
-  req.body = { ...req.body, added_by: Id, member_uuid: organizationMemberUUID };
+  req.body = {
+    ...req.body,
+    added_by: Id,
+    member_uuid: organizationMemberUUID,
+    is_already_registered,
+  };
 
   const data = await organization_services.add_member(req.body);
 
@@ -473,20 +487,20 @@ const addPaymentMethod = catchAsyncError(async (req, res) => {
     organization_id: organization_id,
     address_type: addressType.Shipping,
     user_id: Id,
-    is_deleted:false,
+    is_deleted: false,
   });
 
   if (!shippingAddressData) return response400(res, msg.validShippingAddress);
 
-  if(billing_address_id){
+  if (billing_address_id) {
     const billingAddressData = await organization_services.get_address_details({
       _id: billing_address_id,
       organization_id: organization_id,
       address_type: addressType.Billing,
       user_id: Id,
-      is_deleted:false,
+      is_deleted: false,
     });
-  
+
     if (!billingAddressData) return response400(res, msg.validBillingAddress);
   }
 

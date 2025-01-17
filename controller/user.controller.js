@@ -277,11 +277,12 @@ const getProfile = catchAsyncError(async (req, res) => {
       select: "subscription_plan_id start_date end_date",
     }
   );
-  
-  const organizationList = await organization_services.get_organization_list(
-    { "members.userId": Id, is_deleted: false },
-    { members: 0, __v: 0, updatedAt: 0 }
-  );
+
+  const organizationList =
+    await organization_services.get_organization_list_with_user({
+      "members.userId": Id,
+      is_deleted: false,
+    });
 
   const response = {
     profile: profileDetails,
