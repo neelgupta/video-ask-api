@@ -219,6 +219,51 @@ const getNodesList = async (interactionId) => {
   }
 };
 
+const getLogicNodesList = async (interactionId, selectedNodeId) => {
+  try {
+    let pipeline = [
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(interactionId),
+          is_deleted: false,
+        },
+      },
+      {
+        $lookup: {
+          from: "nodes",
+          localField: "_id",
+          foreignField: "interaction_id",
+          as: "nodes",
+          pipeline: [
+            { $match: { is_deleted: false, _id: { $ne: new mongoose.Types.ObjectId(selectedNodeId) }, type: { $ne: "Start" } } },
+            { $sort: { index: 1 } },
+          ],
+        },
+      },
+    ];
+    let data = await mongoService.aggregation(modelName.INTERACTION, pipeline);
+
+    if (data?.length && data?.[0]?.nodes?.length) {
+      await Promise.all(
+        data?.[0]?.nodes?.map(async (val) => {
+          val.allowedToEditAnswerType = true;
+          const answerData = await mongoService.findOne(modelName.NODE_ANSWER, {
+            "answers.node_id": val._id,
+            is_deleted: false,
+          });
+          if (answerData) {
+            val.allowedToEditAnswerType = false;
+          }
+        })
+      );
+    }
+
+    return data[0]?.nodes;
+  } catch (error) {
+    throw error;
+  }
+};
+
 const addLibrary = async (payload) => {
   try {
     return mongoService.createOne(modelName.LIBRARY, payload);
@@ -568,11 +613,11 @@ const get_all_interaction_answer = async (
           },
           ...(tag !== "all"
             ? {
-                createdAt: {
-                  $gte: startDate,
-                  $lte: endDate,
-                },
-              }
+              createdAt: {
+                $gte: startDate,
+                $lte: endDate,
+              },
+            }
             : {}),
           is_deleted: false,
         },
@@ -831,4 +876,5 @@ module.exports = {
   get_all_answer,
   get_all_contact,
   get_dashboard_recent_interaction,
+  getLogicNodesList
 };

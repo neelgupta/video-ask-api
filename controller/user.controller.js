@@ -42,7 +42,7 @@ const userSignup = catchAsyncError(async (req, res) => {
 
   req.body.user_type = userType.USER;
   req.body.is_member = false;
-  req.body.member_role = memberRole.Admin;
+  req.body.member_role = memberRole.Owner;
 
   let memberData;
   if (memberId) {
@@ -502,6 +502,8 @@ const handleWebhook = catchAsyncError(async (req, res) => {
   const sig = req.headers["stripe-signature"]; // Get Stripe signature header
   let event;
   const endpointSecret = "whsec_cQstXsFBdE0rahN3CVHf7BP7Ov7c6kbA";
+  // const endpointSecret = "whsec_p7HeAEKg09L8ASS6XokuZUt8sARgMQdv";
+
   try {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {

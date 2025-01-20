@@ -134,6 +134,15 @@ const update_subscription = async (query, payload) => {
   }
 };
 
+const saveStripeWebhook = async (event) => {
+  try {
+    const webhookResponse = mongoService.createOne(modelName.STRIPE, event)
+    console.log("Webhook event saved successfully!", webhookResponse);
+  } catch (error) {
+    console.error("Error saving webhook event:", error);
+  }
+};
+
 module.exports = {
   findUser,
   registerUser,
@@ -148,4 +157,5 @@ module.exports = {
   purchase_subscription,
   getUserSubscriptionPlan,
   update_subscription,
+  saveStripeWebhook
 };

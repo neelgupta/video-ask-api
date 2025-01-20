@@ -13,3 +13,4 @@ module.exports.PaymentMethod = require("./PaymentMethod");
 module.exports.NodeAnswer = require("./NodeAnswer");
 module.exports.Library = require("./Library");
 module.exports.Subscriptions = require("./Subscriptions");
+module.exports.Stripe = require("./Stripe");

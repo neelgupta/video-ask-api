@@ -372,6 +372,16 @@ const getNodes = catchAsyncError(async (req, res) => {
   return response200(res, msg.fetch_success, interactionData?.[0] || {});
 });
 
+const getLogicNode = catchAsyncError(async (req, res) => {
+  const { interaction_id } = req.params;
+  const { selectedNodeId } = req.query;
+
+  const interactionData = await interactions_services.getLogicNodesList(interaction_id, selectedNodeId);
+  if (!interactionData?.length) return response400(res, msg.interactionIsNotExists);
+
+  return response200(res, msg.fetch_success, interactionData || []);
+});
+
 const updateCordinates = catchAsyncError(async (req, res) => {
   const { nodes } = req.body;
 
@@ -387,6 +397,27 @@ const updateCordinates = catchAsyncError(async (req, res) => {
       await interactions_services.update_Node({ _id: val.node_id }, val);
     }
   }
+
+  return response200(res, msg.update_success, []);
+});
+
+const updateEdges = catchAsyncError(async (req, res) => {
+  const Id = req.user;
+  const { selectedNodeId, interactionId, newTargetId } = req.body;
+
+  const interactionData = await interactions_services.get_single_interaction({ _id: interactionId, is_deleted: false, });
+  if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+  const nodeData = await interactions_services.get_single_node({ _id: selectedNodeId, is_deleted: false, });
+  if (!nodeData) return response400(res, msg.nodeNotExists);
+
+  const targetNode = await await interactions_services.get_single_node({ _id: newTargetId, is_deleted: false, });
+  if (!targetNode) return response400(res, msg.targetNodeNotExists);
+
+  const updateTarget = await interactions_services.update_Edge(
+    { source: selectedNodeId },
+    { target: newTargetId }
+  );
 
   return response200(res, msg.update_success, []);
 });
@@ -1161,6 +1192,7 @@ module.exports = {
   createNode,
   getNodes,
   updateNode,
+  updateEdges,
   removeNode,
   createDefaultFlow,
   updateCordinates,
@@ -1176,4 +1208,5 @@ module.exports = {
   createNewEdgeConnections,
   getAllInteraction,
   updateIsCompletedInt,
+  getLogicNode
 };

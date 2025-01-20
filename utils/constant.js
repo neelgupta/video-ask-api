@@ -55,6 +55,7 @@ const msg = {
   interactionIsNotExists: "Interaction is not exists",
   flowCreated: "Flow created successfully",
   nodeNotExists: "Node is not exists",
+  targetNodeNotExists: "Targeted node is not exists",
   sourceNotFound: "Source Id is not exists",
   targetNotFound: "Target Id is not exists",
   someThingsWrong: "Something is wrong",
@@ -147,6 +148,8 @@ const modelName = {
   PAYMENT_METHOD: "Payment_method",
   NODE_ANSWER: "Node_answer",
   SUBSCRIPTIONS: "Subscriptions",
+  STRIPE: "Stripe",
+
 };
 
 const subscriptionPlanType = {

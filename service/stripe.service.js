@@ -1,6 +1,7 @@
 const stripe = require("stripe")(
   "sk_test_51Mo53GSF7jse029jHMjdSJqH60MGgJZTO056vmY690KRkjdA2AtniAV9qJH4zcMaZTuVg8flAjGWVbTsSu7z1qrD00tKIJTDPd"
 );
+const { user_services } = require(".");
 const mongoService = require("../config/mongoService");
 const { modelName } = require("../utils/constant");
 const mongoose = require("mongoose");
@@ -275,10 +276,6 @@ const webHookService = async (event) => {
         const customerSubscriptionResumed = event.data.object;
         // Then define and call a function to handle the event customer.subscription.resumed
         break;
-      case "customer.subscription.updated":
-        const customerSubscriptionUpdated = event.data.object;
-        // Then define and call a function to handle the event customer.subscription.updated
-        break;
       case "subscription_schedule.aborted":
         const subscriptionScheduleAborted = event.data.object;
         // Then define and call a function to handle the event subscription_schedule.aborted
@@ -307,9 +304,20 @@ const webHookService = async (event) => {
         const subscriptionScheduleUpdated = event.data.object;
         // Then define and call a function to handle the event subscription_schedule.updated
         break;
+      case "invoice.payment_succeeded":
+        const invoicePaymentSucceeded = event.data.object;
+        await user_services.saveStripeWebhook({ type: "invoicePaymentSucceeded", data: invoicePaymentSucceeded })
+        break;
+
+      case "customer.subscription.updated":
+        const subscriptionUpdated = event.data.object;
+        await user_services.saveStripeWebhook({ type: "subscriptionUpdated", data: subscriptionUpdated })
+        break;
+
       case "payment_intent.succeeded":
         const paymentIntent = event?.data?.object; // contains the payment intent object
         console.log("PaymentIntent was successful:", paymentIntent);
+        await user_services.saveStripeWebhook({ type: "paymentIntent", data: paymentIntent })
         if (paymentIntent) {
           const {
             customer,
@@ -337,7 +345,7 @@ const webHookService = async (event) => {
             );
 
             if (subscriptionData) {
-              console.log("inside the subscription plan",subscriptionData)
+              console.log("inside the subscription plan", subscriptionData)
               await mongoService.updateOne(
                 modelName.SUBSCRIPTIONS,
                 {

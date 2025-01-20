@@ -169,6 +169,18 @@ const updateCordinates = Joi.object({
     .required(),
 });
 
+const updateEdgesValidator = Joi.object({
+  interactionId: Joi.string().required().messages({
+    "*": "Please enter valid interaction Id",
+  }),
+  selectedNodeId: Joi.string().required().messages({
+    "*": "Please enter valid selected node Id",
+  }),
+  newTargetId: Joi.string().required().messages({
+    "*": "Please enter valid new target Id",
+  }),
+});
+
 const updateAnswerFormatValidator = Joi.object({
   node_id: Joi.string().required().messages({
     "*": "Please enter valid Node Id",
@@ -231,13 +243,13 @@ const collectAnswerValidator = Joi.object({
     .optional()
     .valid(openEndedType.audio, openEndedType.text, openEndedType.video),
 
-    contact_details: Joi.object({
-        name: Joi.string().optional(),
-        email: Joi.string().optional(),
-        phone: Joi.string().optional(),
-        product: Joi.string().optional(),
-        // note: Joi.string().optional(), // Uncomment if needed
-      }).optional(),
+  contact_details: Joi.object({
+    name: Joi.string().optional(),
+    email: Joi.string().optional(),
+    phone: Joi.string().optional(),
+    product: Joi.string().optional(),
+    // note: Joi.string().optional(), // Uncomment if needed
+  }).optional(),
 });
 
 
@@ -251,7 +263,7 @@ const createNewEdgeValidator = Joi.object({
   target: Joi.string().required().messages({
     "*": "Please enter valid target",
   }),
-  label:Joi.string().optional(),
+  label: Joi.string().optional(),
 
 });
 
@@ -262,6 +274,7 @@ module.exports = {
   updateInteractionValidator,
   createNodeValidator,
   updateNodeValidator,
+  updateEdgesValidator,
   createDefaultFlow,
   updateCordinates,
   copyInteractionValidator,

@@ -81,6 +81,19 @@ router.put(
   interactionsController.updateNode
 );
 
+// flow
+router.put(
+  "/update-edges",
+  isAuthenticated,
+  validateRequest(interactionsValidation.updateEdgesValidator),
+  interactionsController.updateEdges
+);
+
+router.get(
+  "/logic-nodes/:interaction_id",
+  isAuthenticated,
+  interactionsController.getLogicNode
+);
 router.put(
   "/update-answer-format",
   isAuthenticated,
