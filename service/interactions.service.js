@@ -166,6 +166,42 @@ const remove_interaction = async (query) => {
   }
 };
 
+const update_edge_and_node = async (edgeId, newSourceId, newTargetId) => {
+  try {
+    // Find the edge to update
+    const edge = await mongoService.findOne(modelName.EDGE, { _id: edgeId });
+    if (!edge) throw new Error("Edge not found");
+
+    const { source: oldSourceId, target: oldTargetId } = edge;
+
+    // Update the edge with new source and target
+    edge.source = newSourceId || oldSourceId;
+    edge.target = newTargetId || oldTargetId;
+    await edge.save();
+
+    // Find all connected nodes
+    const affectedNodes = await findConnectedNodes([
+      oldSourceId,
+      oldTargetId,
+      newSourceId,
+      newTargetId,
+    ]);
+
+    // Update indexes of only the connected nodes
+    for (let nodeId of affectedNodes) {
+      const incomingEdges = await Edge.find({ target: nodeId });
+      const node = await Node.findById(nodeId);
+      node.index = incomingEdges.length; // Update index based on connected edges
+      await node.save();
+    }
+
+    return { success: true, message: "Edge and node indexes updated" };
+  } catch (error) {
+    console.error("Error updating edge and node indexes:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 const getNodesList = async (interactionId) => {
   try {
     let pipeline = [
@@ -240,6 +276,30 @@ const getLogicNodesList = async (interactionId, selectedNodeId) => {
           ],
         },
       },
+      {
+        $lookup: {
+          from: "nodes",
+          localField: "_id",
+          foreignField: "interaction_id",
+          as: "selectedNode",
+          pipeline: [
+            { $match: { is_deleted: false, _id: new mongoose.Types.ObjectId(selectedNodeId), answer_type: "multiple-choice" } },
+            { $sort: { index: 1 } },
+          ],
+        },
+      },
+      {
+        $unwind: {
+          path: "$selectedNode",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          nodes: 1,
+          selectedNode: "$selectedNode.answer_format"
+        }
+      }
     ];
     let data = await mongoService.aggregation(modelName.INTERACTION, pipeline);
 
@@ -258,7 +318,8 @@ const getLogicNodesList = async (interactionId, selectedNodeId) => {
       );
     }
 
-    return data[0]?.nodes;
+    const targetNode = await mongoService.findOne(modelName.EDGE, { source: selectedNodeId })
+    return { nodeList: data[0]?.nodes, targetNodeId: targetNode?.target, selectedNode: data[0]?.selectedNode };
   } catch (error) {
     throw error;
   }
@@ -336,6 +397,14 @@ const find_Edge = async (query) => {
     return error;
   }
 };
+
+const find_all_edges = async (query) => {
+  try {
+    return mongoService.findAll(modelName.EDGE, query);
+  } catch (error) {
+    return error;
+  }
+}
 
 const add_answer = async (payload) => {
   try {
@@ -876,5 +945,7 @@ module.exports = {
   get_all_answer,
   get_all_contact,
   get_dashboard_recent_interaction,
-  getLogicNodesList
+  getLogicNodesList,
+  update_edge_and_node,
+  find_all_edges,
 };

@@ -181,14 +181,54 @@ const updateEdgesValidator = Joi.object({
   }),
 });
 
+// const updateAnswerFormatValidator = Joi.object({
+//   node_id: Joi.string().required().messages({
+//     "*": "Please enter valid Node Id",
+//   }),
+//   answer_type: Joi.string()
+//     .valid(...Object.values(answerType))
+//     .optional(),
+//   answer_format: Joi.any().optional(),
+// });
+
 const updateAnswerFormatValidator = Joi.object({
   node_id: Joi.string().required().messages({
-    "*": "Please enter valid Node Id",
+    "*": "Please enter a valid Node Id",
   }),
   answer_type: Joi.string()
     .valid(...Object.values(answerType))
     .optional(),
-  answer_format: Joi.any().optional(),
+  answer_format: Joi.when("answer_type", {
+    is: "multiple-choice",
+    then: Joi.object({
+      choices: Joi.array()
+        .items(
+          Joi.object({
+            index: Joi.number().required().messages({
+              "*": "index is required and must be a string",
+            }),
+            option: Joi.string().required().messages({
+              "*": "Option is required and must be a string",
+            }),
+            targetedNodeId: Joi.string()
+              .required()
+
+              .messages({
+                "any.invalid": "Please provide a valid Targeted Node Id",
+              }),
+          })
+        )
+        .min(1)
+        .required()
+        .messages({
+          "array.min": "Choices must have at least one object",
+          "array.base": "Choices must be an array of valid objects",
+        }),
+
+    }).unknown(true),
+
+    otherwise: Joi.any().optional(),
+  }),
 });
 
 const createDefaultFlow = Joi.object({

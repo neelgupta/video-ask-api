@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const {
   response400,
   response201,
@@ -377,7 +378,7 @@ const getLogicNode = catchAsyncError(async (req, res) => {
   const { selectedNodeId } = req.query;
 
   const interactionData = await interactions_services.getLogicNodesList(interaction_id, selectedNodeId);
-  if (!interactionData?.length) return response400(res, msg.interactionIsNotExists);
+  if (!interactionData) return response400(res, msg.interactionIsNotExists);
 
   return response200(res, msg.fetch_success, interactionData || []);
 });
@@ -401,6 +402,78 @@ const updateCordinates = catchAsyncError(async (req, res) => {
   return response200(res, msg.update_success, []);
 });
 
+// async function updateIndexes(affectedNodeIds) {
+//   const visited = new Set();
+//   const queue = [...affectedNodeIds];
+
+//   while (queue.length > 0) {
+//     const currentNodeId = queue.shift();
+//     if (visited.has(currentNodeId)) continue;
+
+//     visited.add(currentNodeId);
+
+//     // Find all edges connected to the current node
+//     const connectedEdges = await interactions_services.find_all_edges({
+//       $or: [{ source: currentNodeId }, { target: currentNodeId }],
+//     });
+//     console.log("🚀 ~ updateIndexes ~ connectedEdges:", connectedEdges)
+
+//     for (const edge of connectedEdges) {
+//       const connectedNodeId = edge.source === currentNodeId ? edge.target : edge.source;
+//       if (!visited.has(connectedNodeId)) queue.push(connectedNodeId);
+//     }
+
+//     // Update the index for the current node
+//     const incomingEdges = await interactions_services.find_Edge({ target: currentNodeId });
+//     console.log("🚀 ~ updateIndexes ~ incomingEdges:", incomingEdges)
+//     const updatedIndex = incomingEdges?.length; // Number of incoming edges
+//     await interactions_services.update_Node({ _id: currentNodeId }, { index: updatedIndex });
+//   }
+// }
+
+// const updateIndexes = async (interactionId) => {
+//   // Fetch all nodes and edges for the interaction
+//   const nodes = await interactions_services.get_nodes({ interaction_id: interactionId, is_deleted: false });
+//   const edges = await interactions_services.get_edges({ interaction_id: interactionId, is_deleted: false });
+
+//   // Create a graph from the edges
+//   const adjacencyList = {};
+//   nodes.forEach(node => adjacencyList[node._id.toString()] = []);
+//   edges.forEach(edge => {
+//     adjacencyList[edge.source.toString()].push(edge.target.toString());
+//   });
+
+//   console.log("🚀 ~ updateIndexes ~ adjacencyList:", adjacencyList)
+
+//   // Find the root node (no incoming edges)
+//   const incomingEdges = {};
+//   edges.forEach(edge => {
+//     incomingEdges[edge.target.toString()] = true;
+//   });
+//   console.log("🚀 ~ updateIndexes ~ incomingEdges:", incomingEdges)
+//   const rootNode = nodes.find(node => !incomingEdges[node._id.toString()]);
+
+//   if (!rootNode) throw new Error("Root node not found");
+
+//   // Perform BFS to calculate indexes
+//   const queue = [{ nodeId: rootNode._id.toString(), index: 1 }];
+//   const nodeIndexes = {};
+//   while (queue.length > 0) {
+//     const { nodeId, index } = queue.shift();
+//     nodeIndexes[nodeId] = index;
+
+//     adjacencyList[nodeId].forEach((childId, idx) => {
+//       queue.push({ nodeId: childId, index: index + idx + 1 });
+//     });
+//   }
+
+//   // Update the indexes in the database
+//   const updatePromises = Object.keys(nodeIndexes).map(nodeId =>
+//     interactions_services.update_Node({ _id: nodeId }, { index: nodeIndexes[nodeId] })
+//   );
+//   await Promise.all(updatePromises);
+// };
+
 const updateEdges = catchAsyncError(async (req, res) => {
   const Id = req.user;
   const { selectedNodeId, interactionId, newTargetId } = req.body;
@@ -411,15 +484,43 @@ const updateEdges = catchAsyncError(async (req, res) => {
   const nodeData = await interactions_services.get_single_node({ _id: selectedNodeId, is_deleted: false, });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  const targetNode = await await interactions_services.get_single_node({ _id: newTargetId, is_deleted: false, });
+  if (nodeData?.answer_type !== "multiple-choice") {
+    const targetNode = await await interactions_services.get_single_node({ _id: newTargetId, is_deleted: false, });
+    if (!targetNode) return response400(res, msg.targetNodeNotExists);
+
+    const updateTarget = await interactions_services.update_Edge(
+      { source: selectedNodeId },
+      { target: newTargetId }
+    );
+  } else {
+
+
+
+  }
+
+
+  // await updateIndexes([selectedNodeId, newTargetId]);
+  return response200(res, msg.update_success, []);
+});
+
+const changeNodeEdge = catchAsyncError(async (req, res) => {
+  const { selectedNodeId, interactionId, newTargetId } = req.body;
+
+  const interactionData = await interactions_services.get_single_interaction({ _id: interactionId, is_deleted: false, });
+  if (!interactionData) return response400(res, msg.interactionIsNotExists);
+
+  const nodeData = await interactions_services.get_single_node({ _id: selectedNodeId, is_deleted: false, });
+  if (!nodeData) return response400(res, msg.nodeNotExists);
+
+  const targetNode = await interactions_services.get_single_node({ _id: newTargetId, is_deleted: false, });
   if (!targetNode) return response400(res, msg.targetNodeNotExists);
 
-  const updateTarget = await interactions_services.update_Edge(
-    { source: selectedNodeId },
-    { target: newTargetId }
-  );
+  const edgeData = await interactions_services.find_Edge({ target: targetNode._id });
+  console.log("🚀 ~ changeNodeEdge ~ edgeData:", edgeData)
 
-  return response200(res, msg.update_success, []);
+
+  // const data = await interactions_services.update_edge_and_node()
+  return response200(res, msg.fetch_success, []);
 });
 
 const updateNode = catchAsyncError(async (req, res) => {
@@ -877,13 +978,20 @@ const removeForeverInteraction = catchAsyncError(async (req, res) => {
 
 const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
   const Id = req.user;
-  const { node_id } = req.body;
+  const { node_id, answer_type, answer_format } = req.body;
 
   const nodeData = await interactions_services.get_single_node({
     _id: node_id,
     is_deleted: false,
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
+
+  if (answer_type === "multiple-choice") {
+    req.body.answer_format.choices = answer_format?.choices?.map((item) => ({
+      ...item,
+      targetedNodeId: new mongoose.Types.ObjectId(item.targetedNodeId),
+    }));
+  }
 
   await interactions_services.update_Node({ _id: node_id }, req.body);
 
@@ -1208,5 +1316,6 @@ module.exports = {
   createNewEdgeConnections,
   getAllInteraction,
   updateIsCompletedInt,
-  getLogicNode
+  getLogicNode,
+  changeNodeEdge,
 };

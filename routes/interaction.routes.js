@@ -89,6 +89,13 @@ router.put(
   interactionsController.updateEdges
 );
 
+router.put(
+  "/change-node-edges",
+  isAuthenticated,
+  validateRequest(interactionsValidation.updateEdgesValidator),
+  interactionsController.changeNodeEdge
+);
+
 router.get(
   "/logic-nodes/:interaction_id",
   isAuthenticated,
