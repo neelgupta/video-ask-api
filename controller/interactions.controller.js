@@ -343,21 +343,34 @@ const createNode = catchAsyncError(async (req, res) => {
   req.body.index = newNodeIndex;
   let newNode = await interactions_services.add_Node(req.body);
   if (newNode) {
+    const updateSource = await interactions_services.update_Edge(
+      { source: sourceId, target: targetId },
+      { source: newNode._id }
+    );
+
     const newEdge = await interactions_services.add_Edge({
       interaction_id: interaction_id,
       source: sourceId,
-      target: targetId,
+      target: newNode._id,
       added_by: Id,
     });
-    const updateSource = await interactions_services.update_Edge(
-      { source: sourceId },
-      { target: newNode._id }
-    );
-    const updateTarget = await interactions_services.update_Edge(
-      { target: targetId },
-      { source: newNode._id }
-    );
   }
+  // if (newNode) {
+  //   const newEdge = await interactions_services.add_Edge({
+  //     interaction_id: interaction_id,
+  //     source: sourceId,
+  //     target: targetId,
+  //     added_by: Id,
+  //   });
+  //   const updateSource = await interactions_services.update_Edge(
+  //     { source: sourceId },
+  //     { target: newNode._id }
+  //   );
+  //   const updateTarget = await interactions_services.update_Edge(
+  //     { target: targetId },
+  //     { source: newNode._id }
+  //   );
+  // }
   return response201(res, msg.flowCreated, newNode);
 });
 
@@ -377,7 +390,10 @@ const getLogicNode = catchAsyncError(async (req, res) => {
   const { interaction_id } = req.params;
   const { selectedNodeId } = req.query;
 
-  const interactionData = await interactions_services.getLogicNodesList(interaction_id, selectedNodeId);
+  const interactionData = await interactions_services.getLogicNodesList(
+    interaction_id,
+    selectedNodeId
+  );
   if (!interactionData) return response400(res, msg.interactionIsNotExists);
 
   return response200(res, msg.fetch_success, interactionData || []);
@@ -474,18 +490,94 @@ const updateCordinates = catchAsyncError(async (req, res) => {
 //   await Promise.all(updatePromises);
 // };
 
+const updateIndexes = async (sourceId, selectedTargetNode, interaction_id) => {
+  const nodes = await interactions_services.get_flow_list({
+    interaction_id,
+  });
+  nodes.sort((a, b) => a.index - b.index);
+
+  const targetNode = await interactions_services.get_single_node({
+    _id: selectedTargetNode,
+    is_deleted: false,
+  });
+
+  const sourceNode = await interactions_services.get_single_node({
+    _id: sourceId,
+    is_deleted: false,
+  });
+
+  const filterNode = nodes.reduce(
+    (acc, val) => {
+      if (val.type === "End") {
+        acc.endNode = val;
+        return acc;
+      }
+      if (val.index <= sourceNode.index) {
+        acc.static = [...acc.static, val];
+        return acc;
+      }
+      if (val.index >= targetNode.index) {
+        acc.change = [...acc.change, val];
+        return acc;
+      }
+      acc.last = [...acc.last, val];
+      return acc;
+    },
+    { static: [], last: [], change: [], endNode: {} }
+  );
+
+  let newNodes = [];
+  if (filterNode?.change?.length > 0) {
+    const newChange = filterNode.change.map((ele, index) => {
+      return {
+        ...ele,
+        index: sourceNode.index + index + 1,
+      };
+    });
+    const newLast = filterNode.last.map((ele, index) => {
+      return {
+        ...ele,
+        index: sourceNode.index + newChange.length + index + 1,
+      };
+    });
+    newNodes = [...newNodes, ...newChange, ...newLast];
+  }
+  console.log("newNodes", newNodes);
+  if (newNodes?.length) {
+    console.log("hello");
+    await Promise.all(
+      newNodes.map(async (val) => {
+        await interactions_services.update_Node(
+          { _id: val?._id },
+          { index: val.index }
+        );
+      })
+    );
+  }
+  return;
+};
+
 const updateEdges = catchAsyncError(async (req, res) => {
   const Id = req.user;
   const { selectedNodeId, interactionId, newTargetId } = req.body;
 
-  const interactionData = await interactions_services.get_single_interaction({ _id: interactionId, is_deleted: false, });
+  const interactionData = await interactions_services.get_single_interaction({
+    _id: interactionId,
+    is_deleted: false,
+  });
   if (!interactionData) return response400(res, msg.interactionIsNotExists);
 
-  const nodeData = await interactions_services.get_single_node({ _id: selectedNodeId, is_deleted: false, });
+  const nodeData = await interactions_services.get_single_node({
+    _id: selectedNodeId,
+    is_deleted: false,
+  });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
   if (nodeData?.answer_type !== "multiple-choice") {
-    const targetNode = await await interactions_services.get_single_node({ _id: newTargetId, is_deleted: false, });
+    const targetNode = await await interactions_services.get_single_node({
+      _id: newTargetId,
+      is_deleted: false,
+    });
     if (!targetNode) return response400(res, msg.targetNodeNotExists);
 
     const updateTarget = await interactions_services.update_Edge(
@@ -493,31 +585,36 @@ const updateEdges = catchAsyncError(async (req, res) => {
       { target: newTargetId }
     );
   } else {
-
-
-
   }
 
-
-  // await updateIndexes([selectedNodeId, newTargetId]);
+  await updateIndexes(selectedNodeId, newTargetId, interactionId);
   return response200(res, msg.update_success, []);
 });
 
 const changeNodeEdge = catchAsyncError(async (req, res) => {
   const { selectedNodeId, interactionId, newTargetId } = req.body;
 
-  const interactionData = await interactions_services.get_single_interaction({ _id: interactionId, is_deleted: false, });
+  const interactionData = await interactions_services.get_single_interaction({
+    _id: interactionId,
+    is_deleted: false,
+  });
   if (!interactionData) return response400(res, msg.interactionIsNotExists);
 
-  const nodeData = await interactions_services.get_single_node({ _id: selectedNodeId, is_deleted: false, });
+  const nodeData = await interactions_services.get_single_node({
+    _id: selectedNodeId,
+    is_deleted: false,
+  });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  const targetNode = await interactions_services.get_single_node({ _id: newTargetId, is_deleted: false, });
+  const targetNode = await interactions_services.get_single_node({
+    _id: newTargetId,
+    is_deleted: false,
+  });
   if (!targetNode) return response400(res, msg.targetNodeNotExists);
 
-  const edgeData = await interactions_services.find_Edge({ target: targetNode._id });
-  console.log("🚀 ~ changeNodeEdge ~ edgeData:", edgeData)
-
+  const edgeData = await interactions_services.find_Edge({
+    target: targetNode._id,
+  });
 
   // const data = await interactions_services.update_edge_and_node()
   return response200(res, msg.fetch_success, []);
