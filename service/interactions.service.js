@@ -461,6 +461,47 @@ const find_all_edges = async (query) => {
   }
 }
 
+const find_all_with_node = async (query) => {
+  try {
+    let pipeline = [
+      {
+        $match: query
+      },
+      {
+        $lookup: {
+          from: "nodes",
+          localField: "source",
+          foreignField: "_id",
+          as: "source",
+        },
+      },
+      {
+        $lookup: {
+          from: "nodes",
+          localField: "target",
+          foreignField: "_id",
+          as: "target",
+        },
+      },
+      {
+        $unwind: {
+          path: "$source",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $unwind: {
+          path: "$target",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
+    return mongoService.aggregation(modelName.EDGE, pipeline);
+  } catch (error) {
+    return error;
+  }
+}
+
 const add_many_edge = async (payload) => {
   try {
     return mongoService.createMany(modelName.EDGE, payload);
@@ -1021,5 +1062,6 @@ module.exports = {
   find_all_edges,
   add_many_edge,
   delete_edge,
-  getTargetNodeId
+  getTargetNodeId,
+  find_all_with_node
 };
