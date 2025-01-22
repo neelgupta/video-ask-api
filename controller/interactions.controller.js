@@ -1065,6 +1065,14 @@ const copyInteraction = catchAsyncError(async (req, res) => {
   return response200(res, msg.fetch_success, newInteraction);
 });
 
+const getTargetNode = catchAsyncError(async (req, res) => {
+  const { interaction_id } = req.params;
+  const { selectedNodeId } = req.query;
+  const targetNodeId = await interactions_services.getTargetNodeId(interaction_id, selectedNodeId)
+
+  return response200(res, msg.fetch_success, targetNodeId);
+});
+
 const getArchivedInteractions = catchAsyncError(async (req, res) => {
   const { organization_id } = req.params;
 
@@ -1487,4 +1495,5 @@ module.exports = {
   updateIsCompletedInt,
   getLogicNode,
   changeNodeEdge,
+  getTargetNode
 };

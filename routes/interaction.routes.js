@@ -101,6 +101,13 @@ router.get(
   isAuthenticated,
   interactionsController.getLogicNode
 );
+
+router.get(
+  "/target-node-id/:interaction_id",
+  isAuthenticated,
+  interactionsController.getTargetNode
+);
+
 router.put(
   "/update-answer-format",
   isAuthenticated,

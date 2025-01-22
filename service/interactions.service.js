@@ -362,6 +362,24 @@ const getLogicNodesList = async (interactionId, selectedNodeId) => {
   }
 };
 
+const getTargetNodeId = async (interactionId, selectedNodeId) => {
+  try {
+    const node = await get_single_node({ _id: selectedNodeId, interaction_id: interactionId, is_deleted: false })
+    let targetNode
+    if (node?.selectedNodeType === "multiple-choice") {
+      targetNode = await getTargetNodeByIndex(data[0]?.selectedNodeIndex, selectedNodeId)
+    } else {
+      let data = await mongoService.findOne(modelName.EDGE, { source: selectedNodeId })
+      targetNode = data?.target
+    }
+
+    const targetNodeData = await get_single_node({ _id: targetNode })
+    return targetNodeData;
+  } catch (error) {
+    throw error;
+  }
+};
+
 const addLibrary = async (payload) => {
   try {
     return mongoService.createOne(modelName.LIBRARY, payload);
@@ -1002,5 +1020,6 @@ module.exports = {
   update_edge_and_node,
   find_all_edges,
   add_many_edge,
-  delete_edge
+  delete_edge,
+  getTargetNodeId
 };
