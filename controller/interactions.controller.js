@@ -681,10 +681,15 @@ const disableIntermediateNodes = async (interactionId, startNodeId, endNodeId) =
       (node) => node._id.toString() !== startNodeId && node._id.toString() !== endNodeId
     );
 
-    console.log("intermediateNodes =======>",intermediateNodes)
+    const filteredNodes = intermediateNodes?.filter((node) => {
+      if (node.type === "Start" || node.type === "End" ) {
+        return false;
+      }
+      return true;
+    });
   
     // Update `is_disabled` field for intermediate nodes
-    const updatePromises = intermediateNodes.map((node) =>
+    const updatePromises = filteredNodes?.map((node) =>
       interactions_services.update_Node(
         { _id: node._id },
         { is_disabled: true }
@@ -723,7 +728,7 @@ const updateEdges = catchAsyncError(async (req, res) => {
       { target: newTargetId }
     );
 
-    // await disableIntermediateNodes(interactionId, selectedNodeId, newTargetId);
+    await disableIntermediateNodes(interactionId, selectedNodeId, newTargetId);
 
     await updateIndexes(selectedNodeId, newTargetId, interactionId);
   } else {
