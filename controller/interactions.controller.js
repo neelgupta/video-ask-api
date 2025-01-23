@@ -555,6 +555,7 @@ const updateIndexes = async (sourceId, selectedTargetNode, interaction_id) => {
   }
   return;
 };
+
 const manageMultiChoiceEdge = async (
   selectedNodeId,
   targets,
@@ -667,6 +668,33 @@ const updateIndexesForMultiple = async (sourceId, targets, interaction_id) => {
   }
 };
 
+const disableIntermediateNodes = async (interactionId, startNodeId, endNodeId) => {
+  // Fetch all nodes in the interaction
+  const allNodes = await interactions_services.get_flow_list({
+    interaction_id: interactionId,
+    is_deleted: false,
+  });
+
+  if(allNodes?.length){
+    // Identify intermediate nodes
+    const intermediateNodes = allNodes?.filter(
+      (node) => node._id.toString() !== startNodeId && node._id.toString() !== endNodeId
+    );
+
+    console.log("intermediateNodes =======>",intermediateNodes)
+  
+    // Update `is_disabled` field for intermediate nodes
+    const updatePromises = intermediateNodes.map((node) =>
+      interactions_services.update_Node(
+        { _id: node._id },
+        { is_disabled: true }
+      )
+    );
+  
+    await Promise.all(updatePromises);
+  }
+};
+
 const updateEdges = catchAsyncError(async (req, res) => {
   const Id = req.user;
   const { selectedNodeId, interactionId, newTargetId, targets } = req.body;
@@ -690,10 +718,12 @@ const updateEdges = catchAsyncError(async (req, res) => {
     });
     if (!targetNode) return response400(res, msg.targetNodeNotExists);
 
-    const updateTarget = await interactions_services.update_Edge(
+    await interactions_services.update_Edge(
       { source: selectedNodeId },
       { target: newTargetId }
     );
+
+    // await disableIntermediateNodes(interactionId, selectedNodeId, newTargetId);
 
     await updateIndexes(selectedNodeId, newTargetId, interactionId);
   } else {

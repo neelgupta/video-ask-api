@@ -79,9 +79,10 @@ const nodeSchema = new mongoose.Schema(
         index:{
             type:Number,
         },
-        // media_type:{
-
-        // },
+        is_disabled:{
+            type:Boolean,
+            default:false,
+        },
         is_deleted: {
             type: Boolean,
             default: false
