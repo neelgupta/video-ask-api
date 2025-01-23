@@ -140,7 +140,7 @@ const remove_Edge = async (query) => {
 };
 
 // delete permanently
-remove_multiple_Edge = async (query) => {
+const remove_multiple_Edge = async (query) => {
   try {
     return mongoService.deleteManyDocument(modelName.EDGE, query);
   } catch (error) {

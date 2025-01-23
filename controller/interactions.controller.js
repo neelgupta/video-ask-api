@@ -1609,6 +1609,7 @@ const copyInteraction = catchAsyncError(async (req, res) => {
       return true;
     });
 
+    const nodeIdMapping = {};
     for (const [index, node] of filteredNodes.entries()) {
       node.interaction_id = newInteraction._id;
       node.added_by = Id;
@@ -1633,6 +1634,7 @@ const copyInteraction = catchAsyncError(async (req, res) => {
       // Create a new node and get its ID
       const newNode = await interactions_services.add_Node(rest);
       nodeIds.push(newNode?._id);
+      nodeIdMapping[node._id] = newNode._id;
 
       // Track start node (first node)
       if (index === 0) {
@@ -1665,6 +1667,33 @@ const copyInteraction = catchAsyncError(async (req, res) => {
         { type: "End" }
       );
     }
+
+    const newNodeList = await interactions_services.get_flow_list({
+      interaction_id: newInteraction?._id,
+    });
+    if (newNodeList?.length) {
+      await newNodeList.map(async (val) => {
+        if (val.answer_type === answerType.MultipleChoice) {
+          // console.log("val.answer_format.choices", val.answer_format.choices);
+          // console.log("nodeIdMapping ==============>", nodeIdMapping);
+
+          const updatedChoices = val.answer_format.choices.map((choice) => {
+            return {
+              ...choice,
+              targetedNodeId:
+                nodeIdMapping[choice.targetedNodeId] || choice.targetedNodeId,
+            };
+          });
+
+          // Update the interaction node with the new choices
+          val.answer_format.choices = updatedChoices;
+          await interactions_services.update_Node(val._id, {
+            answer_format: val.answer_format,
+          });
+        }
+      });
+    }
+
     // Now create edges between nodes
     for (let i = 0; i < nodeIds.length - 1; i++) {
       const sourceNodeId = nodeIds[i];

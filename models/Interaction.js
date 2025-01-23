@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { modelName, interactionType, answerType } = require("../utils/constant");
+const { modelName, interactionType } = require("../utils/constant");
 
 const interactionSchema = new mongoose.Schema(
   {
