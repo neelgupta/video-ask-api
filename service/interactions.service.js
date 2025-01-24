@@ -1,6 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const mongoService = require("../config/mongoService");
-const { modelName } = require("../utils/constant");
+const { modelName, answerType } = require("../utils/constant");
 
 const add_folder = async (payload) => {
   try {
@@ -125,6 +125,14 @@ const add_Edge = async (payload) => {
 const update_Edge = async (query, payload) => {
   try {
     return mongoService.updateOne(modelName.EDGE, query, payload);
+  } catch (error) {
+    return error;
+  }
+};
+
+const get_all_edges = async (query) => {
+  try {
+    return mongoService.findAll(modelName.EDGE, query);
   } catch (error) {
     return error;
   }
@@ -347,14 +355,13 @@ const getLogicNodesList = async (interactionId, selectedNodeId) => {
 
 
     let targetNode
-    if (data[0]?.selectedNodeType === "multiple-choice") {
+    if ([answerType.MultipleChoice,answerType.NPS].includes(data?.[0]?.selectedNodeType)) {
       targetNode = await getTargetNodeByIndex(data[0]?.selectedNodeIndex, selectedNodeId)
 
     } else {
       let data = await mongoService.findOne(modelName.EDGE, { source: selectedNodeId })
       targetNode = data?.target
     }
-
 
     return { nodeList: data[0]?.nodes, targetNodeId: targetNode, selectedNode: data[0]?.selectedNode };
   } catch (error) {
@@ -366,7 +373,7 @@ const getTargetNodeId = async (interactionId, selectedNodeId) => {
   try {
     const node = await get_single_node({ _id: selectedNodeId, interaction_id: interactionId, is_deleted: false })
     let targetNode
-    if (node?.selectedNodeType === "multiple-choice") {
+    if ([answerType.MultipleChoice,answerType.NPS].includes(node?.selectedNodeType)){
       targetNode = await getTargetNodeByIndex(data[0]?.selectedNodeIndex, selectedNodeId)
     } else {
       let data = await mongoService.findOne(modelName.EDGE, { source: selectedNodeId })
@@ -1063,5 +1070,6 @@ module.exports = {
   add_many_edge,
   delete_edge,
   getTargetNodeId,
-  find_all_with_node
+  find_all_with_node,
+  get_all_edges,
 };

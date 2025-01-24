@@ -26,8 +26,6 @@ const getTeamInvitation = catchAsyncError(async (req, res) => {
     user.email
   );
 
-  console.log("notification", notification);
-
   return response200(res, msg.fetch_success, notification);
 });
 

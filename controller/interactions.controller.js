@@ -323,7 +323,7 @@ const createNode = catchAsyncError(async (req, res) => {
   const newNodeIndex = sourceIndex + 1;
 
   // Increment indices of subsequent nodes
-  const updatedNodes = nodes.map((node) => {
+  const updatedNodes = nodes?.map((node) => {
     if (node.index >= newNodeIndex) {
       node.index += 1;
     }
@@ -332,7 +332,7 @@ const createNode = catchAsyncError(async (req, res) => {
 
   // Update the indices in the database
   await Promise.all(
-    updatedNodes.map((node) =>
+    updatedNodes?.map((node) =>
       interactions_services.update_Node(
         { _id: node._id },
         { index: node.index }
@@ -535,7 +535,7 @@ const updateIndexes = async (sourceId, selectedTargetNode, interaction_id) => {
         index: sourceNode.index + index + 1,
       };
     });
-    const newLast = filterNode.last.map((ele, index) => {
+    const newLast = filterNode?.last?.map((ele, index) => {
       return {
         ...ele,
         index: sourceNode.index + newChange.length + index + 1,
@@ -566,7 +566,7 @@ const manageMultiChoiceEdge = async (
     const existingEdges = await interactions_services.find_all_edges({
       source: selectedNodeId,
     });
-    const existingTargets = existingEdges.map((edge) => edge.target.toString());
+    const existingTargets = existingEdges?.map((edge) => edge.target.toString());
 
     // Extract new targets from request
     const newTargets = targets.map((t) => t.targetedNodeId);
@@ -575,7 +575,7 @@ const manageMultiChoiceEdge = async (
     let newTargetIds = [];
     targets.filter((t) => {
       if (
-        !existingTargets.includes(t.targetedNodeId) &&
+        !existingTargets?.includes(t.targetedNodeId) &&
         !newTargetIds.includes(t.targetedNodeId.toString())
       ) {
         targetsToAdd.push({
@@ -587,16 +587,16 @@ const manageMultiChoiceEdge = async (
         newTargetIds.push(t.targetedNodeId.toString());
       }
     });
-    if (targetsToAdd.length)
+    if (targetsToAdd?.length)
       await interactions_services.add_many_edge(targetsToAdd);
 
     let targetsToDelete = [];
-    existingEdges.filter((edge) => {
+    existingEdges?.filter((edge) => {
       if (!newTargets.includes(edge.target.toString())) {
         targetsToDelete.push(edge._id);
       }
     });
-    if (targetsToDelete.length)
+    if (targetsToDelete?.length)
       await interactions_services.delete_edge({
         _id: { $in: targetsToDelete },
       });
@@ -669,34 +669,61 @@ const updateIndexesForMultiple = async (sourceId, targets, interaction_id) => {
 };
 
 const disableIntermediateNodes = async (interactionId, startNodeId, endNodeId) => {
-  // Fetch all nodes in the interaction
+  // Fetch all nodes and edges in the interaction
   const allNodes = await interactions_services.get_flow_list({
     interaction_id: interactionId,
     is_deleted: false,
   });
 
-  if(allNodes?.length){
-    // Identify intermediate nodes
-    const intermediateNodes = allNodes?.filter(
-      (node) => node._id.toString() !== startNodeId && node._id.toString() !== endNodeId
-    );
+  const allEdges = await interactions_services.get_all_edges({
+    interaction_id: interactionId,
+    is_deleted: false,
+  });
 
-    const filteredNodes = intermediateNodes?.filter((node) => {
-      if (node.type === "Start" || node.type === "End" ) {
-        return false;
-      }
-      return true;
+  if (allNodes?.length && allEdges?.length) {
+    // Build a graph representation
+    const graph = {};
+    allNodes.forEach((node) => {
+      graph[node._id.toString()] = [];
     });
-  
-    // Update `is_disabled` field for intermediate nodes
-    const updatePromises = filteredNodes?.map((node) =>
-      interactions_services.update_Node(
+
+    allEdges.forEach((edge) => {
+      if (!edge.is_deleted) {
+        const source = edge.source.toString();
+        const target = edge.target.toString();
+        if (graph[source]) {
+          graph[source].push(target);
+        }
+      }
+    });
+
+    // Function to check if a node is connected to the end node
+    const isConnectedToEndNode = (nodeId, visited = new Set()) => {
+      if (nodeId === endNodeId) return true;
+      if (visited.has(nodeId)) return false;
+
+      visited.add(nodeId);
+
+      const neighbors = graph[nodeId] || [];
+      for (const neighbor of neighbors) {
+        if (isConnectedToEndNode(neighbor, visited)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // Identify and update nodes
+    const updatePromises = allNodes.map((node) => {
+      const nodeId = node._id.toString();
+      const shouldDisable = nodeId !== startNodeId && nodeId !== endNodeId && !isConnectedToEndNode(nodeId);
+      return interactions_services.update_Node(
         { _id: node._id },
-        { is_disabled: true }
-      )
-    );
-  
-    await Promise.all(updatePromises);
+        { is_disabled: shouldDisable }
+      );
+    });
+
+    // await Promise.all(updatePromises);
   }
 };
 
@@ -716,25 +743,13 @@ const updateEdges = catchAsyncError(async (req, res) => {
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  if (nodeData?.answer_type !== "multiple-choice") {
-    const targetNode = await await interactions_services.get_single_node({
-      _id: newTargetId,
-      is_deleted: false,
-    });
-    if (!targetNode) return response400(res, msg.targetNodeNotExists);
-
-    await interactions_services.update_Edge(
-      { source: selectedNodeId },
-      { target: newTargetId }
-    );
-
-    // await disableIntermediateNodes(interactionId, selectedNodeId, newTargetId);
-
-    await updateIndexes(selectedNodeId, newTargetId, interactionId);
-  } else {
+  if (["multiple-choice","nps"].includes(nodeData?.answer_type) ) {
     await manageMultiChoiceEdge(selectedNodeId, targets, interactionId, Id);
     // Update `choices` in the node
-    const updatedChoices = (nodeData.answer_format.choices || []).map(
+
+    const choices = nodeData?.answer_type === "nps"? nodeData.answer_format.nps_choices : nodeData.answer_format.choices
+
+    const updatedChoices = (choices || []).map(
       (choice) => {
         const updatedTarget = targets.find((t) => t.index === choice.index);
         if (updatedTarget) {
@@ -751,11 +766,29 @@ const updateEdges = catchAsyncError(async (req, res) => {
     await interactions_services.update_Node(
       { _id: selectedNodeId },
       {
-        "answer_format.choices": updatedChoices,
+        ...(nodeData?.answer_type === "nps"?{"answer_format.nps_choices": updatedChoices}:{"answer_format.choices": updatedChoices})
+        ,
       }
     );
 
     await updateIndexesForMultiple(selectedNodeId, targets, interactionId);
+  } else {
+
+    const targetNode = await await interactions_services.get_single_node({
+      _id: newTargetId,
+      is_deleted: false,
+    });
+    if (!targetNode) return response400(res, msg.targetNodeNotExists);
+    const selectedNodeIndex = nodeData?.index;
+    await interactions_services.update_Edge(
+      { source: selectedNodeId },
+      { target: newTargetId }
+    );
+
+    // await disableIntermediateNodes(interactionId, selectedNodeId, newTargetId,selectedNodeIndex);
+
+    await updateIndexes(selectedNodeId, newTargetId, interactionId);
+
   }
 
   return response200(res, msg.update_success, []);
@@ -1109,7 +1142,7 @@ const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  if (answer_type === "multiple-choice") {
+  if (answer_type === answerType.MultipleChoice) {
     req.body.answer_format.choices = answer_format?.choices?.map((item) => ({
       ...item,
       targetedNodeId: new mongoose.Types.ObjectId(item.targetedNodeId),
@@ -1121,11 +1154,27 @@ const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
       Id
     );
   }
+
+  if (answer_type === answerType.NPS) {
+    req.body.answer_format.nps_choices = answer_format?.nps_choices?.map((item) => ({
+      ...item,
+      targetedNodeId: new mongoose.Types.ObjectId(item.targetedNodeId),
+    }));
+    await manageMultiChoiceEdge(
+      node_id,
+      answer_format?.nps_choices,
+      nodeData?.interaction_id,
+      Id
+    );
+  }
   await interactions_services.update_Node({ _id: node_id }, req.body);
 
   if (
-    nodeData?.answer_type === "multiple-choice" &&
-    answer_type !== "multiple-choice"
+    (nodeData?.answer_type === answerType.MultipleChoice &&
+    answer_type !== answerType.MultipleChoice) || (
+      nodeData?.answer_type === answerType.NPS &&
+      answer_type !== answerType.NPS
+    ) 
   ) {
     const nodeEdge = await interactions_services.find_all_edges({
       source: node_id,
@@ -1552,12 +1601,10 @@ const copyInteraction = catchAsyncError(async (req, res) => {
       interaction_id: newInteraction?._id,
     });
     if (newNodeList?.length) {
-      await newNodeList.map(async (val) => {
+      await newNodeList?.map(async (val) => {
         if (val.answer_type === answerType.MultipleChoice) {
-          // console.log("val.answer_format.choices", val.answer_format.choices);
-          // console.log("nodeIdMapping ==============>", nodeIdMapping);
 
-          const updatedChoices = val.answer_format.choices.map((choice) => {
+          const updatedChoices = val?.answer_format?.choices?.map((choice) => {
             return {
               ...choice,
               targetedNodeId:
@@ -1567,6 +1614,22 @@ const copyInteraction = catchAsyncError(async (req, res) => {
 
           // Update the interaction node with the new choices
           val.answer_format.choices = updatedChoices;
+          await interactions_services.update_Node(val._id, {
+            answer_format: val.answer_format,
+          });
+        }
+
+        if (val.answer_type === answerType.NPS) {
+          const updatedChoices = val?.answer_format?.nps_choices?.map((choice) => {
+            return {
+              ...choice,
+              targetedNodeId:
+                nodeIdMapping[choice.targetedNodeId] || choice.targetedNodeId,
+            };
+          });
+
+          // Update the interaction node with the new choices
+          val.answer_format.nps_choices = updatedChoices;
           await interactions_services.update_Node(val._id, {
             answer_format: val.answer_format,
           });
