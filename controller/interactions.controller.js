@@ -566,7 +566,9 @@ const manageMultiChoiceEdge = async (
     const existingEdges = await interactions_services.find_all_edges({
       source: selectedNodeId,
     });
-    const existingTargets = existingEdges?.map((edge) => edge.target.toString());
+    const existingTargets = existingEdges?.map((edge) =>
+      edge.target.toString()
+    );
 
     // Extract new targets from request
     const newTargets = targets.map((t) => t.targetedNodeId);
@@ -668,7 +670,11 @@ const updateIndexesForMultiple = async (sourceId, targets, interaction_id) => {
   }
 };
 
-const disableIntermediateNodes = async (interactionId, startNodeId, endNodeId) => {
+const disableIntermediateNodes = async (
+  interactionId,
+  startNodeId,
+  endNodeId
+) => {
   // Fetch all nodes and edges in the interaction
   const allNodes = await interactions_services.get_flow_list({
     interaction_id: interactionId,
@@ -716,7 +722,10 @@ const disableIntermediateNodes = async (interactionId, startNodeId, endNodeId) =
     // Identify and update nodes
     const updatePromises = allNodes.map((node) => {
       const nodeId = node._id.toString();
-      const shouldDisable = nodeId !== startNodeId && nodeId !== endNodeId && !isConnectedToEndNode(nodeId);
+      const shouldDisable =
+        nodeId !== startNodeId &&
+        nodeId !== endNodeId &&
+        !isConnectedToEndNode(nodeId);
       return interactions_services.update_Node(
         { _id: node._id },
         { is_disabled: shouldDisable }
@@ -743,37 +752,38 @@ const updateEdges = catchAsyncError(async (req, res) => {
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  if (["multiple-choice","nps"].includes(nodeData?.answer_type) ) {
+  if (["multiple-choice", "nps"].includes(nodeData?.answer_type)) {
     await manageMultiChoiceEdge(selectedNodeId, targets, interactionId, Id);
     // Update `choices` in the node
 
-    const choices = nodeData?.answer_type === "nps"? nodeData.answer_format.nps_choices : nodeData.answer_format.choices
+    const choices =
+      nodeData?.answer_type === "nps"
+        ? nodeData.answer_format.nps_choices
+        : nodeData.answer_format.choices;
 
-    const updatedChoices = (choices || []).map(
-      (choice) => {
-        const updatedTarget = targets.find((t) => t.index === choice.index);
-        if (updatedTarget) {
-          return {
-            ...choice,
-            targetedNodeId: updatedTarget.targetedNodeId,
-          };
-        }
-        return choice;
+    const updatedChoices = (choices || []).map((choice) => {
+      const updatedTarget = targets.find((t) => t.index === choice.index);
+      if (updatedTarget) {
+        return {
+          ...choice,
+          targetedNodeId: updatedTarget.targetedNodeId,
+        };
       }
-    );
+      return choice;
+    });
 
     // Save the updated node
     await interactions_services.update_Node(
       { _id: selectedNodeId },
       {
-        ...(nodeData?.answer_type === "nps"?{"answer_format.nps_choices": updatedChoices}:{"answer_format.choices": updatedChoices})
-        ,
+        ...(nodeData?.answer_type === "nps"
+          ? { "answer_format.nps_choices": updatedChoices }
+          : { "answer_format.choices": updatedChoices }),
       }
     );
 
     await updateIndexesForMultiple(selectedNodeId, targets, interactionId);
   } else {
-
     const targetNode = await await interactions_services.get_single_node({
       _id: newTargetId,
       is_deleted: false,
@@ -788,7 +798,6 @@ const updateEdges = catchAsyncError(async (req, res) => {
     // await disableIntermediateNodes(interactionId, selectedNodeId, newTargetId,selectedNodeIndex);
 
     await updateIndexes(selectedNodeId, newTargetId, interactionId);
-
   }
 
   return response200(res, msg.update_success, []);
@@ -1156,10 +1165,12 @@ const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
   }
 
   if (answer_type === answerType.NPS) {
-    req.body.answer_format.nps_choices = answer_format?.nps_choices?.map((item) => ({
-      ...item,
-      targetedNodeId: new mongoose.Types.ObjectId(item.targetedNodeId),
-    }));
+    req.body.answer_format.nps_choices = answer_format?.nps_choices?.map(
+      (item) => ({
+        ...item,
+        targetedNodeId: new mongoose.Types.ObjectId(item.targetedNodeId),
+      })
+    );
     await manageMultiChoiceEdge(
       node_id,
       answer_format?.nps_choices,
@@ -1171,10 +1182,8 @@ const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
 
   if (
     (nodeData?.answer_type === answerType.MultipleChoice &&
-    answer_type !== answerType.MultipleChoice) || (
-      nodeData?.answer_type === answerType.NPS &&
-      answer_type !== answerType.NPS
-    ) 
+      answer_type !== answerType.MultipleChoice) ||
+    (nodeData?.answer_type === answerType.NPS && answer_type !== answerType.NPS)
   ) {
     const nodeEdge = await interactions_services.find_all_edges({
       source: node_id,
@@ -1603,7 +1612,6 @@ const copyInteraction = catchAsyncError(async (req, res) => {
     if (newNodeList?.length) {
       await newNodeList?.map(async (val) => {
         if (val.answer_type === answerType.MultipleChoice) {
-
           const updatedChoices = val?.answer_format?.choices?.map((choice) => {
             return {
               ...choice,
@@ -1620,13 +1628,15 @@ const copyInteraction = catchAsyncError(async (req, res) => {
         }
 
         if (val.answer_type === answerType.NPS) {
-          const updatedChoices = val?.answer_format?.nps_choices?.map((choice) => {
-            return {
-              ...choice,
-              targetedNodeId:
-                nodeIdMapping[choice.targetedNodeId] || choice.targetedNodeId,
-            };
-          });
+          const updatedChoices = val?.answer_format?.nps_choices?.map(
+            (choice) => {
+              return {
+                ...choice,
+                targetedNodeId:
+                  nodeIdMapping[choice.targetedNodeId] || choice.targetedNodeId,
+              };
+            }
+          );
 
           // Update the interaction node with the new choices
           val.answer_format.nps_choices = updatedChoices;

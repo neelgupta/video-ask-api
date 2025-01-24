@@ -177,7 +177,8 @@ const updateEdgesValidator = Joi.object({
     "*": "Please enter valid selected node Id",
   }),
   newTargetId: Joi.string().optional(),
-  targets: Joi.array().optional()
+  targets: Joi.array().optional(),
+  redirection_url:Joi.string().optional(),
 });
 
 // const updateAnswerFormatValidator = Joi.object({
