@@ -64,6 +64,9 @@ const nodeSchema = new mongoose.Schema(
         description: {
             type: String,
         },
+        redirection_url: {
+            type: String,
+        },
         answer_type: {
             type: String,
             enum: Object.values(answerType), 

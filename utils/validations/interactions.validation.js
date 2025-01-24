@@ -178,7 +178,7 @@ const updateEdgesValidator = Joi.object({
   }),
   newTargetId: Joi.string().optional(),
   targets: Joi.array().optional(),
-  redirection_url:Joi.string().optional(),
+  redirection_url: Joi.string().optional().allow(""),
 });
 
 // const updateAnswerFormatValidator = Joi.object({
@@ -224,7 +224,6 @@ const updateAnswerFormatValidator = Joi.object({
           "array.min": "Choices must have at least one object",
           "array.base": "Choices must be an array of valid objects",
         }),
-
     }).unknown(true),
 
     otherwise: Joi.any().optional(),
@@ -292,7 +291,6 @@ const collectAnswerValidator = Joi.object({
   }).optional(),
 });
 
-
 const createNewEdgeValidator = Joi.object({
   interaction_id: Joi.string().required().messages({
     "*": "Please enter valid interaction Id",
@@ -304,7 +302,6 @@ const createNewEdgeValidator = Joi.object({
     "*": "Please enter valid target",
   }),
   label: Joi.string().optional(),
-
 });
 
 module.exports = {
@@ -320,5 +317,5 @@ module.exports = {
   copyInteractionValidator,
   updateAnswerFormatValidator,
   collectAnswerValidator,
-  createNewEdgeValidator
+  createNewEdgeValidator,
 };

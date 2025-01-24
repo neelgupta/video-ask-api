@@ -116,7 +116,8 @@ const add_Node = async (payload) => {
 
 const add_Edge = async (payload) => {
   try {
-    return mongoService.createOne(modelName.EDGE, payload);
+    const data = await mongoService.createOne(modelName.EDGE, payload);
+    return data;
   } catch (error) {
     return error;
   }
@@ -124,7 +125,15 @@ const add_Edge = async (payload) => {
 
 const update_Edge = async (query, payload) => {
   try {
-    return mongoService.updateOne(modelName.EDGE, query, payload);
+    return await mongoService.updateOne(modelName.EDGE, query, payload);
+  } catch (error) {
+    return error;
+  }
+};
+
+const single_Edge = async (query) => {
+  try {
+    return await mongoService.findOne(modelName.EDGE, query);
   } catch (error) {
     return error;
   }
@@ -132,7 +141,7 @@ const update_Edge = async (query, payload) => {
 
 const get_all_edges = async (query) => {
   try {
-    return mongoService.findAll(modelName.EDGE, query);
+    return await mongoService.findAll(modelName.EDGE, query);
   } catch (error) {
     return error;
   }
@@ -141,7 +150,7 @@ const get_all_edges = async (query) => {
 // delete permanently
 const remove_Edge = async (query) => {
   try {
-    return mongoService.deleteDocument(modelName.EDGE, query);
+    return await mongoService.deleteDocument(modelName.EDGE, query);
   } catch (error) {
     return error;
   }
@@ -208,7 +217,7 @@ const update_edge_and_node = async (edgeId, newSourceId, newTargetId) => {
     console.error("Error updating edge and node indexes:", error);
     return { success: false, error: error.message };
   }
-}
+};
 
 const getNodesList = async (interactionId) => {
   try {
@@ -265,8 +274,7 @@ const getNodesList = async (interactionId) => {
 
 const getTargetNodeByIndex = async (selectedIndex, selectedNodeId) => {
   try {
-
-    const edges = await find_all_edges({ source: selectedNodeId, });
+    const edges = await find_all_edges({ source: selectedNodeId });
 
     // Fetch all target nodes connected by these edges
     const targetNodes = await Promise.all(
@@ -278,9 +286,13 @@ const getTargetNodeByIndex = async (selectedIndex, selectedNodeId) => {
       )
     );
     // Filter out null nodes (if any) and sort by `index`
-    const validTargetNodes = targetNodes.filter((node) => node).sort((a, b) => a.index - b.index);
+    const validTargetNodes = targetNodes
+      .filter((node) => node)
+      .sort((a, b) => a.index - b.index);
 
-    const nextTargetNode = validTargetNodes.find((node) => node.index > selectedIndex);
+    const nextTargetNode = validTargetNodes.find(
+      (node) => node.index > selectedIndex
+    );
 
     return nextTargetNode?._id;
   } catch (error) {
@@ -305,7 +317,16 @@ const getLogicNodesList = async (interactionId, selectedNodeId) => {
           foreignField: "interaction_id",
           as: "nodes",
           pipeline: [
-            { $match: { is_deleted: false, _id: { $ne: new mongoose.Types.ObjectId(selectedNodeId) }, type: { $ne: "Start" } } },
+            {
+              $match: {
+                is_deleted: false,
+                _id: { $ne: new mongoose.Types.ObjectId(selectedNodeId) },
+                $and: [
+                  { type: { $ne: "Redirect" } },
+                  { type: { $ne: "Start" } },
+                ],
+              },
+            },
             { $sort: { index: 1 } },
           ],
         },
@@ -317,7 +338,12 @@ const getLogicNodesList = async (interactionId, selectedNodeId) => {
           foreignField: "interaction_id",
           as: "selectedNode",
           pipeline: [
-            { $match: { is_deleted: false, _id: new mongoose.Types.ObjectId(selectedNodeId), } },
+            {
+              $match: {
+                is_deleted: false,
+                _id: new mongoose.Types.ObjectId(selectedNodeId),
+              },
+            },
           ],
         },
       },
@@ -332,9 +358,9 @@ const getLogicNodesList = async (interactionId, selectedNodeId) => {
           nodes: 1,
           selectedNode: "$selectedNode.answer_format",
           selectedNodeType: "$selectedNode.answer_type",
-          selectedNodeIndex: "$selectedNode.index"
-        }
-      }
+          selectedNodeIndex: "$selectedNode.index",
+        },
+      },
     ];
     let data = await mongoService.aggregation(modelName.INTERACTION, pipeline);
 
@@ -353,17 +379,28 @@ const getLogicNodesList = async (interactionId, selectedNodeId) => {
       );
     }
 
-
-    let targetNode
-    if ([answerType.MultipleChoice,answerType.NPS].includes(data?.[0]?.selectedNodeType)) {
-      targetNode = await getTargetNodeByIndex(data[0]?.selectedNodeIndex, selectedNodeId)
-
+    let targetNode;
+    if (
+      [answerType.MultipleChoice, answerType.NPS].includes(
+        data?.[0]?.selectedNodeType
+      )
+    ) {
+      targetNode = await getTargetNodeByIndex(
+        data[0]?.selectedNodeIndex,
+        selectedNodeId
+      );
     } else {
-      let data = await mongoService.findOne(modelName.EDGE, { source: selectedNodeId })
-      targetNode = data?.target
+      let data = await mongoService.findOne(modelName.EDGE, {
+        source: selectedNodeId,
+      });
+      targetNode = data?.target;
     }
 
-    return { nodeList: data[0]?.nodes, targetNodeId: targetNode, selectedNode: data[0]?.selectedNode };
+    return {
+      nodeList: data[0]?.nodes,
+      targetNodeId: targetNode,
+      selectedNode: data[0]?.selectedNode,
+    };
   } catch (error) {
     throw error;
   }
@@ -371,16 +408,29 @@ const getLogicNodesList = async (interactionId, selectedNodeId) => {
 
 const getTargetNodeId = async (interactionId, selectedNodeId) => {
   try {
-    const node = await get_single_node({ _id: selectedNodeId, interaction_id: interactionId, is_deleted: false })
-    let targetNode
-    if ([answerType.MultipleChoice,answerType.NPS].includes(node?.selectedNodeType)){
-      targetNode = await getTargetNodeByIndex(data[0]?.selectedNodeIndex, selectedNodeId)
+    const node = await get_single_node({
+      _id: selectedNodeId,
+      interaction_id: interactionId,
+      is_deleted: false,
+    });
+    let targetNode;
+    if (
+      [answerType.MultipleChoice, answerType.NPS].includes(
+        node?.selectedNodeType
+      )
+    ) {
+      targetNode = await getTargetNodeByIndex(
+        data[0]?.selectedNodeIndex,
+        selectedNodeId
+      );
     } else {
-      let data = await mongoService.findOne(modelName.EDGE, { source: selectedNodeId })
-      targetNode = data?.target
+      let data = await mongoService.findOne(modelName.EDGE, {
+        source: selectedNodeId,
+      });
+      targetNode = data?.target;
     }
 
-    const targetNodeData = await get_single_node({ _id: targetNode })
+    const targetNodeData = await get_single_node({ _id: targetNode });
     return targetNodeData;
   } catch (error) {
     throw error;
@@ -466,13 +516,13 @@ const find_all_edges = async (query) => {
   } catch (error) {
     return error;
   }
-}
+};
 
 const find_all_with_node = async (query) => {
   try {
     let pipeline = [
       {
-        $match: query
+        $match: query,
       },
       {
         $lookup: {
@@ -507,7 +557,7 @@ const find_all_with_node = async (query) => {
   } catch (error) {
     return error;
   }
-}
+};
 
 const add_many_edge = async (payload) => {
   try {
@@ -515,7 +565,7 @@ const add_many_edge = async (payload) => {
   } catch (error) {
     return error;
   }
-}
+};
 
 const delete_edge = async (payload) => {
   try {
@@ -523,7 +573,7 @@ const delete_edge = async (payload) => {
   } catch (error) {
     return error;
   }
-}
+};
 
 const add_answer = async (payload) => {
   try {
@@ -801,11 +851,11 @@ const get_all_interaction_answer = async (
           },
           ...(tag !== "all"
             ? {
-              createdAt: {
-                $gte: startDate,
-                $lte: endDate,
-              },
-            }
+                createdAt: {
+                  $gte: startDate,
+                  $lte: endDate,
+                },
+              }
             : {}),
           is_deleted: false,
         },
@@ -1072,4 +1122,5 @@ module.exports = {
   getTargetNodeId,
   find_all_with_node,
   get_all_edges,
+  single_Edge,
 };
