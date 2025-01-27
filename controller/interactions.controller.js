@@ -575,7 +575,7 @@ const manageMultiChoiceEdge = async (
 
     let targetsToAdd = [];
     let newTargetIds = [];
-    targets.filter((t) => {
+    targets.map((t) => {
       if (
         !existingTargets?.includes(t.targetedNodeId) &&
         !newTargetIds.includes(t.targetedNodeId.toString())
@@ -588,22 +588,26 @@ const manageMultiChoiceEdge = async (
         });
         newTargetIds.push(t.targetedNodeId.toString());
       }
+      return;
     });
     if (targetsToAdd?.length)
       await interactions_services.add_many_edge(targetsToAdd);
 
     let targetsToDelete = [];
-    existingEdges?.filter((edge) => {
+    existingEdges?.map((edge) => {
       if (!newTargets.includes(edge.target.toString())) {
         targetsToDelete.push(edge._id);
       }
+      return;
     });
+
     if (targetsToDelete?.length)
       await interactions_services.delete_edge({
         _id: { $in: targetsToDelete },
       });
   } catch (error) {
     console.log("🚀 ~ manageMultiChoiceEdge ~ error:", error);
+    return error;
   }
 };
 
@@ -736,6 +740,94 @@ const disableIntermediateNodes = async (
   }
 };
 
+const handelRedirectEdge = async (nodeData, targets, interactionId, userId) => {
+  try {
+    const existingRedirectNode = await interactions_services.get_flow_list({
+      type: "Redirect",
+      interaction_id: interactionId,
+      is_deleted: false,
+    });
+
+    const newTargetUrlWithId = await Promise.all(
+      targets?.map(async (val) => {
+        if (val?.redirection_url) {
+          const existNode = existingRedirectNode.find(
+            (ele) => ele?.redirection_url === val.redirection_url
+          );
+          if (existNode) {
+            return {
+              ...val,
+              _id: existNode?._id.toString(),
+            };
+          } else {
+            const newRedirect = await interactions_services.add_Node({
+              interaction_id: interactionId,
+              type: "Redirect",
+              position: {
+                x:
+                  nodeData?.position?.x +
+                  (Math.floor(Math.random() * (400 - 200 + 1)) + 200),
+                y:
+                  nodeData?.position?.y +
+                  (Math.random() < 0.5 ? 1 : -1) *
+                    (Math.floor(Math.random() * (400 - 200 + 1)) + 200),
+              },
+              redirection_url: val.redirection_url,
+              title: "Redirect",
+              added_by: userId,
+              answer_format: {},
+            });
+            return {
+              ...val,
+              _id: newRedirect?._id?.toString(),
+            };
+          }
+        }
+      })
+    );
+
+    const uniqueData = newTargetUrlWithId.filter(
+      (item, index, self) =>
+        index ===
+        self.findIndex((t) => t._id.toString() === item._id.toString())
+    );
+
+    await Promise.all(
+      uniqueData?.map(async (val) => {
+        await interactions_services.add_Edge({
+          interaction_id: interactionId,
+          source: nodeData._id,
+          target: val._id,
+          added_by: userId,
+        });
+      })
+    );
+  } catch (error) {
+    console.log("error", error);
+    return error;
+  }
+};
+
+const handelEmptyRedirectNode = async (interactionId) => {
+  const existingRedirectNode = await interactions_services.get_flow_list({
+    type: "Redirect",
+    interaction_id: interactionId,
+    is_deleted: false,
+  });
+  await Promise.all(
+    existingRedirectNode.map(async (redirect) => {
+      const existingEdges = await interactions_services.find_all_edges({
+        target: redirect._id,
+        interaction_id: interactionId,
+        is_deleted: false,
+      });
+      if (existingEdges.length === 0) {
+        await interactions_services.remove_Node({ _id: redirect._id });
+      }
+    })
+  );
+};
+
 const updateEdges = catchAsyncError(async (req, res) => {
   const Id = req.user;
   const {
@@ -758,10 +850,26 @@ const updateEdges = catchAsyncError(async (req, res) => {
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  if (["multiple-choice", "nps"].includes(nodeData?.answer_type)) {
-    await manageMultiChoiceEdge(selectedNodeId, targets, interactionId, Id);
-    // Update `choices` in the node
+  if (
+    [answerType.MultipleChoice, answerType.NPS].includes(nodeData?.answer_type)
+  ) {
+    const targetedToNode = targets.filter(
+      (target) => target?.targetedNodeId !== null
+    );
+    const targetedToRedirect = targets.filter(
+      (target) => target?.redirection_url !== null
+    );
 
+    await manageMultiChoiceEdge(
+      selectedNodeId,
+      targetedToNode,
+      interactionId,
+      Id
+    );
+
+    await handelRedirectEdge(nodeData, targetedToRedirect, interactionId, Id);
+
+    // Update `choices` in the node
     const choices =
       nodeData?.answer_type === "nps"
         ? nodeData.answer_format.nps_choices
@@ -773,44 +881,11 @@ const updateEdges = catchAsyncError(async (req, res) => {
         return {
           ...choice,
           targetedNodeId: updatedTarget.targetedNodeId,
+          redirection_url: updatedTarget.redirection_url,
         };
       }
       return choice;
     });
-
-    if (targets?.length) {
-      await Promise.all(
-        targets?.map(async (val) => {
-          if (val.redirection_url) {
-            await interactions_services.add_Node({
-              interaction_id: interactionData._id,
-              type: "Redirect",
-              position: {
-                x: 376.25,
-                y: 251,
-              },
-              redirection_url: val.redirection_url,
-              title: "untitled",
-              added_by: Id,
-              answer_format: {},
-            });
-
-            await interactions_services.update_Node(
-              { _id: selectedNodeId },
-              {
-                redirection_url: val.redirection_url,
-              }
-            );
-
-            await interactions_services.add_Edge({
-              interaction_id: interactionData._id,
-              source: selectedNodeId,
-              added_by: Id,
-            });
-          }
-        })
-      );
-    }
 
     // Save the updated node
     await interactions_services.update_Node(
@@ -822,11 +897,13 @@ const updateEdges = catchAsyncError(async (req, res) => {
       }
     );
 
-    await updateIndexesForMultiple(selectedNodeId, targets, interactionId);
+    await updateIndexesForMultiple(
+      selectedNodeId,
+      targetedToNode,
+      interactionId
+    );
   } else {
-
     const selectedNodeIndex = nodeData?.index;
-
     if (redirection_url) {
       const redirectUrlAlreadyExists =
         await interactions_services.get_single_node({
@@ -836,62 +913,65 @@ const updateEdges = catchAsyncError(async (req, res) => {
           is_deleted: false,
         });
 
-        if(redirectUrlAlreadyExists){
-
-          await interactions_services.update_Node(
-            { _id: selectedNodeId },
-            {
-              redirection_url: redirection_url,
-            }
-          );
-
-          await interactions_services.add_Edge({
-            interaction_id: interactionData._id,
-            source: selectedNodeId,
-            target: redirectUrlAlreadyExists._id,
-            added_by: Id,
-          });
-
-          const parentEdgeData = await interactions_services.single_Edge({
-            source: selectedNodeId,
-          });
-    
-          await interactions_services.remove_Edge({ _id: parentEdgeData._id });
-
-        }else{
-          const newNode = await interactions_services.add_Node({
-            interaction_id: interactionData._id,
-            type: "Redirect",
-            position: {
-              x: 376.25,
-              y: 251,
-            },
-            title: "untitled",
+      if (redirectUrlAlreadyExists) {
+        await interactions_services.update_Node(
+          { _id: selectedNodeId },
+          {
             redirection_url: redirection_url,
-            added_by: Id,
-            answer_format: {},
-          });
-    
-          await interactions_services.update_Node(
-            { _id: selectedNodeId },
-            {
-              redirection_url: redirection_url,
-            }
-          );
-    
-          await interactions_services.add_Edge({
-            interaction_id: interactionData._id,
-            source: selectedNodeId,
-            target: newNode._id,
-            added_by: Id,
-          });
-    
-          const parentEdgeData = await interactions_services.single_Edge({
-            source: selectedNodeId,
-          });
-    
-          await interactions_services.remove_Edge({ _id: parentEdgeData._id });
-        }
+          }
+        );
+
+        await interactions_services.add_Edge({
+          interaction_id: interactionData._id,
+          source: selectedNodeId,
+          target: redirectUrlAlreadyExists._id,
+          added_by: Id,
+        });
+
+        const parentEdgeData = await interactions_services.single_Edge({
+          source: selectedNodeId,
+        });
+
+        await interactions_services.remove_Edge({ _id: parentEdgeData._id });
+      } else {
+        const newNode = await interactions_services.add_Node({
+          interaction_id: interactionData._id,
+          type: "Redirect",
+          position: {
+            x:
+              nodeData?.position?.x +
+              (Math.floor(Math.random() * (400 - 200 + 1)) + 200),
+            y:
+              nodeData?.position?.y +
+              (Math.random() < 0.5 ? 1 : -1) *
+                (Math.floor(Math.random() * (400 - 200 + 1)) + 200),
+          },
+          title: "untitled",
+          redirection_url: redirection_url,
+          added_by: Id,
+          answer_format: {},
+        });
+
+        await interactions_services.update_Node(
+          { _id: selectedNodeId },
+          {
+            redirection_url: redirection_url,
+          }
+        );
+
+        await interactions_services.add_Edge({
+          interaction_id: interactionData._id,
+          source: selectedNodeId,
+          target: newNode._id,
+          added_by: Id,
+        });
+
+        const parentEdgeData = await interactions_services.single_Edge({
+          source: selectedNodeId,
+        });
+
+        await interactions_services.remove_Edge({ _id: parentEdgeData._id });
+      }
     } else {
       const findSourceEdge = await interactions_services.single_Edge({
         source: selectedNodeId,
@@ -901,7 +981,7 @@ const updateEdges = catchAsyncError(async (req, res) => {
         target: findSourceEdge.target,
       });
 
-      if (findRedirectEdge?.length === 1 ) {
+      if (findRedirectEdge?.length === 1) {
         await interactions_services.update_Node(
           {
             interaction_id: interactionId,
@@ -925,6 +1005,7 @@ const updateEdges = catchAsyncError(async (req, res) => {
     }
     // await disableIntermediateNodes(interactionId, selectedNodeId, newTargetId,selectedNodeIndex);
   }
+  await handelEmptyRedirectNode(interactionId);
 
   return response200(res, msg.update_success, []);
 });
@@ -1329,6 +1410,14 @@ const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
       });
     }
   }
+
+  const existingRedirectNode = await interactions_services.get_flow_list({
+    type: "Redirect",
+    interaction_id: nodeData.interaction_id,
+    is_deleted: false,
+  });
+
+  await handelEmptyRedirectNode(nodeData.interaction_id);
 
   return response200(res, msg.update_success, []);
 });
