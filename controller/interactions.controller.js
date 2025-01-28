@@ -418,6 +418,78 @@ const updateCordinates = catchAsyncError(async (req, res) => {
   return response200(res, msg.update_success, []);
 });
 
+// async function updateIndexes(affectedNodeIds) {
+//   const visited = new Set();
+//   const queue = [...affectedNodeIds];
+
+//   while (queue.length > 0) {
+//     const currentNodeId = queue.shift();
+//     if (visited.has(currentNodeId)) continue;
+
+//     visited.add(currentNodeId);
+
+//     // Find all edges connected to the current node
+//     const connectedEdges = await interactions_services.find_all_edges({
+//       $or: [{ source: currentNodeId }, { target: currentNodeId }],
+//     });
+//     console.log("🚀 ~ updateIndexes ~ connectedEdges:", connectedEdges)
+
+//     for (const edge of connectedEdges) {
+//       const connectedNodeId = edge.source === currentNodeId ? edge.target : edge.source;
+//       if (!visited.has(connectedNodeId)) queue.push(connectedNodeId);
+//     }
+
+//     // Update the index for the current node
+//     const incomingEdges = await interactions_services.find_Edge({ target: currentNodeId });
+//     console.log("🚀 ~ updateIndexes ~ incomingEdges:", incomingEdges)
+//     const updatedIndex = incomingEdges?.length; // Number of incoming edges
+//     await interactions_services.update_Node({ _id: currentNodeId }, { index: updatedIndex });
+//   }
+// }
+
+// const updateIndexes = async (interactionId) => {
+//   // Fetch all nodes and edges for the interaction
+//   const nodes = await interactions_services.get_nodes({ interaction_id: interactionId, is_deleted: false });
+//   const edges = await interactions_services.get_edges({ interaction_id: interactionId, is_deleted: false });
+
+//   // Create a graph from the edges
+//   const adjacencyList = {};
+//   nodes.forEach(node => adjacencyList[node._id.toString()] = []);
+//   edges.forEach(edge => {
+//     adjacencyList[edge.source.toString()].push(edge.target.toString());
+//   });
+
+//   console.log("🚀 ~ updateIndexes ~ adjacencyList:", adjacencyList)
+
+//   // Find the root node (no incoming edges)
+//   const incomingEdges = {};
+//   edges.forEach(edge => {
+//     incomingEdges[edge.target.toString()] = true;
+//   });
+//   console.log("🚀 ~ updateIndexes ~ incomingEdges:", incomingEdges)
+//   const rootNode = nodes.find(node => !incomingEdges[node._id.toString()]);
+
+//   if (!rootNode) throw new Error("Root node not found");
+
+//   // Perform BFS to calculate indexes
+//   const queue = [{ nodeId: rootNode._id.toString(), index: 1 }];
+//   const nodeIndexes = {};
+//   while (queue.length > 0) {
+//     const { nodeId, index } = queue.shift();
+//     nodeIndexes[nodeId] = index;
+
+//     adjacencyList[nodeId].forEach((childId, idx) => {
+//       queue.push({ nodeId: childId, index: index + idx + 1 });
+//     });
+//   }
+
+//   // Update the indexes in the database
+//   const updatePromises = Object.keys(nodeIndexes).map(nodeId =>
+//     interactions_services.update_Node({ _id: nodeId }, { index: nodeIndexes[nodeId] })
+//   );
+//   await Promise.all(updatePromises);
+// };
+
 const updateIndexes = async (sourceId, selectedTargetNode, interaction_id) => {
   const nodes = await interactions_services.get_flow_list({
     interaction_id,
