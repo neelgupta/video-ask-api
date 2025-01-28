@@ -212,10 +212,11 @@ const updateAnswerFormatValidator = Joi.object({
             }),
             targetedNodeId: Joi.string()
               .required()
-
               .messages({
                 "any.invalid": "Please provide a valid Targeted Node Id",
-              }),
+              })
+              .allow(null),
+            redirection_url: Joi.any().optional(),
           })
         )
         .min(1)

@@ -418,78 +418,6 @@ const updateCordinates = catchAsyncError(async (req, res) => {
   return response200(res, msg.update_success, []);
 });
 
-// async function updateIndexes(affectedNodeIds) {
-//   const visited = new Set();
-//   const queue = [...affectedNodeIds];
-
-//   while (queue.length > 0) {
-//     const currentNodeId = queue.shift();
-//     if (visited.has(currentNodeId)) continue;
-
-//     visited.add(currentNodeId);
-
-//     // Find all edges connected to the current node
-//     const connectedEdges = await interactions_services.find_all_edges({
-//       $or: [{ source: currentNodeId }, { target: currentNodeId }],
-//     });
-//     console.log("🚀 ~ updateIndexes ~ connectedEdges:", connectedEdges)
-
-//     for (const edge of connectedEdges) {
-//       const connectedNodeId = edge.source === currentNodeId ? edge.target : edge.source;
-//       if (!visited.has(connectedNodeId)) queue.push(connectedNodeId);
-//     }
-
-//     // Update the index for the current node
-//     const incomingEdges = await interactions_services.find_Edge({ target: currentNodeId });
-//     console.log("🚀 ~ updateIndexes ~ incomingEdges:", incomingEdges)
-//     const updatedIndex = incomingEdges?.length; // Number of incoming edges
-//     await interactions_services.update_Node({ _id: currentNodeId }, { index: updatedIndex });
-//   }
-// }
-
-// const updateIndexes = async (interactionId) => {
-//   // Fetch all nodes and edges for the interaction
-//   const nodes = await interactions_services.get_nodes({ interaction_id: interactionId, is_deleted: false });
-//   const edges = await interactions_services.get_edges({ interaction_id: interactionId, is_deleted: false });
-
-//   // Create a graph from the edges
-//   const adjacencyList = {};
-//   nodes.forEach(node => adjacencyList[node._id.toString()] = []);
-//   edges.forEach(edge => {
-//     adjacencyList[edge.source.toString()].push(edge.target.toString());
-//   });
-
-//   console.log("🚀 ~ updateIndexes ~ adjacencyList:", adjacencyList)
-
-//   // Find the root node (no incoming edges)
-//   const incomingEdges = {};
-//   edges.forEach(edge => {
-//     incomingEdges[edge.target.toString()] = true;
-//   });
-//   console.log("🚀 ~ updateIndexes ~ incomingEdges:", incomingEdges)
-//   const rootNode = nodes.find(node => !incomingEdges[node._id.toString()]);
-
-//   if (!rootNode) throw new Error("Root node not found");
-
-//   // Perform BFS to calculate indexes
-//   const queue = [{ nodeId: rootNode._id.toString(), index: 1 }];
-//   const nodeIndexes = {};
-//   while (queue.length > 0) {
-//     const { nodeId, index } = queue.shift();
-//     nodeIndexes[nodeId] = index;
-
-//     adjacencyList[nodeId].forEach((childId, idx) => {
-//       queue.push({ nodeId: childId, index: index + idx + 1 });
-//     });
-//   }
-
-//   // Update the indexes in the database
-//   const updatePromises = Object.keys(nodeIndexes).map(nodeId =>
-//     interactions_services.update_Node({ _id: nodeId }, { index: nodeIndexes[nodeId] })
-//   );
-//   await Promise.all(updatePromises);
-// };
-
 const updateIndexes = async (sourceId, selectedTargetNode, interaction_id) => {
   const nodes = await interactions_services.get_flow_list({
     interaction_id,
@@ -742,68 +670,65 @@ const disableIntermediateNodes = async (
 
 const handelRedirectEdge = async (nodeData, targets, interactionId, userId) => {
   try {
-    const existingRedirectNode = await interactions_services.get_flow_list({
+    const uniqueTargets = [
+      ...new Map(targets.map((t) => [t.redirection_url, t])).values(),
+    ];
+
+    const existingRedirectNodes = await interactions_services.get_flow_list({
       type: "Redirect",
       interaction_id: interactionId,
       is_deleted: false,
     });
 
     const newTargetUrlWithId = await Promise.all(
-      targets?.map(async (val) => {
-        if (val?.redirection_url) {
-          const existNode = existingRedirectNode.find(
-            (ele) => ele?.redirection_url === val.redirection_url
-          );
-          if (existNode) {
-            return {
-              ...val,
-              _id: existNode?._id.toString(),
-            };
-          } else {
-            const newRedirect = await interactions_services.add_Node({
-              interaction_id: interactionId,
-              type: "Redirect",
-              position: {
-                x:
-                  nodeData?.position?.x +
-                  (Math.floor(Math.random() * (400 - 200 + 1)) + 200),
-                y:
-                  nodeData?.position?.y +
-                  (Math.random() < 0.5 ? 1 : -1) *
-                    (Math.floor(Math.random() * (400 - 200 + 1)) + 200),
-              },
-              redirection_url: val.redirection_url,
-              title: "Redirect",
-              added_by: userId,
-              answer_format: {},
-            });
-            return {
-              ...val,
-              _id: newRedirect?._id?.toString(),
-            };
-          }
+      uniqueTargets.map(async (target) => {
+        if (!target?.redirection_url) return null;
+
+        const existingNode = existingRedirectNodes.find(
+          (node) => node.redirection_url === target.redirection_url
+        );
+
+        if (existingNode) {
+          return { ...target, _id: existingNode._id.toString() };
         }
+
+        const newRedirectNode = await interactions_services.add_Node({
+          interaction_id: interactionId,
+          type: "Redirect",
+          position: {
+            x: nodeData?.position?.x + Math.random() * 200 + 200,
+            y:
+              nodeData?.position?.y +
+              (Math.random() < 0.5 ? 1 : -1) * (Math.random() * 200 + 200),
+          },
+          redirection_url: target.redirection_url,
+          title: "Redirect",
+          added_by: userId,
+          answer_format: {},
+        });
+
+        return { ...target, _id: newRedirectNode?._id?.toString() };
       })
     );
 
-    const uniqueData = newTargetUrlWithId.filter(
-      (item, index, self) =>
-        index ===
-        self.findIndex((t) => t._id.toString() === item._id.toString())
-    );
+    const uniqueData = [
+      ...new Map(
+        newTargetUrlWithId.filter(Boolean).map((t) => [t._id, t])
+      ).values(),
+    ];
 
     await Promise.all(
-      uniqueData?.map(async (val) => {
-        await interactions_services.add_Edge({
+      uniqueData.map((target) =>
+        interactions_services.add_Edge({
           interaction_id: interactionId,
           source: nodeData._id,
-          target: val._id,
+          target: target._id,
           added_by: userId,
-        });
-      })
+        })
+      )
     );
   } catch (error) {
-    console.log("error", error);
+    console.error("Error:", error);
     return error;
   }
 };
