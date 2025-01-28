@@ -278,23 +278,34 @@ const getTargetNodeByIndex = async (selectedIndex, selectedNodeId) => {
 
     // Fetch all target nodes connected by these edges
     const targetNodes = await Promise.all(
-      edges.map((edge) =>
-        get_single_node({
+      edges.map((edge) => {
+        return get_single_node({
           _id: edge.target,
+          type: "Question",
           is_deleted: false,
-        })
-      )
+        });
+      })
     );
     // Filter out null nodes (if any) and sort by `index`
     const validTargetNodes = targetNodes
       .filter((node) => node)
       .sort((a, b) => a.index - b.index);
 
-    const nextTargetNode = validTargetNodes.find(
-      (node) => node.index > selectedIndex
-    );
+    console.log("validTargetNodes", validTargetNodes);
+    if (!!validTargetNodes.length) {
+      const nextTargetNode = validTargetNodes.find(
+        (node) => node.index > selectedIndex
+      );
+      return nextTargetNode?._id;
+    }
 
-    return nextTargetNode?._id;
+    const defaultNode = await get_single_node({
+      index: selectedIndex + 1,
+      type: "Question",
+      is_deleted: false,
+    });
+
+    return defaultNode._id;
   } catch (error) {
     console.error("Error in getTargetNodeByIndex:", error.message);
     throw error;
@@ -413,24 +424,30 @@ const getTargetNodeId = async (interactionId, selectedNodeId) => {
       interaction_id: interactionId,
       is_deleted: false,
     });
-    let targetNode;
+    let targetNodeData;
     if (
-      [answerType.MultipleChoice, answerType.NPS].includes(
-        node?.selectedNodeType
-      )
+      [answerType.MultipleChoice, answerType.NPS].includes(node?.answer_type)
     ) {
-      targetNode = await getTargetNodeByIndex(
-        data[0]?.selectedNodeIndex,
+      const targetNode = await getTargetNodeByIndex(
+        node?.index,
         selectedNodeId
       );
+      targetNodeData = await get_single_node({ _id: targetNode });
     } else {
       let data = await mongoService.findOne(modelName.EDGE, {
         source: selectedNodeId,
       });
-      targetNode = data?.target;
+      if (data?.target) {
+        targetNodeData = await get_single_node({ _id: data?.target });
+      }
+      if (!targetNodeData || targetNodeData.type === "Redirect") {
+        targetNodeData = await get_single_node({
+          index: node.index + 1,
+          interaction_id: interactionId,
+          is_deleted: false,
+        });
+      }
     }
-
-    const targetNodeData = await get_single_node({ _id: targetNode });
     return targetNodeData;
   } catch (error) {
     throw error;
