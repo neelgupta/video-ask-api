@@ -272,7 +272,7 @@ const getNodesList = async (interactionId) => {
   }
 };
 
-const getTargetNodeByIndex = async (selectedIndex, selectedNodeId) => {
+const getTargetNodeByIndex = async (selectedIndex, selectedNodeId, interactionId) => {
   try {
     const edges = await find_all_edges({ source: selectedNodeId });
 
@@ -303,6 +303,7 @@ const getTargetNodeByIndex = async (selectedIndex, selectedNodeId) => {
       index: selectedIndex + 1,
       type: "Question",
       is_deleted: false,
+      interaction_id: interactionId
     });
 
     return defaultNode._id;
@@ -398,7 +399,8 @@ const getLogicNodesList = async (interactionId, selectedNodeId) => {
     ) {
       targetNode = await getTargetNodeByIndex(
         data[0]?.selectedNodeIndex,
-        selectedNodeId
+        selectedNodeId,
+        interactionId
       );
     } else {
       let data = await mongoService.findOne(modelName.EDGE, {
@@ -430,7 +432,8 @@ const getTargetNodeId = async (interactionId, selectedNodeId) => {
     ) {
       const targetNode = await getTargetNodeByIndex(
         node?.index,
-        selectedNodeId
+        selectedNodeId,
+        interactionId
       );
       targetNodeData = await get_single_node({ _id: targetNode });
     } else {
@@ -868,11 +871,11 @@ const get_all_interaction_answer = async (
           },
           ...(tag !== "all"
             ? {
-                createdAt: {
-                  $gte: startDate,
-                  $lte: endDate,
-                },
-              }
+              createdAt: {
+                $gte: startDate,
+                $lte: endDate,
+              },
+            }
             : {}),
           is_deleted: false,
         },

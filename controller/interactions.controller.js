@@ -941,7 +941,7 @@ const updateEdges = catchAsyncError(async (req, res) => {
             y:
               nodeData?.position?.y +
               (Math.random() < 0.5 ? 1 : -1) *
-                (Math.floor(Math.random() * (400 - 200 + 1)) + 200),
+              (Math.floor(Math.random() * (400 - 200 + 1)) + 200),
           },
           title: "untitled",
           redirection_url: redirection_url,
@@ -990,7 +990,7 @@ const updateEdges = catchAsyncError(async (req, res) => {
       }
 
       await interactions_services.update_Node(
-        { source: selectedNodeId },
+        { _id: selectedNodeId },
         { redirection_url: "" }
       );
 
@@ -1354,7 +1354,7 @@ const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  if (answer_type === answerType.MultipleChoice) {
+  if (answer_type === answerType.MultipleChoice && nodeData?.answer_type !== answerType.MultipleChoice) {
     req.body.answer_format.choices = answer_format?.choices?.map((item) => ({
       ...item,
       targetedNodeId: new mongoose.Types.ObjectId(item.targetedNodeId),
@@ -1365,6 +1365,26 @@ const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
       nodeData?.interaction_id,
       Id
     );
+  }
+
+  // This is for if new options add in same answer_type = MultipleChoice
+
+  if (answer_type === answerType.MultipleChoice && nodeData?.answer_type === answerType.MultipleChoice) {
+    const targetedToNode = answer_format.choices.filter(
+      (target) => target?.targetedNodeId !== null
+    );
+    const targetedToRedirect = answer_format.choices.filter(
+      (target) => target?.redirection_url !== null
+    );
+
+    await manageMultiChoiceEdge(
+      node_id,
+      targetedToNode,
+      nodeData?.interaction_id,
+      Id
+    );
+
+    await handelRedirectEdge(nodeData, targetedToRedirect, nodeData?.interaction_id, Id);
   }
 
   if (answer_type === answerType.NPS) {
@@ -1383,6 +1403,7 @@ const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
   }
   await interactions_services.update_Node({ _id: node_id }, req.body);
 
+  // this is for reset all edges if type is change from MultipleChoice or NPS to other
   if (
     (nodeData?.answer_type === answerType.MultipleChoice &&
       answer_type !== answerType.MultipleChoice) ||
