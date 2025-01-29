@@ -290,6 +290,9 @@ const collectAnswerValidator = Joi.object({
     product: Joi.string().optional(),
     // note: Joi.string().optional(), // Uncomment if needed
   }).optional(),
+  device_name: Joi.string().required().messages({
+    "*": "Please enter valid device name.",
+  }),
 });
 
 const createNewEdgeValidator = Joi.object({

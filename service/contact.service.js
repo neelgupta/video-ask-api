@@ -105,20 +105,6 @@ const get_conversations = async (query) => {
                 localField: "answers.node_id",
                 foreignField: "_id",
                 as: "answers.nodeDetails",
-                pipeline: [
-                  {
-                    $project: {
-                      type: 1,
-                      flow_type: 1,
-                      video_thumbnail: 1,
-                      title: 1,
-                      overlay_text: 1,
-                      answer_type: 1,
-                      createdAt: 1,
-                      index: 1,
-                    },
-                  },
-                ],
               },
             },
             {

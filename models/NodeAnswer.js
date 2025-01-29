@@ -46,6 +46,10 @@ const nodeAnswerSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    device_name: {
+      type: String,
+      default: "",
+    },
   },
   { minimize: false, timestamps: true }
 );

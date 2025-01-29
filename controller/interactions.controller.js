@@ -941,7 +941,7 @@ const updateEdges = catchAsyncError(async (req, res) => {
             y:
               nodeData?.position?.y +
               (Math.random() < 0.5 ? 1 : -1) *
-              (Math.floor(Math.random() * (400 - 200 + 1)) + 200),
+                (Math.floor(Math.random() * (400 - 200 + 1)) + 200),
           },
           title: "untitled",
           redirection_url: redirection_url,
@@ -1354,7 +1354,10 @@ const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
   });
   if (!nodeData) return response400(res, msg.nodeNotExists);
 
-  if (answer_type === answerType.MultipleChoice && nodeData?.answer_type !== answerType.MultipleChoice) {
+  if (
+    answer_type === answerType.MultipleChoice &&
+    nodeData?.answer_type !== answerType.MultipleChoice
+  ) {
     req.body.answer_format.choices = answer_format?.choices?.map((item) => ({
       ...item,
       targetedNodeId: new mongoose.Types.ObjectId(item.targetedNodeId),
@@ -1369,7 +1372,10 @@ const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
 
   // This is for if new options add in same answer_type = MultipleChoice
 
-  if (answer_type === answerType.MultipleChoice && nodeData?.answer_type === answerType.MultipleChoice) {
+  if (
+    answer_type === answerType.MultipleChoice &&
+    nodeData?.answer_type === answerType.MultipleChoice
+  ) {
     const targetedToNode = answer_format.choices.filter(
       (target) => target?.targetedNodeId !== null
     );
@@ -1384,7 +1390,12 @@ const updateNodeAnswerFormat = catchAsyncError(async (req, res) => {
       Id
     );
 
-    await handelRedirectEdge(nodeData, targetedToRedirect, nodeData?.interaction_id, Id);
+    await handelRedirectEdge(
+      nodeData,
+      targetedToRedirect,
+      nodeData?.interaction_id,
+      Id
+    );
   }
 
   if (answer_type === answerType.NPS) {
@@ -1524,7 +1535,8 @@ const collectAnswer = catchAsyncError(async (req, res) => {
 
   if (
     node_answer_type === answerType.MultipleChoice ||
-    node_answer_type === answerType.Button
+    node_answer_type === answerType.Button ||
+    node_answer_type === answerType.NPS
   ) {
     const ansType = ["true", "false"];
     if (ansType.includes(answer)) {
@@ -1597,9 +1609,36 @@ const collectAnswer = catchAsyncError(async (req, res) => {
     answerId = result._id;
   }
 
+  let isMultiple = false;
+  let isRedirect = false;
+  let target = null;
+  if ([answerType.MultipleChoice, answerType.NPS].includes(node_answer_type)) {
+    isMultiple = true;
+  } else {
+    isRedirect = true;
+    target = nodeData?.redirection_url;
+    if (!nodeData?.redirection_url) {
+      isRedirect = false;
+      const edges = await interactions_services.get_all_edges({
+        interaction_id,
+        source: node_id,
+      });
+      if (edges.length > 0) {
+        const targetNode = await interactions_services.get_single_node({
+          interaction_id,
+          _id: edges?.[0].target,
+        });
+        target = targetNode._id;
+      }
+    }
+  }
+
   return response201(res, msg.answerSuccess, {
     answerId,
     contactId: req.body.contact_id,
+    isMultiple,
+    isRedirect,
+    target,
   });
 });
 
