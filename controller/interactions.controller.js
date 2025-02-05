@@ -22,7 +22,10 @@ const {
   openEndedType,
   generateUUID,
   getDateRangeForFilter,
+  generateLabels,
 } = require("../utils/constant");
+const dayjs = require("dayjs");
+const isBetween = require("dayjs/plugin/isBetween");
 
 const addFolder = catchAsyncError(async (req, res) => {
   const Id = req.user;
@@ -1476,6 +1479,8 @@ const collectAnswer = catchAsyncError(async (req, res) => {
     answer,
   } = req.body;
 
+  // const clintIp = req.ip || req.headers["x-forwarded-for"]?.split(",").shift();
+
   const interactionData = await interactions_services.get_single_interaction({
     _id: interaction_id,
     is_deleted: false,
@@ -2043,6 +2048,76 @@ const copyInteraction = catchAsyncError(async (req, res) => {
   return response200(res, msg.fetch_success);
 });
 
+const getMetricsCount = catchAsyncError(async (req, res) => {
+  const { interaction_id } = req.params;
+  const { interval = "day", start, end } = req.query;
+
+  const labelArray = generateLabels(start, end, interval);
+  const metrics = await interactions_services.get_metrics(
+    interaction_id,
+    interval,
+    start,
+    end
+  );
+  const newInteracted = [];
+  const newAnswers = [];
+  const newCompleted = [];
+
+  if (labelArray.length > 0) {
+    if (interval === "day") {
+      labelArray.forEach((label) => {
+        const findCount = metrics?.[label];
+        newInteracted.push(findCount?.Interacted || 0);
+        newAnswers.push(findCount?.Answers || 0);
+        newCompleted.push(findCount?.Completed || 0);
+      });
+    }
+
+    if (["week", "month"].includes(interval)) {
+      dayjs.extend(isBetween);
+      labelArray.forEach((labelData, index) => {
+        if (!metrics) {
+          newInteracted.push(0);
+          newAnswers.push(0);
+          newCompleted.push(0);
+          return;
+        }
+
+        if (index === labelArray.length - 1) {
+          newInteracted.push(metrics[labelData]?.Interacted || 0);
+          newAnswers.push(metrics[labelData]?.Answers || 0);
+          newCompleted.push(metrics[labelData]?.Completed || 0);
+          return;
+        }
+
+        const [interactedSum, answersSum, completedSum] = Object.keys(metrics)
+          .filter((ele) =>
+            dayjs(ele).isBetween(labelData, labelArray[index + 1], null, "[)")
+          )
+          .reduce(
+            ([interSum, ansSum, compSum], key) => [
+              interSum + (metrics[key]?.Interacted || 0),
+              ansSum + (metrics[key]?.Answers || 0),
+              compSum + (metrics[key]?.Completed || 0),
+            ],
+            [0, 0, 0]
+          );
+
+        newInteracted.push(interactedSum);
+        newAnswers.push(answersSum);
+        newCompleted.push(completedSum);
+      });
+    }
+  }
+
+  return response200(res, msg.fetch_success, {
+    labels: labelArray,
+    Interacted: newInteracted,
+    Answers: newAnswers,
+    Completed: newCompleted,
+  });
+});
+
 module.exports = {
   addFolder,
   getFolderList,
@@ -2074,4 +2149,5 @@ module.exports = {
   getLogicNode,
   changeNodeEdge,
   getTargetNode,
+  getMetricsCount,
 };

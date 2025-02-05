@@ -198,6 +198,12 @@ router.get(
   interactionsController.getNodeWiseAnswers
 );
 
+router.get(
+  "/get-metrics/:interaction_id",
+  isAuthenticated,
+  interactionsController.getMetricsCount
+);
+
 router.post(
   "/create-new-edge",
   isAuthenticated,

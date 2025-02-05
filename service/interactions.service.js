@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose");
 const mongoService = require("../config/mongoService");
-const { modelName, answerType } = require("../utils/constant");
+const { modelName, answerType, generateLabels } = require("../utils/constant");
+const dayjs = require("dayjs");
 
 const add_folder = async (payload) => {
   try {
@@ -272,7 +273,11 @@ const getNodesList = async (interactionId) => {
   }
 };
 
-const getTargetNodeByIndex = async (selectedIndex, selectedNodeId, interactionId) => {
+const getTargetNodeByIndex = async (
+  selectedIndex,
+  selectedNodeId,
+  interactionId
+) => {
   try {
     const edges = await find_all_edges({ source: selectedNodeId });
 
@@ -303,7 +308,7 @@ const getTargetNodeByIndex = async (selectedIndex, selectedNodeId, interactionId
       index: selectedIndex + 1,
       type: "Question",
       is_deleted: false,
-      interaction_id: interactionId
+      interaction_id: interactionId,
     });
 
     return defaultNode._id;
@@ -871,11 +876,11 @@ const get_all_interaction_answer = async (
           },
           ...(tag !== "all"
             ? {
-              createdAt: {
-                $gte: startDate,
-                $lte: endDate,
-              },
-            }
+                createdAt: {
+                  $gte: startDate,
+                  $lte: endDate,
+                },
+              }
             : {}),
           is_deleted: false,
         },
@@ -1097,6 +1102,76 @@ const get_dashboard_recent_interaction = async (
   }
 };
 
+const get_metrics = async (interaction_id, interval, start, end) => {
+  const startDate = new Date(`${start}T00:00:00.000Z`);
+  const endDate = new Date(`${end}T23:59:59.999Z`);
+
+  try {
+    const pipeline = [
+      {
+        $match: {
+          interaction_id: new mongoose.Types.ObjectId(interaction_id),
+          createdAt: {
+            $gte: startDate,
+            $lte: endDate,
+          },
+        },
+      },
+
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          Interacted: { $sum: 1 },
+          Answers: {
+            $sum: {
+              $cond: [{ $eq: ["$is_completed_interaction", false] }, 1, 0],
+            },
+          },
+          Completed: {
+            $sum: {
+              $cond: [{ $eq: ["$is_completed_interaction", true] }, 1, 0],
+            },
+          },
+        },
+      },
+
+      { $sort: { _id: 1 } },
+
+      {
+        $group: {
+          _id: null,
+          data: {
+            $push: {
+              k: "$_id",
+              v: {
+                Interacted: "$Interacted",
+                Answers: "$Answers",
+                Completed: "$Completed",
+              },
+            },
+          },
+        },
+      },
+
+      {
+        $project: {
+          _id: 0,
+          data: { $arrayToObject: "$data" }, // Convert array to object format
+        },
+      },
+    ];
+
+    const metrics = await mongoService.aggregation(
+      modelName.NODE_ANSWER,
+      pipeline
+    );
+
+    return metrics?.[0]?.data || null;
+  } catch (error) {
+    return error;
+  }
+};
+
 module.exports = {
   add_folder,
   get_folder_list,
@@ -1143,4 +1218,5 @@ module.exports = {
   find_all_with_node,
   get_all_edges,
   single_Edge,
+  get_metrics,
 };

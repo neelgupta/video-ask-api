@@ -149,7 +149,6 @@ const modelName = {
   NODE_ANSWER: "Node_answer",
   SUBSCRIPTIONS: "Subscriptions",
   STRIPE: "Stripe",
-
 };
 
 const subscriptionPlanType = {
@@ -294,6 +293,31 @@ const getDateRangeForFilter = (tag) => {
   return { startDate, endDate };
 };
 
+const generateLabels = (start, end, interval) => {
+  let currentDate = dayjs(start);
+  const endDate = dayjs(end);
+  const labels = [];
+
+  while (
+    currentDate.isBefore(endDate) ||
+    currentDate.isSame(endDate, interval)
+  ) {
+    labels.push(currentDate.format("YYYY-MM-DD")); // Format as YYYY-MM-DD
+
+    // Increment date based on interval
+    if (interval === "day") {
+      currentDate = currentDate.add(1, "day");
+    } else if (interval === "week") {
+      currentDate = currentDate.add(1, "week");
+    } else if (interval === "month") {
+      currentDate = currentDate.add(1, "month");
+    } else {
+      throw new Error("Invalid interval. Use 'day', 'week', or 'month'.");
+    }
+  }
+  return labels;
+};
+
 module.exports = {
   userType,
   frontBaseUrl,
@@ -324,4 +348,5 @@ module.exports = {
   generateResetPasswordToken,
   generateUid,
   getDateRangeForFilter,
+  generateLabels,
 };
