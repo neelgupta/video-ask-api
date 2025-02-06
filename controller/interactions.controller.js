@@ -2050,12 +2050,12 @@ const copyInteraction = catchAsyncError(async (req, res) => {
 
 const getMetricsCount = catchAsyncError(async (req, res) => {
   const { interaction_id } = req.params;
-  const { interval = "day", start, end } = req.query;
+  const { interval = "day", start, end, deviceType = "all" } = req.query;
 
   const labelArray = generateLabels(start, end, interval);
   const metrics = await interactions_services.get_metrics(
     interaction_id,
-    interval,
+    deviceType,
     start,
     end
   );

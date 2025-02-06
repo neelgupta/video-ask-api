@@ -1102,7 +1102,7 @@ const get_dashboard_recent_interaction = async (
   }
 };
 
-const get_metrics = async (interaction_id, interval, start, end) => {
+const get_metrics = async (interaction_id, deviceType, start, end) => {
   const startDate = new Date(`${start}T00:00:00.000Z`);
   const endDate = new Date(`${end}T23:59:59.999Z`);
 
@@ -1111,6 +1111,7 @@ const get_metrics = async (interaction_id, interval, start, end) => {
       {
         $match: {
           interaction_id: new mongoose.Types.ObjectId(interaction_id),
+          ...(deviceType === "all" ? {} : { device_name: deviceType }),
           createdAt: {
             $gte: startDate,
             $lte: endDate,
