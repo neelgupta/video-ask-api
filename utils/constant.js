@@ -87,6 +87,7 @@ const msg = {
   planAlreadyPurchase: "Subscription plan is already purchased",
   validShippingAddress: "Please enter valid shipping address",
   validBillingAddress: "Please enter valid billing address",
+  TemplateAdd: "Template added successfully.",
 };
 
 const invitationTokenType = {
@@ -149,6 +150,12 @@ const modelName = {
   NODE_ANSWER: "Node_answer",
   SUBSCRIPTIONS: "Subscriptions",
   STRIPE: "Stripe",
+};
+
+const shardModelName = {
+  SHARD_INTERACTION: "Shard_Interaction",
+  SHARD_EDGE: "Shard_Edge",
+  SHARD_NODE: "Shard_Node",
 };
 
 const subscriptionPlanType = {
@@ -349,4 +356,5 @@ module.exports = {
   generateUid,
   getDateRangeForFilter,
   generateLabels,
+  shardModelName,
 };

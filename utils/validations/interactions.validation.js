@@ -282,7 +282,6 @@ const collectAnswerValidator = Joi.object({
   type: Joi.string()
     .optional()
     .valid(openEndedType.audio, openEndedType.text, openEndedType.video),
-
   contact_details: Joi.object({
     name: Joi.string().optional(),
     email: Joi.string().optional(),

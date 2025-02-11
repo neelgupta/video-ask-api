@@ -1,6 +1,11 @@
 const { default: mongoose } = require("mongoose");
 const mongoService = require("../config/mongoService");
-const { modelName, answerType, generateLabels } = require("../utils/constant");
+const {
+  modelName,
+  answerType,
+  generateLabels,
+  shardModelName,
+} = require("../utils/constant");
 const dayjs = require("dayjs");
 
 const add_folder = async (payload) => {
@@ -220,7 +225,7 @@ const update_edge_and_node = async (edgeId, newSourceId, newTargetId) => {
   }
 };
 
-const getNodesList = async (interactionId) => {
+const getNodesList = async (interactionId, preview_type) => {
   try {
     let pipeline = [
       {
@@ -231,7 +236,7 @@ const getNodesList = async (interactionId) => {
       },
       {
         $lookup: {
-          from: "nodes",
+          from: preview_type === "template" ? "shard_nodes" : "nodes",
           localField: "_id",
           foreignField: "interaction_id",
           as: "nodes",
@@ -243,7 +248,7 @@ const getNodesList = async (interactionId) => {
       },
       {
         $lookup: {
-          from: "edges",
+          from: preview_type === "template" ? "shard_edges" : "edges",
           localField: "_id",
           foreignField: "interaction_id",
           as: "edges",
@@ -251,9 +256,18 @@ const getNodesList = async (interactionId) => {
         },
       },
     ];
-    let data = await mongoService.aggregation(modelName.INTERACTION, pipeline);
+    let data = await mongoService.aggregation(
+      preview_type === "template"
+        ? shardModelName.SHARD_INTERACTION
+        : modelName.INTERACTION,
+      pipeline
+    );
 
-    if (data?.length && data?.[0]?.nodes?.length) {
+    if (
+      data?.length &&
+      data?.[0]?.nodes?.length &&
+      preview_type !== "template"
+    ) {
       await Promise.all(
         data?.[0]?.nodes?.map(async (val) => {
           val.allowedToEditAnswerType = true;
@@ -296,7 +310,6 @@ const getTargetNodeByIndex = async (
       .filter((node) => node)
       .sort((a, b) => a.index - b.index);
 
-    console.log("validTargetNodes", validTargetNodes);
     if (!!validTargetNodes.length) {
       const nextTargetNode = validTargetNodes.find(
         (node) => node.index > selectedIndex
@@ -311,7 +324,9 @@ const getTargetNodeByIndex = async (
       interaction_id: interactionId,
     });
 
-    return defaultNode._id;
+    if (defaultNode) return defaultNode._id;
+
+    return edges?.[0]?._id;
   } catch (error) {
     console.error("Error in getTargetNodeByIndex:", error.message);
     throw error;

@@ -14,3 +14,8 @@ module.exports.NodeAnswer = require("./NodeAnswer");
 module.exports.Library = require("./Library");
 module.exports.Subscriptions = require("./Subscriptions");
 module.exports.Stripe = require("./Stripe");
+
+// Shard Model
+module.exports.ShardInteraction = require("./shard/ShardInteraction");
+module.exports.ShardNode = require("./shard/ShardNode");
+module.exports.ShardEdge = require("./shard/ShardEdge");
