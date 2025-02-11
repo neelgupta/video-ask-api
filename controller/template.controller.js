@@ -151,22 +151,6 @@ const copyTemplate = catchAsyncError(async (req, res) => {
 
   const processNode = async (node) => {
     node.interaction_id = newInteraction._id;
-    if (node.video_url) {
-      const videoData = await copyVideoInCloudinary(
-        node.video_url,
-        `${CloudFolder}/${Id}/${folderData?.folder_name}/${newInteraction?._id}`
-      );
-      Object.assign(node, {
-        video_url: videoData?.videoUrl,
-        video_thumbnail: videoData?.thumbnailUrl,
-        video_size: videoData?.fileSize,
-      });
-
-      await organization_services.update_organization(
-        { _id: oldInteraction.organization_id },
-        { $inc: { storage_occupied: videoData?.fileSize } }
-      );
-    }
     const { _id, createdAt, updatedAt, __v, ...rest } = node;
     const newNode = await interactions_services.add_Node({
       ...rest,
