@@ -258,6 +258,21 @@ const update_payment_method = async (query, payload) => {
   }
 };
 
+const get_single_library = async (query) => {
+  try {
+    return mongoService.findOne(modelName.LIBRARY, query);
+  } catch (error) {
+    return error;
+  }
+};
+
+const update_library = async (query, payload) => {
+  try {
+    return mongoService.updateOne(modelName.LIBRARY, query, payload);
+  } catch (error) {
+    return error;
+  }
+};
 module.exports = {
   add_organization,
   get_organization,
@@ -283,4 +298,6 @@ module.exports = {
   get_payment_method,
   update_payment_method,
   find_member,
+  get_single_library,
+  update_library,
 };

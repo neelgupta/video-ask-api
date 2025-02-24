@@ -175,6 +175,13 @@ router.post(
   interactionsController.collectAnswer
 );
 
+router.post(
+  "/add-direct-message-answer",
+  uploadFile.single("answer"),
+  multerErrorHandler,
+  interactionsController.collectDirectMessageAnswer
+);
+
 router.put(
   "/update-is-completed-answer",
   interactionsController.updateIsCompletedInt
@@ -209,6 +216,18 @@ router.post(
   isAuthenticated,
   validateRequest(interactionsValidation.createNewEdgeValidator),
   interactionsController.createNewEdgeConnections
+);
+
+router.get(
+  "/get-single-interaction/:interaction_id",
+  isAuthenticated,
+  interactionsController.getSingleInteraction
+);
+
+router.get(
+  "/get-all-interaction/:organizationId",
+  isAuthenticated,
+  interactionsController.fetch_interactions_only
 );
 
 module.exports = router;

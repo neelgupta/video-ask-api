@@ -15,6 +15,7 @@ const {
   invitationTokenType,
   CloudFolder,
   addressType,
+  getCloudFolderPath,
 } = require("../utils/constant");
 const {
   response400,
@@ -636,12 +637,20 @@ const uploadMedia = catchAsyncError(async (req, res) => {
 
   req.body.added_by = Id;
   if (req.file) {
-    const uploadedFile = await uploadVideoToCloudinary(
-      req.file,
-      `${CloudFolder}/${Id}/library/${organization_id}`
-    );
-    req.body.video_thumbnail = uploadedFile.thumbnailUrl;
-    req.body.video_url = uploadedFile.videoUrl;
+    const cloudFolderPath = getCloudFolderPath({
+      path_type: "library",
+      organization_id: organization_id,
+      user_id: Id,
+    });
+    const uploadedFile = await uploadVideoToCloudinary({
+      file: req.file,
+      folderPath: cloudFolderPath,
+      type: "library",
+      organization_id: organization_id,
+    });
+    req.body.media_thumbnail = uploadedFile.thumbnailUrl;
+    req.body.media_url = uploadedFile.videoUrl;
+    req.body.media_size = uploadedFile?.fileSize;
   }
 
   const data = await interactions_services.addLibrary(req.body);

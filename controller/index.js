@@ -7,3 +7,4 @@ module.exports.interactionsController = require("./interactions.controller");
 module.exports.dashboardController = require("./dashboard.controller");
 module.exports.notificationController = require("./notification.controller");
 module.exports.templateController = require("./template.controller");
+module.exports.replyController = require("./reply.controller");

@@ -166,7 +166,7 @@ const addPaymentMethodValidator = Joi.object({
   shipping_address_id: Joi.string().required().messages({
     "*": "Shipping address is required",
   }),
-  billing_address_id:Joi.string().optional(),
+  billing_address_id: Joi.string().optional(),
   // billing_address_id: Joi.string().required().messages({
   //   "*": "Billing address is required",
   // }),
@@ -188,17 +188,11 @@ const uploadMediaValidator = Joi.object({
   organization_id: Joi.string().required().messages({
     "*": "Please enter valid organization Id",
   }),
-  media: Joi.array()
-    .items(
-      Joi.object({
-        originalname: Joi.string().optional(),
-        // mimetype: Joi.string().valid('image/jpeg', 'image/png', 'application/pdf').required(),
-        size: Joi.number().max(10 * 1024 * 1024), // Max size 10MB
-      })
-    )
-    .optional(),
-  title: Joi.string().optional(),
-  description: Joi.string().optional(),
+  media_type: Joi.string().optional(),
+  link_id: Joi.string().optional(),
+  is_link: Joi.boolean().default(false).required(),
+  title: Joi.string().required("Title is required"),
+  description: Joi.string().optional().allow(""),
 });
 
 module.exports = {

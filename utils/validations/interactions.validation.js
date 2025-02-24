@@ -99,6 +99,7 @@ const createNodeValidator = Joi.object({
       })
     )
     .optional(),
+  library_id: Joi.string().optional(),
   video_align: Joi.boolean().optional(),
   video_duration: Joi.boolean().optional(),
   overlay_text: Joi.string().optional().allow(""),
@@ -144,6 +145,7 @@ const updateNodeValidator = Joi.object({
   video_align: Joi.boolean().optional(),
   video_duration: Joi.boolean().optional(),
   overlay_text: Joi.string().optional().allow(""),
+  library_id: Joi.string().optional(),
   answer_type: Joi.string()
     .valid(...Object.values(answerType))
     .optional(),
@@ -292,6 +294,7 @@ const collectAnswerValidator = Joi.object({
   device_name: Joi.string().required().messages({
     "*": "Please enter valid device name.",
   }),
+  preview_type: Joi.string().optional(),
 });
 
 const createNewEdgeValidator = Joi.object({

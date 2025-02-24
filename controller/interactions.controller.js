@@ -13,6 +13,8 @@ const {
   organization_services,
   interactions_services,
   contact_services,
+  reply_service,
+  direct_message_answer_service,
 } = require("../service");
 const {
   msg,
@@ -23,6 +25,9 @@ const {
   generateUUID,
   getDateRangeForFilter,
   generateLabels,
+  modelName,
+  getCloudFolderPath,
+  flowType,
 } = require("../utils/constant");
 const dayjs = require("dayjs");
 const isBetween = require("dayjs/plugin/isBetween");
@@ -288,6 +293,16 @@ const createNode = catchAsyncError(async (req, res) => {
     _id: interactionData.folder_id,
     is_deleted: false,
   });
+  if (!folderData) return response400(res, msg.folderIsNotExists);
+
+  let libraryData = null;
+  if (req.body.flow_type === flowType.Library) {
+    libraryData = await organization_services.get_single_library({
+      _id: req.body.library_id,
+      is_deleted: false,
+    });
+    if (!libraryData) return response400(res, msg.libraryIsNotExists);
+  }
 
   req.body.added_by = Id;
   req.body.answer_type = answerType.OpenEnded;
@@ -303,18 +318,24 @@ const createNode = catchAsyncError(async (req, res) => {
   };
 
   if (req.file) {
-    const uploadedFile = await uploadVideoToCloudinary(
-      req.file,
-      `${CloudFolder}/${Id}/${folderData?.folder_name}/${interaction_id}`
-    );
+    const cloudFolderPath = getCloudFolderPath({
+      path_type: "interactionNode",
+      organization_id: interactionData.organization_id,
+      user_id: Id,
+    });
+    const uploadedFile = await uploadVideoToCloudinary({
+      file: req.file,
+      folderPath: cloudFolderPath,
+      type: "node",
+      organization_id: interactionData.organization_id,
+    });
+
     req.body.video_thumbnail = uploadedFile.thumbnailUrl;
     req.body.video_url = uploadedFile.videoUrl;
     req.body.video_size = uploadedFile?.fileSize;
-
-    await organization_services.update_organization(
-      { _id: interactionData.organization_id },
-      { $inc: { storage_occupied: uploadedFile?.fileSize } }
-    );
+  } else if (req.body.flow_type === flowType.Library) {
+    req.body.video_thumbnail = libraryData.media_thumbnail;
+    req.body.video_url = libraryData.media_url;
   }
 
   // Get all nodes for the interaction and sort by index
@@ -345,6 +366,15 @@ const createNode = catchAsyncError(async (req, res) => {
 
   req.body.index = newNodeIndex;
   let newNode = await interactions_services.add_Node(req.body);
+  await organization_services.update_library(
+    {
+      _id: req.body.library_id,
+    },
+    {
+      is_link: true,
+      link_id: newNode._id,
+    }
+  );
   if (newNode) {
     const updateSource = await interactions_services.update_Edge(
       { source: sourceId, target: targetId },
@@ -357,6 +387,20 @@ const createNode = catchAsyncError(async (req, res) => {
       target: newNode._id,
       added_by: Id,
     });
+
+    if (req.body.flow_type !== flowType.Library) {
+      await interactions_services.addLibrary({
+        organization_id: interactionData.organization_id,
+        media_thumbnail: req.body.video_thumbnail,
+        media_url: req.body.video_url,
+        media_size: req.body.video_size,
+        media_type: "node",
+        link_id: newNode._id,
+        is_link: true,
+        title: req.body.title,
+        added_by: Id,
+      });
+    }
   }
   // if (newNode) {
   //   const newEdge = await interactions_services.add_Edge({
@@ -380,16 +424,49 @@ const createNode = catchAsyncError(async (req, res) => {
 const getNodes = catchAsyncError(async (req, res) => {
   const { interaction_id } = req.params;
   const { preview_type } = req.query;
-  console.log("preview_type", preview_type);
 
-  const interactionData = await interactions_services.getNodesList(
-    interaction_id,
-    preview_type
-  );
+  let replyData = null;
+  if (["reply", "direct-message", "reply-message"].includes(preview_type)) {
+    replyData = await reply_service.findOneReplyNode({
+      _id: interaction_id,
+      type: preview_type,
+    });
+    console.log("replyData", replyData);
+    if (!replyData) return response400(res, msg.replyIsNotExists);
+  }
+
+  let interactionData = null;
+  if (["direct-message", "reply-message"].includes(preview_type)) {
+    interactionData = [
+      {
+        language: "english",
+        font: "Arial",
+        primary_color: "#7B5AFF",
+        secondary_color: "#B3A1FF",
+        background_color: "#FFFFFF",
+        border_radius: 10,
+        ...replyData.node_style,
+        nodes: [{ _id: "end_node", type: "End", position: { x: 0, y: 0 } }],
+        edges: [],
+        _id: replyData.reply_id || replyData._id,
+      },
+    ];
+  } else {
+    interactionData = await interactions_services.getNodesList(
+      preview_type === "reply" ? replyData.interaction_id : interaction_id,
+      preview_type
+    );
+  }
+
   if (!interactionData?.length)
     return response400(res, msg.interactionIsNotExists);
 
-  return response200(res, msg.fetch_success, interactionData?.[0] || {});
+  const newInteractionData = {
+    ...interactionData?.[0],
+    replyNode: replyData ? [replyData] : [],
+  };
+
+  return response200(res, msg.fetch_success, newInteractionData || {});
 });
 
 const getLogicNode = catchAsyncError(async (req, res) => {
@@ -1043,7 +1120,7 @@ const changeNodeEdge = catchAsyncError(async (req, res) => {
 
 const updateNode = catchAsyncError(async (req, res) => {
   const Id = req.user;
-  const { node_id } = req.body;
+  const { node_id, library_id } = req.body;
 
   const nodeData = await interactions_services.get_single_node({
     _id: node_id,
@@ -1063,10 +1140,18 @@ const updateNode = catchAsyncError(async (req, res) => {
   });
 
   if (req.file) {
-    const uploadedFile = await uploadVideoToCloudinary(
-      req.file,
-      `${CloudFolder}/${Id}/${folderData.folder_name}`
-    );
+    const cloudFolderPath = getCloudFolderPath({
+      path_type: "interactionNode",
+      organization_id: interactionData.organization_id,
+      user_id: Id,
+    });
+    const fileName = `node_${dayjs().unix()}`;
+    const uploadedFile = await uploadVideoToCloudinary({
+      file: req.file,
+      folderPath: cloudFolderPath,
+      type: "node",
+      organization_id: interactionData.organization_id,
+    });
     req.body.video_thumbnail = uploadedFile.thumbnailUrl;
     req.body.video_url = uploadedFile.videoUrl;
     req.body.video_size = uploadedFile?.fileSize;
@@ -1076,12 +1161,17 @@ const updateNode = catchAsyncError(async (req, res) => {
         { _id: interactionData.organization_id },
         { $inc: { storage_occupied: -nodeData?.video_size } }
       );
-
-      await organization_services.update_organization(
-        { _id: interactionData.organization_id },
-        { $inc: { storage_occupied: uploadedFile?.fileSize } }
-      );
     }
+  }
+  if (library_id) {
+    const libraryData = await organization_services.get_single_library({
+      _id: library_id,
+      is_deleted: false,
+    });
+    if (!libraryData) return response400(res, msg.libraryIsNotExists);
+
+    req.body.video_thumbnail = libraryData.media_thumbnail;
+    req.body.video_url = libraryData.media_url;
   }
 
   await interactions_services.update_Node({ _id: node_id }, req.body);
@@ -1241,40 +1331,18 @@ const getMediaLibrary = catchAsyncError(async (req, res) => {
   const { organization_id } = req.params;
   const { search } = req.query;
 
-  const interActions = await interactions_services.get_all_interactions({
+  const organizationData = await organization_services.get_organization({
+    _id: organization_id,
+    is_deleted: false,
+  });
+  if (!organizationData) return response400(res, msg.organizationNotExists);
+
+  const library = await interactions_services.getLibrary({
     organization_id,
-  });
-  let interActionIds = [];
-  interActions.map((val) => {
-    interActionIds.push(val._id);
+    search,
   });
 
-  const results = await interactions_services.getNodeLibrary(
-    interActionIds,
-    search
-  );
-
-  if (results?.length) results.map((val) => (val.type = "Node"));
-
-  const data = await interactions_services.getLibrary(
-    {
-      organization_id,
-      is_deleted: false,
-    },
-    {
-      organization_id: 1,
-      video_thumbnail: 1,
-      video_url: 1,
-      is_connected_with_node: 1,
-      added_by: 1,
-    }
-  );
-
-  if (data?.length) data.map((val) => (val.type = "Media"));
-
-  let result = [...results, ...data];
-
-  return response200(res, msg.fetch_success, result);
+  return response200(res, msg.fetch_success, library);
 });
 
 const getTargetNode = catchAsyncError(async (req, res) => {
@@ -1480,6 +1548,7 @@ const collectAnswer = catchAsyncError(async (req, res) => {
     type,
     contact_details,
     answer,
+    preview_type,
   } = req.body;
 
   // const clintIp = req.ip || req.headers["x-forwarded-for"]?.split(",").shift();
@@ -1491,23 +1560,37 @@ const collectAnswer = catchAsyncError(async (req, res) => {
 
   if (!interactionData) return response400(res, msg.interactionIsNotExists);
 
-  const nodeData = await interactions_services.get_single_node({
-    _id: node_id,
-    is_deleted: false,
-    type: nodeType.Question,
-  });
+  let nodeData = null;
+  if (preview_type === "reply") {
+    nodeData = await reply_service.findOneReplyNode({
+      _id: node_id,
+      is_deleted: false,
+    });
+  } else {
+    nodeData = await interactions_services.get_single_node({
+      _id: node_id,
+      is_deleted: false,
+      type: nodeType.Question,
+    });
+  }
   if (!nodeData) return response400(res, msg.nodeTypeQuestion);
 
   if (node_answer_type !== nodeData.answer_type) {
     return response400(res, msg.answerTypeNotMatched);
   }
 
+  let answerData = null;
   if (answer_id) {
-    const answerData = await interactions_services.get_answer({
+    answerData = await interactions_services.get_answer({
       _id: answer_id,
       is_deleted: false,
     });
     if (!answerData) return response400(res, "Answer details not exists");
+  }
+  if (preview_type === "reply") {
+    if (nodeData.contact_id.toString() !== answerData?.contact_id.toString()) {
+      return response400(res, msg.contactNotMatched);
+    }
   }
 
   let answer_details = {};
@@ -1517,10 +1600,18 @@ const collectAnswer = catchAsyncError(async (req, res) => {
     let tempType = [openEndedType.audio, openEndedType.video];
     if (tempType.includes(type)) {
       if (req.file) {
-        const uploadedFile = await uploadVideoToCloudinary(
-          req.file,
-          `${CloudFolder}/${interaction_id}/ans/${node_id}`
-        );
+        const cloudFolderPath = getCloudFolderPath({
+          path_type:
+            preview_type === "reply" ? "replyAnswer" : "interactionAnswer",
+          organization_id: interactionData.organization_id,
+          user_id: Id,
+        });
+        const uploadedFile = await uploadVideoToCloudinary({
+          file: req.file,
+          folderPath: cloudFolderPath,
+          type: "ans",
+          organization_id: interactionData.organization_id,
+        });
         answer_details.ansThumbnail = uploadedFile.thumbnailUrl;
         answer_details.answer = uploadedFile.videoUrl;
         answer_details.type = type;
@@ -1533,10 +1624,18 @@ const collectAnswer = catchAsyncError(async (req, res) => {
 
   if (node_answer_type === answerType.FileUpload) {
     if (req.file) {
-      const uploadedFile = await uploadVideoToCloudinary(
-        req.file,
-        `${CloudFolder}/${interaction_id}/ans/${node_id}`
-      );
+      const cloudFolderPath = getCloudFolderPath({
+        path_type:
+          preview_type === "reply" ? "replyAnswer" : "interactionAnswer",
+        organization_id: interactionData.organization_id,
+        user_id: Id,
+      });
+      const uploadedFile = await uploadVideoToCloudinary({
+        file: req.file,
+        folderPath: cloudFolderPath,
+        type: "ans",
+        organization_id: interactionData.organization_id,
+      });
       answer_details.answer = uploadedFile.videoUrl;
     }
   }
@@ -1560,6 +1659,8 @@ const collectAnswer = catchAsyncError(async (req, res) => {
       node_id,
       node_answer_type,
       answer_details,
+      node_type:
+        preview_type === "reply" ? modelName.REPLY_NODE : modelName.NODE,
     },
   ];
 
@@ -1620,23 +1721,43 @@ const collectAnswer = catchAsyncError(async (req, res) => {
   let isMultiple = false;
   let isRedirect = false;
   let target = null;
-  if ([answerType.MultipleChoice, answerType.NPS].includes(node_answer_type)) {
-    isMultiple = true;
-  } else {
-    isRedirect = true;
-    target = nodeData?.redirection_url;
-    if (!nodeData?.redirection_url) {
-      isRedirect = false;
-      const edges = await interactions_services.get_all_edges({
+  if (preview_type === "reply") {
+    console.log("nodeData", nodeData);
+    if (nodeData?.answer_type === "open-ended") {
+      const endNode = await interactions_services.get_single_node({
         interaction_id,
-        source: node_id,
+        type: nodeType.End,
       });
-      if (edges.length > 0) {
-        const targetNode = await interactions_services.get_single_node({
+      if (endNode) {
+        target = endNode._id;
+      }
+    } else {
+      if (nodeData?.answer_format?.button_url) {
+        isRedirect = true;
+        target = nodeData?.answer_format?.button_url;
+      }
+    }
+  } else {
+    if (
+      [answerType.MultipleChoice, answerType.NPS].includes(node_answer_type)
+    ) {
+      isMultiple = true;
+    } else {
+      isRedirect = true;
+      target = nodeData?.redirection_url;
+      if (!nodeData?.redirection_url) {
+        isRedirect = false;
+        const edges = await interactions_services.get_all_edges({
           interaction_id,
-          _id: edges?.[0].target,
+          source: node_id,
         });
-        target = targetNode._id;
+        if (edges.length > 0) {
+          const targetNode = await interactions_services.get_single_node({
+            interaction_id,
+            _id: edges?.[0].target,
+          });
+          target = targetNode._id;
+        }
       }
     }
   }
@@ -1648,6 +1769,134 @@ const collectAnswer = catchAsyncError(async (req, res) => {
     isRedirect,
     target,
   });
+});
+
+const collectDirectMessageAnswer = catchAsyncError(async (req, res) => {
+  const {
+    reply_id,
+    message_id,
+    node_id,
+    node_answer_type,
+    type,
+    answer,
+    preview_type,
+    contact_id,
+    organization_id,
+  } = req.body;
+
+  const nodeData = await direct_message_answer_service.get_direct_message_node({
+    _id: node_id,
+    is_deleted: false,
+  });
+
+  if (!nodeData) return response400(res, msg.directMessageNodeNotFound);
+
+  const directNodeData =
+    await direct_message_answer_service.get_direct_message_node({
+      _id:
+        preview_type === "reply-message" ? nodeData.direct_node_id : message_id,
+      is_deleted: false,
+    });
+
+  if (!directNodeData) return response400(res, msg.directMessageNodeNotFound);
+
+  const contactData = await contact_services.get_single_contact({
+    _id: contact_id,
+    is_deleted: false,
+  });
+
+  if (!contactData) return response400(res, msg.contactNotFound);
+
+  if (node_answer_type !== nodeData.answer_type) {
+    return response400(res, msg.answerTypeNotMatched);
+  }
+
+  let replyData = null;
+  if (preview_type === "reply-message") {
+    replyData = await direct_message_answer_service.get_direct_message_answer({
+      _id: reply_id,
+      is_deleted: false,
+    });
+
+    if (!replyData) return response400(res, msg.directMessageAnswerNotFound);
+  }
+
+  let answer_details = {};
+  if (node_answer_type === answerType.OpenEnded) {
+    if (!type) return response400(res, "Open ended answer type is required");
+
+    let tempType = [openEndedType.audio, openEndedType.video];
+    if (tempType.includes(type)) {
+      if (req.file) {
+        const cloudFolderPath = getCloudFolderPath({
+          path_type:
+            preview_type === "reply-message"
+              ? "replyMessageAnswer"
+              : "directMessageAnswer",
+          organization_id: organization_id,
+          user_id: Id,
+        });
+        const uploadedFile = await uploadVideoToCloudinary({
+          file: req.file,
+          folderPath: cloudFolderPath,
+          type: "ans",
+          organization_id: organization_id,
+        });
+        answer_details.ansThumbnail = uploadedFile.thumbnailUrl;
+        answer_details.answer = uploadedFile.videoUrl;
+        answer_details.type = type;
+      }
+    } else {
+      answer_details.answer = answer;
+      answer_details.type = type;
+    }
+  }
+
+  if (node_answer_type === answerType.Button) {
+    answer_details.answer = answer === "true" ? true : false;
+  }
+
+  req.body.answers = [
+    {
+      node_id,
+      node_answer_type,
+      answer_details,
+      node_type: preview_type,
+    },
+  ];
+
+  delete req.body.node_id;
+  delete req.body.node_answer_type;
+  delete req?.body?.type;
+
+  req.body.contact_id = contact_id;
+  req.body.direct_node_id = message_id;
+  req.body.user_id = directNodeData.added_by;
+
+  let replyAnswerId = null;
+  if (reply_id) {
+    await direct_message_answer_service.update_direct_message_answer(
+      { _id: reply_id },
+      {
+        $push: { answers: req.body.answers },
+        contact_id: req.body.contact_id,
+      }
+    );
+    replyAnswerId = reply_id;
+  } else {
+    const result =
+      await direct_message_answer_service.add_direct_message_answer(req.body);
+    replyAnswerId = result._id;
+  }
+
+  return response201(res, msg.answerSuccess, {
+    replyAnswerId,
+    contactId: req.body.contact_id,
+    isMultiple: false,
+    isRedirect: false,
+    target: "end_node",
+  });
+  // return response200(res, msg.fetch_success, req.body);
 });
 
 const getInteractionAnswers = catchAsyncError(async (req, res) => {
@@ -1754,7 +2003,17 @@ const getAllInteraction = catchAsyncError(async (req, res) => {
     organization_id
   );
 
-  return response200(res, msg.fetch_success, data);
+  const newData = data.map((item) => {
+    const findInt = intList.find(
+      (int) => int._id.toString() === item.interaction_id.toString()
+    );
+    return {
+      ...item,
+      interactionDetails: findInt,
+    };
+  });
+
+  return response200(res, msg.fetch_success, newData);
 });
 
 const updateIsCompletedInt = catchAsyncError(async (req, res) => {
@@ -1947,6 +2206,32 @@ const getMetricsCount = catchAsyncError(async (req, res) => {
   });
 });
 
+const getSingleInteraction = catchAsyncError(async (req, res) => {
+  const { interaction_id } = req.params;
+  const interaction = await interactions_services.get_single_interaction({
+    _id: interaction_id,
+  });
+  return response200(res, msg.fetch_success, interaction);
+});
+
+const fetch_interactions_only = catchAsyncError(async (req, res) => {
+  const { organizationId } = req.params;
+  const { search } = req.query;
+
+  const interaction = await interactions_services.get_interaction_only(
+    organizationId,
+    search
+  );
+  const newInt = interaction.map((ele) => {
+    const { nodes, ...int } = ele;
+    return {
+      ...int,
+      interaction_thumbnail: nodes?.[0]?.video_thumbnail,
+    };
+  });
+  return response200(res, msg.fetch_success, newInt);
+});
+
 module.exports = {
   addFolder,
   getFolderList,
@@ -1979,4 +2264,7 @@ module.exports = {
   changeNodeEdge,
   getTargetNode,
   getMetricsCount,
+  getSingleInteraction,
+  fetch_interactions_only,
+  collectDirectMessageAnswer,
 };

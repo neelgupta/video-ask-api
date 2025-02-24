@@ -2,10 +2,13 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const { v4: uuidv4 } = require("uuid");
 const dayjs = require("dayjs");
-
+const CryptoJS = require("crypto-js");
 // const frontBaseUrl = "https://adorable-custard-9de130.netlify.app";
 const frontBaseUrl = "http://localhost:3000";
-
+const ENCRYPTION_KEY = CryptoJS.enc.Utf8.parse(
+  "34145392620706094264300535641132"
+);
+const ENCRYPTION_IV = CryptoJS.enc.Utf8.parse("9498358038652241");
 const defaultOrganization = "My Organization";
 
 const defaultFolderName = "Default";
@@ -88,6 +91,14 @@ const msg = {
   validShippingAddress: "Please enter valid shipping address",
   validBillingAddress: "Please enter valid billing address",
   TemplateAdd: "Template added successfully.",
+  replyIsNotExists: "Reply is not exists",
+  answerNotExists: "Answer details not exists",
+  nodeTypeReply: "Node type must be Reply",
+  directMessageNodeNotFound: "Direct message node not found",
+  directMessageAnswerNotFound: "Direct message answer not found",
+  contactNotMatched: "Contact details not matched",
+  contactNotExists: "Contact details not exists",
+  replyNodeNotExists: "Reply node details not exists",
 };
 
 const invitationTokenType = {
@@ -150,6 +161,8 @@ const modelName = {
   NODE_ANSWER: "Node_answer",
   SUBSCRIPTIONS: "Subscriptions",
   STRIPE: "Stripe",
+  REPLY_NODE: "reply_node",
+  DIRECT_MESSAGE_ANSWER: "Direct_message_answer",
 };
 
 const shardModelName = {
@@ -231,6 +244,23 @@ const generateEncryptedToken = (payload) => {
   let encrypted = cipher.update(payload, "utf8", "hex");
   encrypted += cipher.final("hex");
   return encrypted;
+};
+
+const encrypt = (data) => {
+  const phrase = JSON.stringify(data);
+  const encrypted = CryptoJS.AES.encrypt(phrase, ENCRYPTION_KEY, {
+    iv: ENCRYPTION_IV,
+    padding: CryptoJS.pad.Pkcs7,
+    mode: CryptoJS.mode.CBC,
+  });
+
+  // Convert ciphertext to URL-safe Base64
+  const base64String = encrypted.ciphertext.toString(CryptoJS.enc.Base64);
+  const urlSafeString = base64String
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, ""); // Remove padding
+  return urlSafeString;
 };
 
 const decryptToken = (encryptedToken) => {
@@ -325,6 +355,39 @@ const generateLabels = (start, end, interval) => {
   return labels;
 };
 
+const getCloudFolderPath = ({ path_type, organization_id, user_id }) => {
+  const pathType = {
+    interactionNode: {
+      path: `${CloudFolder}/${organization_id}/${user_id}/interaction/node`,
+    },
+    interactionAnswer: {
+      path: `${CloudFolder}/${organization_id}/${user_id}/interaction/answer`,
+    },
+    replyNode: {
+      path: `${CloudFolder}/${organization_id}/${user_id}/interaction/node`,
+    },
+    replyAnswer: {
+      path: `${CloudFolder}/${organization_id}/${user_id}/interaction/answer`,
+    },
+    directMessageAnswer: {
+      path: `${CloudFolder}/${organization_id}/${user_id}/direct-message/answer`,
+    },
+    directMessageNode: {
+      path: `${CloudFolder}/${organization_id}/${user_id}/direct-message/node`,
+    },
+    replyMessageNode: {
+      path: `${CloudFolder}/${organization_id}/${user_id}/direct-message/node`,
+    },
+    replyMessageAnswer: {
+      path: `${CloudFolder}/${organization_id}/${user_id}/direct-message/answer`,
+    },
+    library: {
+      path: `${CloudFolder}/${organization_id}/${user_id}/library`,
+    },
+  };
+  return pathType[path_type];
+};
+
 module.exports = {
   userType,
   frontBaseUrl,
@@ -357,4 +420,6 @@ module.exports = {
   getDateRangeForFilter,
   generateLabels,
   shardModelName,
+  encrypt,
+  getCloudFolderPath,
 };

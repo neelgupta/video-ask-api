@@ -17,8 +17,14 @@ const nodeAnswerSchema = new mongoose.Schema(
       {
         node_id: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: modelName.NODE,
+          refPath: "answers.node_type",
           required: true,
+        },
+        node_type: {
+          type: String,
+          required: true,
+          enum: [modelName.NODE, modelName.REPLY_NODE],
+          default: modelName.NODE,
         },
         node_answer_type: {
           type: String,

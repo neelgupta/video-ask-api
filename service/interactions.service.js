@@ -485,9 +485,20 @@ const addLibrary = async (payload) => {
   }
 };
 
-const getLibrary = async (query, project) => {
+const getLibrary = async ({ organization_id, search }) => {
   try {
-    return mongoService.findAll(modelName.LIBRARY, query, project);
+    const pipeline = [
+      {
+        $match: {
+          organization_id: new mongoose.Types.ObjectId(organization_id),
+          is_deleted: false,
+          title: { $regex: search || "", $options: "i" },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+    ];
+    const library = await mongoService.aggregation(modelName.LIBRARY, pipeline);
+    return library;
   } catch (error) {
     return error;
   }
@@ -659,8 +670,52 @@ const get_interaction_answer = async (match) => {
           from: "nodes",
           localField: "answers.node_id",
           foreignField: "_id",
-          as: "answers.nodeDetails",
-          pipeline: [{ $project: { updatedAt: 0, __v: 0, added_by: 0 } }],
+          as: "node",
+          pipeline: [
+            {
+              $project: {
+                updatedAt: 0,
+                __v: 0,
+                added_by: 0,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "reply_nodes",
+          localField: "answers.node_id",
+          foreignField: "_id",
+          as: "replyNode",
+          pipeline: [
+            {
+              $project: {
+                updatedAt: 0,
+                __v: 0,
+                added_by: 0,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          "answers.nodeDetails": {
+            $cond: {
+              if: {
+                $eq: ["$answers.node_type", "Node"],
+              },
+              then: "$node",
+              else: "$replyNode",
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          node: 0,
+          replyNode: 0,
         },
       },
       {
@@ -672,7 +727,9 @@ const get_interaction_answer = async (match) => {
       {
         $group: {
           _id: "$_id",
-          interaction_id: { $first: "$interaction_id" },
+          interaction_id: {
+            $first: "$interaction_id",
+          },
           is_deleted: { $first: "$is_deleted" },
           contact_id: { $first: "$contact_id" },
           createdAt: { $first: "$createdAt" },
@@ -911,8 +968,52 @@ const get_all_interaction_answer = async (
           from: "nodes",
           localField: "answers.node_id",
           foreignField: "_id",
-          as: "answers.nodeDetails",
-          pipeline: [{ $project: { updatedAt: 0, __v: 0, added_by: 0 } }],
+          as: "node",
+          pipeline: [
+            {
+              $project: {
+                updatedAt: 0,
+                __v: 0,
+                added_by: 0,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "reply_nodes",
+          localField: "answers.node_id",
+          foreignField: "_id",
+          as: "replyNode",
+          pipeline: [
+            {
+              $project: {
+                updatedAt: 0,
+                __v: 0,
+                added_by: 0,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          "answers.nodeDetails": {
+            $cond: {
+              if: {
+                $eq: ["$answers.node_type", "Node"],
+              },
+              then: "$node",
+              else: "$replyNode",
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          node: 0,
+          replyNode: 0,
         },
       },
       {
@@ -924,7 +1025,9 @@ const get_all_interaction_answer = async (
       {
         $group: {
           _id: "$_id",
-          interaction_id: { $first: "$interaction_id" },
+          interaction_id: {
+            $first: "$interaction_id",
+          },
           is_deleted: { $first: "$is_deleted" },
           contact_id: { $first: "$contact_id" },
           createdAt: { $first: "$createdAt" },
@@ -941,11 +1044,6 @@ const get_all_interaction_answer = async (
           as: "contact_details",
           pipeline: [
             {
-              $match: {
-                organization_id: new mongoose.Types.ObjectId(organization_id),
-              },
-            },
-            {
               $project: {
                 updatedAt: 0,
                 __v: 0,
@@ -956,7 +1054,6 @@ const get_all_interaction_answer = async (
           ],
         },
       },
-      // { $match: { contact_details: { $gt: [] } } },
       {
         $unwind: {
           path: "$contact_details",
@@ -1188,6 +1285,58 @@ const get_metrics = async (interaction_id, deviceType, start, end) => {
   }
 };
 
+const get_interaction_only = async (organization_id, searchText) => {
+  try {
+    function escapeRegex(text) {
+      return text.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+    }
+
+    let matchQuery = {
+      organization_id: new mongoose.Types.ObjectId(organization_id),
+      is_deleted: false,
+      title: { $regex: escapeRegex(searchText || ""), $options: "i" },
+    };
+    const pipeline = [
+      {
+        $match: matchQuery,
+      },
+      {
+        $lookup: {
+          from: "node_answers",
+          localField: "_id",
+          foreignField: "interaction_id",
+          as: "landed",
+        },
+      },
+      {
+        $lookup: {
+          from: "nodes",
+          let: { interactionId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: ["$interaction_id", "$$interactionId"],
+                    },
+                    { $eq: ["$type", "Question"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "nodes",
+        },
+      },
+    ];
+
+    return await mongoService.aggregation(modelName.INTERACTION, pipeline);
+  } catch (error) {
+    return error;
+  }
+};
+
 module.exports = {
   add_folder,
   get_folder_list,
@@ -1235,4 +1384,5 @@ module.exports = {
   get_all_edges,
   single_Edge,
   get_metrics,
+  get_interaction_only,
 };

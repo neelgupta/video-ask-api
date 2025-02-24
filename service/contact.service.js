@@ -104,7 +104,46 @@ const get_conversations = async (query) => {
                 from: "nodes",
                 localField: "answers.node_id",
                 foreignField: "_id",
-                as: "answers.nodeDetails",
+                as: "answers.node",
+                pipeline: [
+                  {
+                    $project: {
+                      updatedAt: 0,
+                      __v: 0,
+                      added_by: 0,
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              $lookup: {
+                from: "reply_nodes",
+                localField: "answers.node_id",
+                foreignField: "_id",
+                as: "answers.replyNode",
+                pipeline: [
+                  {
+                    $project: {
+                      updatedAt: 0,
+                      __v: 0,
+                      added_by: 0,
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              $addFields: {
+                "answers.nodeDetails": {
+                  $concatArrays: ["$answers.node", "$answers.replyNode"],
+                },
+              },
+            },
+            {
+              $project: {
+                "answers.node": 0,
+                "answers.replyNode": 0,
               },
             },
             {
@@ -113,10 +152,13 @@ const get_conversations = async (query) => {
                 preserveNullAndEmptyArrays: true,
               },
             },
+
             {
               $group: {
                 _id: "$_id",
-                interactionDetails: { $first: "$interactionDetails" },
+                interactionDetails: {
+                  $first: "$interactionDetails",
+                },
                 is_deleted: { $first: "$is_deleted" },
                 createdAt: { $first: "$createdAt" },
                 answers: {
@@ -124,7 +166,13 @@ const get_conversations = async (query) => {
                 },
               },
             },
-            { $project: { updatedAt: 0, __v: 0, added_by: 0 } },
+            {
+              $project: {
+                updatedAt: 0,
+                __v: 0,
+                added_by: 0,
+              },
+            },
           ],
         },
       },
