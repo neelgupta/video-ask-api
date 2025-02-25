@@ -1172,6 +1172,15 @@ const updateNode = catchAsyncError(async (req, res) => {
 
     req.body.video_thumbnail = libraryData.media_thumbnail;
     req.body.video_url = libraryData.media_url;
+
+    await organization_services.update_library(
+      { _id: library_id },
+      {
+        $inc: {
+          is_link: true,
+        },
+      }
+    );
   }
 
   await interactions_services.update_Node({ _id: node_id }, req.body);
